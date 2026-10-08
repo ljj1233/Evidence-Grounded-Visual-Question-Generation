@@ -1,0 +1,53 @@
+phase: future_grpo_ablation_contract
+status: specification_only
+rows:
+  - id: zero_shot
+    base_model: Qwen3-VL-8B-Instruct
+    sft_checkpoint: null
+    training_image_budget: null
+    rollout_count: null
+    decoding: frozen_evaluation_protocol_v1
+    final_evaluation_protocol: EVALUATION_PROTOCOL_V1
+  - id: sft
+    base_model: Qwen3-VL-8B-Instruct
+    sft_checkpoint: outputs/checkpoints/qwen3vl8b_lora_r16_vqav2_50k/checkpoint-final
+    training_image_budget: 50000
+    rollout_count: null
+    decoding: frozen_evaluation_protocol_v1
+    final_evaluation_protocol: EVALUATION_PROTOCOL_V1
+  - id: sft_vanilla_grpo
+    base_model: Qwen3-VL-8B-Instruct
+    sft_checkpoint: same_as_sft
+    training_image_budget: same_as_sft
+    rollout_count: frozen_future_rollout_count
+    decoding: frozen_evaluation_protocol_v1
+    final_evaluation_protocol: EVALUATION_PROTOCOL_V1
+  - id: sft_vic_only
+    base_model: Qwen3-VL-8B-Instruct
+    sft_checkpoint: same_as_sft
+    training_image_budget: same_as_sft
+    rollout_count: frozen_future_rollout_count
+    decoding: frozen_evaluation_protocol_v1
+    final_evaluation_protocol: EVALUATION_PROTOCOL_V1
+  - id: sft_violation_only
+    base_model: Qwen3-VL-8B-Instruct
+    sft_checkpoint: same_as_sft
+    training_image_budget: same_as_sft
+    rollout_count: frozen_future_rollout_count
+    decoding: frozen_evaluation_protocol_v1
+    final_evaluation_protocol: EVALUATION_PROTOCOL_V1
+  - id: sft_full
+    base_model: Qwen3-VL-8B-Instruct
+    sft_checkpoint: same_as_sft
+    training_image_budget: same_as_sft
+    rollout_count: frozen_future_rollout_count
+    decoding: frozen_evaluation_protocol_v1
+    final_evaluation_protocol: EVALUATION_PROTOCOL_V1
+constraints:
+  same_base_model: true
+  same_sft_checkpoint_where_applicable: true
+  same_training_image_budget: true
+  same_rollout_count: true
+  same_decoding: true
+  same_final_evaluation_protocol: true
+  experiments_run: false

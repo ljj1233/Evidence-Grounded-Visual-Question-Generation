@@ -1,0 +1,59 @@
+# Stage 1 SFT — image-conditioned VQG (Qwen3-VL-8B-Instruct), LoRA, bf16.
+#
+# Model path note: the requested path `~/models/Qwen/Qwen3-VL-8B-Instruct` does
+# not exist on this host; the checkpoint present is `~/models/Qwen3-VL-8B-Instruct`
+# (model_type qwen3_vl). That real path is used here (no symlink).
+stage: sft
+task: image_to_question
+base_model: models/Qwen3-VL-8B-Instruct
+train_data: src/vvqg/data/sft/train.jsonl
+output_dir: outputs/checkpoints/qwen3vl8b_lora_r16_vqav2_50k
+seed: 42
+max_seq_length: 512
+instruction: "Generate a question about this image."
+
+# Image resolution budget (shared by training and inference/vLLM).
+# Qwen3-VL patch factor is 32 (patch 16 x merge 2); tokens = pixels / 32^2.
+# min_pixels 4096 = 4 tokens; max_pixels 147456 = 384x384 = 144 tokens.
+# Model default longest_edge=16,777,216 (16384 tokens) is far too large; 384x384
+# is a standard VQA resolution and ~half the cost of native COCO (~260 tokens).
+image:
+  min_pixels: 4096
+  max_pixels: 147456
+
+precision:
+  bf16: true
+
+lora:
+  enabled: true
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+training:
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8
+  effective_batch_size: 16
+  num_train_epochs: 2
+  learning_rate: 2.0e-4
+  warmup_ratio: 0.03
+  logging_steps: 10
+  save_steps: 500
+  save_total_limit: 3
+  dataloader_num_workers: 8
+  gradient_checkpointing: true
+  attn_implementation: flash_attention_2
+
+smoke:
+  num_samples: 1000
+  max_steps: 20
+  logging_steps: 1
+  output_dir: checkpoint/sft_smoke

@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "classification": "CURRENT_MAIN_PIPELINE",
+  "script_count": 15,
+  "scripts": [
+    "scripts/vvqg/dpo_v1_formal_pairs.py",
+    "scripts/vvqg/dpo_v1_formal_score.py",
+    "scripts/vvqg/dpo_v1_formal_train.py",
+    "scripts/vvqg/ec_aligned_direct4_generate.py",
+    "scripts/vvqg/overnight_matched_negative.py",
+    "scripts/vvqg/phase26_vfc.py",
+    "scripts/vvqg/phase4b_prepare.py",
+    "scripts/vvqg/phase5b_direct4_generate.py",
+    "scripts/vvqg/phase5b_score_candidates.py",
+    "scripts/vvqg/phase5b_select.py",
+    "scripts/vvqg/phase5c_build_targets.py",
+    "scripts/vvqg/phase5c_distill.py",
+    "scripts/vvqg/phase5c_select.py",
+    "scripts/vvqg/prepare_sft_data.py",
+    "scripts/vvqg/train_online_uvfc_relative.py"
+  ],
+  "modules": [
+    "vvqg.training.online_uvfc_relative_grpo",
+    "vvqg.training.fixed_group_relative",
+    "vvqg.training.policy_logprobs",
+    "vvqg.rewards.visual_information.uvfc",
+    "vvqg.rewards.support.structured_flat",
+    "vvqg.dpo_pilot.trainer",
+    "vvqg.generation.generator",
+    "vvqg.baselines.contrastive_grounding.model",
+    "vvqg.baselines.implicit_guided",
+    "vvqg.baselines.seeq_faithful.pipeline"
+  ]
+}

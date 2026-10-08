@@ -1,0 +1,17 @@
+{
+  "task": "same_type_pair_feasibility_shortcut_audit",
+  "cpu_only": true,
+  "training": false,
+  "api": false,
+  "pool": "outputs/offline_dpo_v1_formal_20261007T102440Z/data/candidates_scored.jsonl",
+  "original_pairs": "outputs/offline_dpo_v1_formal_20261007T102440Z/data/pairs_train.jsonl",
+  "taxonomy": [
+    "yes/no",
+    "count",
+    "color",
+    "what",
+    "other"
+  ],
+  "diagnostic": "image-grouped 5-fold naive-Bayes bag-of-words pairwise ranking",
+  "does_not_modify_pairs": true
+}

@@ -1,0 +1,27 @@
+{
+  "protocol": {
+    "decoding": "greedy",
+    "max_new_tokens": 32,
+    "batch_size": 16,
+    "seed": 42,
+    "instruction": "Generate a question about this image."
+  },
+  "systems": {
+    "full_ours": {
+      "images_processed": 2000,
+      "records_written": 2000,
+      "empty_or_malformed": 0
+    },
+    "full_ours_dpo": {
+      "images_processed": 2000,
+      "records_written": 2000,
+      "empty_or_malformed": 0
+    }
+  },
+  "runtime": {
+    "full_ours_images_per_sec": 8.452,
+    "full_ours_dpo_images_per_sec": 10.285,
+    "peak_gpu_mb": 18779.2
+  },
+  "deterministic_runtime_failures": 0
+}

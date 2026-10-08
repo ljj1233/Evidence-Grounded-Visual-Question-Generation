@@ -1,0 +1,77 @@
+{
+  "candidate": {
+    "name": "Full Ours + Offline DPO Refinement",
+    "checkpoint": "reports/offline_dpo_unified_refinement_20261008/dpo/checkpoints/step_00207",
+    "adapter_model_sha256": "32384eea130274b29be1f1e8a9882faae56c0db274ce219882f07a8bd9c7f07e",
+    "global_step": 207
+  },
+  "init_reference": {
+    "checkpoint": "outputs/phase5c_qse_relativeguard/checkpoints/step_final",
+    "adapter_model_sha256": "52ee692ca08737058594fe408a7817419f53532395f9249b2f227b43b4d9a58d"
+  },
+  "training_dataset": {
+    "path": "reports/offline_dpo_unified_refinement_20261008/UNIFIED_PAIRS.jsonl",
+    "sha256": "ae27e2ee32a0314378d1b4c334e07a91afb089aec15cc7d771b1a188dd59c94e",
+    "total_pairs": 6633,
+    "matched_rejected": 2733,
+    "original_rejected_fallback": 3900,
+    "trainer_pairs_sha256": "e570195033b9954766341d565e41b8baad024dc8a2349160e880214744dea140"
+  },
+  "training_config": {
+    "beta": 0.1,
+    "lr": 5e-06,
+    "scheduler": "constant",
+    "effective_batch_size": 8,
+    "lora": "r16 alpha32 dropout0.05 q/k/v/o/gate/up/down",
+    "seed": 42,
+    "optimizer": "AdamW(0.9,0.999) wd0 gradclip1.0",
+    "optimizer_steps": 207,
+    "full_schedule_steps": 830,
+    "sfp": "bf16 sdpa",
+    "note": "step_00207 selected as 25% of the 830-step schedule; no training API"
+  },
+  "generation_config": {
+    "schema": "greedy",
+    "do_sample": false,
+    "max_new_tokens": 32,
+    "seed": 42,
+    "batch_size": 16,
+    "instruction": "Generate a question about this image.",
+    "one_question_per_image": true
+  },
+  "dev_selection": {
+    "dev256_manifest": "reports/offline_dpo_checkpoint_trajectory_20261008/DEV256_MANIFEST.jsonl",
+    "dev256_sha256": "afc3825c1f19d9acda459b27a3ef6534a409a6e87aff9d58c727dc378957a590",
+    "dev744_manifest": "reports/offline_dpo_freeze_20261008/DEV744_MANIFEST.jsonl",
+    "dev744_sha256": "a6db294a3d9dc4887de8eead7fb911441dd2aa783d5764ced36a7275112ff1ae",
+    "selection_evidence": "reports/offline_dpo_unified_refinement_20261008/PHASE1/PHASE1_REPORT.md + PHASE1/STAGE1EXT.json",
+    "selected_checkpoint": "step_00207",
+    "state": "DEV256 used for model selection"
+  },
+  "evaluators": {
+    "seeq": {
+      "model": "gpt-5.6-luna",
+      "status": "VARIANT_DOCUMENTED",
+      "prompt_hash": "57a357e077e599248bc2212ca1e3d83b42c4ae5ab6448d6fbd26e824773fe133",
+      "protocol": "seeq-single-question-v1"
+    },
+    "support": {
+      "model": "gpt-4o",
+      "protocol_version": "visual-support-phase23-v1.0",
+      "prompt_file": "configs/new_vqg/visual_support_prompts.json"
+    },
+    "bootstrap": {
+      "n": 10000,
+      "seed": 42,
+      "unit": "image_id",
+      "paired": true
+    }
+  },
+  "git_head": "9dea27f09aa5c21f4fa53f730923ac1df64169eb",
+  "statements": [
+    "DEV256 is a model-selection development subset.",
+    "No further checkpoint or DPO hyperparameter selection is permitted after this freeze.",
+    "DEV744_SECONDARY_CONFIRMATION = formal_dev1000 minus DEV256; it is NOT an untouched test set (the broader dev1000 participated in prior development), but step_00207 was not selected on it.",
+    "final_holdout remains sealed."
+  ]
+}

@@ -1,0 +1,8 @@
+Original report/artifact directory (retained):
+/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_parity_audit_20261008
+
+Small reports were COPIED; original report files, checkpoints, datasets, generations and API caches remain at their original paths.
+Running audit PID 182816 may still read those original paths.
+
+Original artifact references (repo-relative; historical strings, not relocated):
+

@@ -1,0 +1,14 @@
+{
+  "base_model": "/hpc2hdd/home/fye374/models/Qwen3-VL-8B-Instruct",
+  "sft_checkpoint": "outputs/phase5c_qse_relativeguard/checkpoints/step_final",
+  "uvfc_dir": "outputs/phase26/vfc",
+  "flat_model": "/hpc2hdd/home/fye374/models/Qwen2.5-VL-7B-Instruct",
+  "instruction": "Generate a question about this image.",
+  "seed": 42, "group_size": 4, "groups_per_step": 8, "max_steps": 300, "inner_epochs": 2,
+  "temperature": 0.8, "top_p": 0.9, "max_new_tokens": 32, "generation_batch_size": 8, "flat_batch_size": 32,
+  "lr": 5e-7, "betas": [0.9, 0.999], "clip_epsilon": 0.2, "beta_kl": 0.02, "max_grad_norm": 1.0,
+  "checkpoint_steps": [0, 50, 100, 150, 200, 250, 300],
+  "train_manifest": "outputs/phase4b_online_uvfc/data/train_10000.jsonl",
+  "calibration_n": 128,
+  "output_dir": "reports/g3_support_preserving_rl_20261005T105701Z/pilot"
+}

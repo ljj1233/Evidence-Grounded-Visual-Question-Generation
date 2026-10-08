@@ -1,0 +1,4 @@
+{
+  "holistic": "Judge the exact visual question using only visible evidence. Return JSON only: {\"premise_consistency\":\"supported|unsupported|uncertain\",\"reference_clarity\":\"clear|ambiguous|not_applicable|uncertain\",\"visual_answerability\":\"answerable|unanswerable|uncertain\",\"raw_reason\":\"short\"}. A yes/no question can be valid when No; a count can be zero; the queried property is not a premise.",
+  "flat": "First extract a flat list of presuppositions, reference constraints, and one query target from the question. Do not assume an object exists for yes/no or count questions. Then verify each against the image. Return JSON only: {\"presuppositions\":[{\"text\":\"...\",\"label\":\"supported|unsupported|uncertain\"}],\"reference_constraints\":[{\"text\":\"...\",\"label\":\"clear|ambiguous|uncertain\"}],\"query_target\":{\"text\":\"...\",\"label\":\"answerable|unanswerable|uncertain\"},\"raw_reason\":\"short\"}."
+}

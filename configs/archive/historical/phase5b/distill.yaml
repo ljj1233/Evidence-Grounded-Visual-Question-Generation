@@ -1,0 +1,48 @@
+# Phase 5B-D — direct-policy distillation of Explore-4 + SupportFirst.
+# Recipe is the original VQG SFT recipe (configs/new_vqg/sft.yaml) with
+# num_train_epochs=1; only the init adapter (Final SFT) and the question-only
+# pseudo-target change.
+stage: sft
+task: image_to_question
+base_model: /hpc2hdd/home/fye374/models/Qwen3-VL-8B-Instruct
+train_data: outputs/phase5b_teacher_explore_ground/student_train_10000.jsonl
+output_dir: outputs/phase5b_explore_ground_distill
+sft_checkpoint: outputs/checkpoints/qwen3vl8b_lora_r16_vqav2_50k/checkpoint-final
+seed: 42
+max_seq_length: 512
+instruction: "Generate a question about this image."
+
+image:
+  min_pixels: 4096
+  max_pixels: 147456
+
+precision:
+  bf16: true
+
+lora:
+  enabled: true
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+training:
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8
+  effective_batch_size: 16
+  num_train_epochs: 1
+  learning_rate: 2.0e-4
+  warmup_ratio: 0.03
+  logging_steps: 10
+  save_steps: 1000000
+  save_total_limit: 1
+  dataloader_num_workers: 4
+  gradient_checkpointing: true
+  attn_implementation: flash_attention_2

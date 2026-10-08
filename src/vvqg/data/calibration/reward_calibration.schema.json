@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vvqg/data/calibration/reward_calibration.schema.json",
+  "title": "VVQG reward-calibration record",
+  "description": "Human judgement + machine scores for an (image, question) pair. No answer or reference question is part of the policy input.",
+  "type": "object",
+  "required": ["image", "image_id", "question", "source", "human", "scores"],
+  "additionalProperties": false,
+  "properties": {
+    "image": {"type": "string", "minLength": 1},
+    "image_id": {"type": ["string", "integer"]},
+    "question": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "minLength": 1},
+    "human": {
+      "type": "object",
+      "required": ["visual_dependence", "visual_support"],
+      "additionalProperties": false,
+      "properties": {
+        "visual_dependence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "visual_support": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    },
+    "scores": {"type": "object"}
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "groups": 2000,
+  "mixed_groups": 1440,
+  "all_admissible_groups": 506,
+  "all_violation_groups": 54,
+  "admissible": 5203,
+  "confirmed_violation": 2657,
+  "failed": 140
+}\n

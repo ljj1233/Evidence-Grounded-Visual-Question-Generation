@@ -1,0 +1,221 @@
+docs/
+├── archive/
+│   ├── diagnostics/
+│   ├── evaluation/
+│   ├── historical/
+│   ├── HISTORICAL_EXPERIMENT_INDEX.md
+│   ├── HISTORICAL_PHASE_MAP.md
+│   └── SCRIPT_CLASSIFICATION.tsv
+├── data/
+│   ├── CROSS_DATASET_DATA_CONTRACT.md
+│   ├── DATA_PROTOCOL.md
+│   ├── GQA_NATIVE_DATA_CONTRACT.md
+│   ├── REWARD_CALIBRATION_CORPUS_REPORT.md
+│   ├── SFT_DATA_LEAKAGE_AUDIT.md
+│   └── SFT_LEAKAGE_AUDIT_V2.md
+├── evaluation/
+│   ├── EVALUATION_ACTIVE_PROTOCOL.md
+│   ├── EVALUATION_METRIC_CONTRACT_V1.md
+│   ├── EVALUATION_PROTOCOL_V1.md
+│   ├── SAME_BACKBONE_BASELINES_SPEC.md
+│   └── VISUAL_SUPPORT_CALIBRATION_V1.md
+├── method/
+│   ├── CURRENT_METHOD_CODEMAP.md
+│   ├── CURRENT_METHOD_TECHNICAL_SPEC.md
+│   ├── GQA_NATIVE_FULL_OURS_METHOD_CONTRACT.md
+│   ├── PHASE5C_EVIDENCE_CONSTRAINED_QSE.md
+│   ├── UVFC_IMPLEMENTATION_FREEZE.md
+│   └── VFC_FAC_ADAPTATION_SPEC.md
+├── reproducibility/
+│   ├── audits/
+│   ├── environments/
+│   ├── vllm/
+│   ├── EVALUATION_IMPLEMENTATION_AUDIT_V1.md
+│   ├── EXTERNAL_ARTIFACTS.md
+│   ├── EXTERNAL_REFERENCE_INDEX.md
+│   ├── FINAL_SFT_BASELINE.md
+│   ├── GIT_READINESS_FINAL.md
+│   ├── HISTORICAL_OUTPUT_INDEX.md
+│   ├── MODEL_REGISTRY.md
+│   ├── OUTPUT_REGISTRY.md
+│   ├── PORTABILITY_AUDIT.md
+│   ├── README.md
+│   ├── REPRODUCIBILITY.md
+│   ├── SAME_BACKBONE_BASELINES_RUNTIME.md
+│   ├── SEEQ_BASELINE_FINAL_AUDIT.md
+│   ├── SEEQ_FAITHFULNESS_AUDIT.md
+│   ├── SFT_TRAINING_CONFIG.md
+│   ├── SNAPSHOT_AUDIT.md
+│   ├── SNAPSHOT_PRUNING_REPORT.md
+│   └── TEST_FAILURE_TRIAGE.tsv
+└── README.md
+
+reports/
+├── ablations/
+│   └── README.md
+├── analysis/
+│   ├── documentation_cleanup_20261008/
+│   ├── dpo_refinement_selection/
+│   ├── judge_robustness/
+│   ├── offline_dpo_k4_diversity_20261008/
+│   ├── offline_dpo_parity_audit_20261008/
+│   ├── offline_dpo_same_type_pair_audit_20261008/
+│   ├── published_baseline_intervention_20261004T032525Z/
+│   └── README.md
+├── archive/
+│   ├── diagnostics/
+│   ├── dpo/
+│   ├── historical/
+│   ├── CANONICAL_REPORT_INDEX.md
+│   └── README.md
+├── baselines/
+│   ├── development/
+│   ├── FINAL_PUBLISHED_BASELINES_TABLE.md
+│   └── README.md
+├── cross_dataset/
+│   ├── gqa/
+│   └── README.md
+├── main/
+│   ├── final_evaluation_20261008/
+│   └── offline_dpo_freeze_20261008/
+└── README.md
+
+scripts/
+├── archive/
+│   ├── diagnostics/
+│   ├── README.md
+│   └── overnight_same_type_audit.py
+├── new_vqg/
+│   └── check_dataset.py
+├── vvqg/
+│   ├── analyze_full_ours_seeq_intervention.py
+│   ├── audit_seeq_baseline.py
+│   ├── audit_seeq_baseline_report.py
+│   ├── build_seeq_faithful_artifacts.py
+│   ├── collect_all_metrics.py
+│   ├── dpo_pilot_pairs_from_pool.py
+│   ├── dpo_v1_formal_contract.py
+│   ├── dpo_v1_formal_dev.py
+│   ├── dpo_v1_formal_pairs.py
+│   ├── dpo_v1_formal_score.py
+│   ├── dpo_v1_formal_train.py
+│   ├── ec_aligned_direct4_generate.py
+│   ├── evaluate.py
+│   ├── evaluate_seeq_diversity.py
+│   ├── evaluate_visual_centric.py
+│   ├── evaluate_visual_support.py
+│   ├── freeze_data_contract.py
+│   ├── freeze_gqa_native.py
+│   ├── full_ours_intervention_analyze.py
+│   ├── full_ours_intervention_generate.py
+│   ├── full_ours_intervention_tables.py
+│   ├── generate.py
+│   ├── generate_b2.py
+│   ├── generate_b3.py
+│   ├── gqa_b2b3_10k_chain.sh
+│   ├── gqa_b2b3_chain.sh
+│   ├── gqa_base_pipeline.sh
+│   ├── gqa_baseline_table.py
+│   ├── gqa_baselines_chain.sh
+│   ├── gqa_build_shared_10k.py
+│   ├── gqa_evaluate.py
+│   ├── gqa_full_ours_base_chain.sh
+│   ├── gqa_full_ours_chain.sh
+│   ├── gqa_full_ours_final_report.py
+│   ├── gqa_full_ours_guard.sh
+│   ├── gqa_make_seed_adapter.py
+│   ├── gqa_monitor.sh
+│   ├── gqa_native_seeq_chain.sh
+│   ├── gqa_prepare_b3_targets.py
+│   ├── overnight_analyze.py
+│   ├── overnight_build_dev256.py
+│   ├── overnight_flat.py
+│   ├── overnight_matched_negative.py
+│   ├── overnight_paired_stats.py
+│   ├── overnight_reference_sanity.py
+│   ├── phase23_report.py
+│   ├── phase26_compare.py
+│   ├── phase26_vfc.py
+│   ├── phase26c_audit.py
+│   ├── phase3a_flat_rollouts.py
+│   ├── phase4a2_evaluate.py
+│   ├── phase4a3_retry_seeq.sh
+│   ├── phase4a_select.py
+│   ├── phase4b_evaluate.py
+│   ├── phase4b_prepare.py
+│   ├── phase4b_verify_uvfc.py
+│   ├── phase5a_evaluate.py
+│   ├── phase5a_generate_checkpoints.py
+│   ├── phase5b_direct4_generate.py
+│   ├── phase5b_score_candidates.py
+│   ├── phase5b_select.py
+│   ├── phase5c_build_targets.py
+│   ├── phase5c_distill.py
+│   ├── phase5c_select.py
+│   ├── preflight_seeq_faithful.py
+│   ├── prepare_b2_cache.py
+│   ├── prepare_b2_embeddings.py
+│   ├── prepare_b3_detector_cache.py
+│   ├── prepare_b3_targets.py
+│   ├── prepare_same_backbone_manifests.py
+│   ├── prepare_seeq_round.py
+│   ├── prepare_sft_data.py
+│   ├── published_vqg_compare.py
+│   ├── published_vqg_inference.py
+│   ├── repo_cleanup_execute.py
+│   ├── run_seeq.py
+│   ├── run_seeq_faithful.py
+│   ├── seeq_faithful_chain.sh
+│   ├── seeq_faithful_compare.py
+│   ├── seeq_faithful_eval.sh
+│   ├── seeq_faithful_tables.py
+│   ├── serve_vllm_baseline.py
+│   ├── smoke_sft.py
+│   ├── support_delta_analyze.py
+│   ├── support_delta_anchors.py
+│   ├── support_delta_data.py
+│   ├── support_delta_dev1000_audit.py
+│   ├── support_delta_dev1000_generate.py
+│   ├── support_delta_dev1000_merge.py
+│   ├── support_delta_dev1000_stats.py
+│   ├── support_delta_final_holdout_audit.py
+│   ├── support_delta_final_holdout_stats.py
+│   ├── support_delta_pilot_local.py
+│   ├── support_delta_report.py
+│   ├── support_delta_review.py
+│   ├── support_delta_sanity.py
+│   ├── support_delta_train.py
+│   ├── train_b2.py
+│   ├── train_b3.py
+│   ├── train_online_uvfc_relative.py
+│   ├── train_seeq.py
+│   ├── train_seeq_faithful.py
+│   ├── validate_sft_dataset.py
+│   ├── vc_support_verify.py
+│   ├── verify_gqa_full_ours.py
+│   └── write_baseline_readiness.py
+├── README.md
+└── build_image_split_manifest.py
+
+configs/
+├── archive/
+│   ├── historical/
+│   └── README.md
+├── baselines/
+│   ├── contrastive_grounding.yaml
+│   ├── implicit_guided.yaml
+│   └── seeq_style.yaml
+├── gqa_native/
+│   ├── g2.yaml
+│   ├── g2_base.yaml
+│   ├── sft.yaml
+│   └── sft_smoke.yaml
+├── new_vqg/
+│   ├── grpo.yaml
+│   ├── sft.yaml
+│   └── visual_support_prompts.json
+├── phase3a/
+│   ├── p1_uvfc_fixed_group.yaml
+│   └── p2_uvfc_violation_fixed_group.yaml
+└── phase5c/
+    └── qse_relativeguard.yaml

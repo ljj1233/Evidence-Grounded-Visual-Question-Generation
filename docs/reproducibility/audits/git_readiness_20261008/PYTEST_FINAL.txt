@@ -1,0 +1,54 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /hpc2hdd/home/fye374/LJJ/look-before-you-ask
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 162 items
+
+tests/test_b2_contrastive.py ...                                         [  1%]
+tests/test_b3_implicit_guided.py ......                                  [  5%]
+tests/test_cer_signal_audit.py ....                                      [  8%]
+tests/test_clean_repo.py .......                                         [ 12%]
+tests/test_corpus_bootstrap.py ..                                        [ 13%]
+tests/test_evaluation_metrics.py .........                               [ 19%]
+tests/test_evidence_constrained.py ...........s                          [ 26%]
+tests/test_fixed_group_relative.py .............s                        [ 35%]
+tests/test_generation.py ...                                             [ 37%]
+tests/test_guard_patience.py ...                                         [ 38%]
+tests/test_image_split_integrity.py sssss......                          [ 45%]
+tests/test_judge_roles.py ..........                                     [ 51%]
+tests/test_phase4a4_audit.py sss...s                                     [ 56%]
+tests/test_repo_cleanup.py ....                                          [ 58%]
+tests/test_same_backbone_baselines.py .....                              [ 61%]
+tests/test_seeq_faithful.py ........s..                                  [ 68%]
+tests/test_seeq_pipeline.py ........                                     [ 73%]
+tests/test_slot_assignment_v2.py ..........                              [ 79%]
+tests/test_support_delta.py ......                                       [ 83%]
+tests/test_trainer_base.py ..                                            [ 84%]
+tests/test_vc_qse.py ......                                              [ 88%]
+tests/test_visual_information_contribution.py ...                        [ 90%]
+tests/test_visual_information_scorer.py ..                               [ 91%]
+tests/test_visual_support_calibration.py .......                         [ 95%]
+tests/test_vqg_loader_contract.py .......                                [100%]
+
+=============================== warnings summary ===============================
+tests/test_trainer_base.py::test_plain_sft_forward_loss_regression_matches_shared_hook
+  /hpc2hdd/home/fye374/LJJ/look-before-you-ask/tests/test_trainer_base.py:37: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+    assert abs(float(got - expected)) < 1e-6
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_evidence_constrained.py:109: requires external artifact: outputs/phase4b_online_uvfc/data/train_10000.jsonl, outputs/same_backbone_baselines/manifests/development1000_images.jsonl
+SKIPPED [1] tests/test_fixed_group_relative.py:203: requires external artifact: outputs/phase3a_fixed_group_relative/monitor128.jsonl
+SKIPPED [1] tests/test_image_split_integrity.py:39: requires external artifact: data/train_resources/image_split_manifest.json
+SKIPPED [1] tests/test_image_split_integrity.py:64: requires external artifact: data/train_resources/image_split_manifest.json
+SKIPPED [1] tests/test_image_split_integrity.py:47: requires external artifact: data/train_resources/image_split_manifest.json
+SKIPPED [1] tests/test_image_split_integrity.py:33: requires external artifact: data/train_resources/image_split_manifest.json
+SKIPPED [1] tests/test_image_split_integrity.py:57: requires external artifact: data/train_resources/image_split_manifest.json
+SKIPPED [1] tests/test_phase4a4_audit.py:30: requires external artifact: outputs/phase3a_grpo_pilot/preflight/rollouts_flat.jsonl, outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl, outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl
+SKIPPED [1] tests/test_phase4a4_audit.py:54: requires external artifact: outputs/phase4a2_rft_replay/data/human_replay_2000.jsonl, outputs/phase4a2_rft_replay/data/mixed_uvfc_violation_replay_1to1.jsonl, outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl
+SKIPPED [1] tests/test_phase4a4_audit.py:71: requires external artifact: outputs/phase4a2_rft_replay/generation/sampled4x1000.jsonl, outputs/phase4a3_rft_replay_multiseed/seed43/generation/sampled4x1000.jsonl, outputs/same_backbone_baselines/manifests/development1000_images.jsonl
+SKIPPED [1] tests/test_phase4a4_audit.py:175: requires external artifact: outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl, outputs/same_backbone_baselines/manifests/development1000_images.jsonl
+SKIPPED [1] tests/test_seeq_faithful.py:89: requires external artifact: outputs/same_backbone_baselines/manifests/development1000_images.jsonl, outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl
+============ 150 passed, 12 skipped, 1 warning in 62.97s (0:01:02) =============

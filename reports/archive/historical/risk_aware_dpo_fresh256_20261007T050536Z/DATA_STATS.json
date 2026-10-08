@@ -1,0 +1,42 @@
+{
+  "pool_images": 1000,
+  "train_images": 578,
+  "old_pilot_images": 128,
+  "fresh_pilot_images": 256,
+  "pairs_train": 394,
+  "class_definitions": {
+    "S": "supported & support_floor>=0.75 & no uncertain/unsupported requirement",
+    "U": "overall uncertain",
+    "X": "unsupported or CONFIRMED_VIOLATION"
+  },
+  "pair_weights": {
+    "S>U": 1.0,
+    "U>X": 1.5,
+    "S>X": 0.25
+  },
+  "train": {
+    "S>X": 313,
+    "S>U": 38,
+    "U>X": 43
+  },
+  "all": {
+    "S>X": 391,
+    "S>U": 78,
+    "U>X": 62
+  },
+  "class_counts": {
+    "train": {
+      "S": 578,
+      "U": 67,
+      "X": 578
+    },
+    "all": {
+      "S": 956,
+      "U": 147,
+      "X": 750
+    }
+  },
+  "filters": {
+    "uvfc_below_median_minus_0.10": 404
+  }
+}

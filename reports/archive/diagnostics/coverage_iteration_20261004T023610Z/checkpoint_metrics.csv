@@ -1,0 +1,4 @@
+status,note,arm,step,coverage,supported,unsupported,search,context,spatial,duplicate_rate,output_hash
+not_run,Phase-1 gate failed; no G2 training performed,D1-hard-A2,,,,,,,,,
+not_run,Phase-1 gate failed; no G2 training performed,D1-soft-A2,,,,,,,,,
+not_run,Phase-1 gate failed; no G2 training performed,G2-from-soft-A2,,,,,,,,,

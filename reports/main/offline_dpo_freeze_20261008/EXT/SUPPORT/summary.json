@@ -1,0 +1,204 @@
+{
+  "model": "gpt-4o",
+  "prompt": "You are a strict image-grounded visual-support annotator. Return JSON only with keys premise_consistency, reference_clarity, visual_answerability, failure_type, reason. Labels: premise_consistency=supported|unsupported|uncertain; reference_clarity=clear|ambiguous|not_applicable|uncertain; visual_answerability=answerable|unanswerable|uncertain; failure_type=none|missing_entity|wrong_attribute|wrong_relation|ambiguous_reference|unobservable_target|external_knowledge_required|other|uncertain. A yes/no question may be valid when the answer is No. A count question may be valid when the answer is zero. A queried property is not automatically a premise. External or non-visible information is visually unanswerable. When evidence is uncertain, use uncertain rather than guessing. Judge only visible image evidence.",
+  "evaluator_version": "visual-support-phase23-v1.0",
+  "temperature": 0,
+  "concurrency": 16,
+  "runtime": {
+    "api_requests": 335,
+    "cache_hits": 1153,
+    "wall_seconds": 73.33071819320321,
+    "requests_per_second": 4.568344729931338,
+    "peak_rss_mb": 508.88671875
+  },
+  "inputs": {
+    "base": {
+      "path": "reports/offline_dpo_freeze_20261008/GEN/base_dev744.jsonl",
+      "sha256": "7db88846a81743fc779a2833fedcf05206e7146cb9d2d1564febd4edb2861bf5"
+    },
+    "dpo": {
+      "path": "reports/offline_dpo_freeze_20261008/GEN/dpo_dev744.jsonl",
+      "sha256": "ad69e307367c7c00b86a3628ef87f8bfd9c94f2366866ee12d3ead6839e9dddc"
+    }
+  },
+  "systems": {
+    "base": {
+      "requested": 744,
+      "valid": 744,
+      "api_failures": 0,
+      "parser_failures": 0,
+      "rate_denominator": "valid parsed labels",
+      "premise_consistency": {
+        "counts": {
+          "supported": 632,
+          "unsupported": 2,
+          "uncertain": 110
+        },
+        "rates": {
+          "supported": 0.8494623655913979,
+          "unsupported": 0.002688172043010753,
+          "uncertain": 0.1478494623655914
+        }
+      },
+      "reference_clarity": {
+        "counts": {
+          "clear": 739,
+          "ambiguous": 5,
+          "not_applicable": 0,
+          "uncertain": 0
+        },
+        "rates": {
+          "clear": 0.9932795698924731,
+          "ambiguous": 0.006720430107526882,
+          "not_applicable": 0.0,
+          "uncertain": 0.0
+        }
+      },
+      "visual_answerability": {
+        "counts": {
+          "answerable": 654,
+          "unanswerable": 24,
+          "uncertain": 66
+        },
+        "rates": {
+          "answerable": 0.8790322580645161,
+          "unanswerable": 0.03225806451612903,
+          "uncertain": 0.08870967741935484
+        }
+      },
+      "failure_type": {
+        "counts": {
+          "none": 653,
+          "missing_entity": 0,
+          "wrong_attribute": 2,
+          "wrong_relation": 0,
+          "ambiguous_reference": 5,
+          "unobservable_target": 63,
+          "external_knowledge_required": 2,
+          "other": 0,
+          "uncertain": 19
+        },
+        "rates": {
+          "none": 0.8776881720430108,
+          "missing_entity": 0.0,
+          "wrong_attribute": 0.002688172043010753,
+          "wrong_relation": 0.0,
+          "ambiguous_reference": 0.006720430107526882,
+          "unobservable_target": 0.0846774193548387,
+          "external_knowledge_required": 0.002688172043010753,
+          "other": 0.0,
+          "uncertain": 0.025537634408602152
+        }
+      },
+      "overall_visual_support": {
+        "counts": {
+          "supported": 630,
+          "unsupported": 29,
+          "uncertain": 85
+        },
+        "rates": {
+          "supported": 0.8467741935483871,
+          "unsupported": 0.038978494623655914,
+          "uncertain": 0.11424731182795698
+        }
+      },
+      "six_failure_type_rates": {
+        "missing_entity": 0.0,
+        "wrong_attribute": 0.002688172043010753,
+        "wrong_relation": 0.0,
+        "ambiguous_reference": 0.006720430107526882,
+        "unobservable_target": 0.0846774193548387,
+        "external_knowledge_required": 0.002688172043010753
+      }
+    },
+    "dpo": {
+      "requested": 744,
+      "valid": 744,
+      "api_failures": 0,
+      "parser_failures": 0,
+      "rate_denominator": "valid parsed labels",
+      "premise_consistency": {
+        "counts": {
+          "supported": 695,
+          "unsupported": 1,
+          "uncertain": 48
+        },
+        "rates": {
+          "supported": 0.9341397849462365,
+          "unsupported": 0.0013440860215053765,
+          "uncertain": 0.06451612903225806
+        }
+      },
+      "reference_clarity": {
+        "counts": {
+          "clear": 739,
+          "ambiguous": 5,
+          "not_applicable": 0,
+          "uncertain": 0
+        },
+        "rates": {
+          "clear": 0.9932795698924731,
+          "ambiguous": 0.006720430107526882,
+          "not_applicable": 0.0,
+          "uncertain": 0.0
+        }
+      },
+      "visual_answerability": {
+        "counts": {
+          "answerable": 715,
+          "unanswerable": 15,
+          "uncertain": 14
+        },
+        "rates": {
+          "answerable": 0.9610215053763441,
+          "unanswerable": 0.020161290322580645,
+          "uncertain": 0.01881720430107527
+        }
+      },
+      "failure_type": {
+        "counts": {
+          "none": 715,
+          "missing_entity": 0,
+          "wrong_attribute": 0,
+          "wrong_relation": 0,
+          "ambiguous_reference": 5,
+          "unobservable_target": 18,
+          "external_knowledge_required": 1,
+          "other": 0,
+          "uncertain": 5
+        },
+        "rates": {
+          "none": 0.9610215053763441,
+          "missing_entity": 0.0,
+          "wrong_attribute": 0.0,
+          "wrong_relation": 0.0,
+          "ambiguous_reference": 0.006720430107526882,
+          "unobservable_target": 0.024193548387096774,
+          "external_knowledge_required": 0.0013440860215053765,
+          "other": 0.0,
+          "uncertain": 0.006720430107526882
+        }
+      },
+      "overall_visual_support": {
+        "counts": {
+          "supported": 693,
+          "unsupported": 19,
+          "uncertain": 32
+        },
+        "rates": {
+          "supported": 0.9314516129032258,
+          "unsupported": 0.025537634408602152,
+          "uncertain": 0.043010752688172046
+        }
+      },
+      "six_failure_type_rates": {
+        "missing_entity": 0.0,
+        "wrong_attribute": 0.0,
+        "wrong_relation": 0.0,
+        "ambiguous_reference": 0.006720430107526882,
+        "unobservable_target": 0.024193548387096774,
+        "external_knowledge_required": 0.0013440860215053765
+      }
+    }
+  }
+}

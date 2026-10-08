@@ -1,0 +1,11 @@
+# FINAL INTERNAL TABLE — final_holdout (n=2000; SeeQ valid n=1995)
+
+Internal methods only (not published baselines). Values are absolute means.
+
+| method | Supported ↑ | Unsupported ↓ | Coverage ↑ | Search ↑ | Context ↑ | Spatial ↑ | BLEU-4 ↑ | CIDEr ↑ | Q-BLEU4-v ↑ |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Full Ours | 0.8580 | 0.0445 | 0.3850 | 0.3684 | 0.2739 | 0.0637 | 0.2645 | 0.4215 | 0.2558 |
+| Full Ours + DPO | **0.9365** | **0.0195** | **0.4244** | **0.4166** | 0.2296 | 0.0586 | 0.2595 | **0.4262** | 0.2508 |
+
+GPT metrics: support n=2000 both systems. SeeQ metrics: n=1995 both systems (5 images
+failed deterministically, kept missing). Local reference metrics from VQAv2 val GT.

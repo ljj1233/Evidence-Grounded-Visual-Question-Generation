@@ -1,0 +1,50 @@
+{
+  "n": 2000,
+  "corpus_bleu4": 0.2594582910366613,
+  "corpus_qbleu4_variant": 0.2508111748890964,
+  "corpus_cider": 0.4261531929519718,
+  "distinct_2": 0.140027,
+  "normalized_excess_duplicate_rate": 0.5045,
+  "most_frequent": [
+    {
+      "question": "How many people are in the picture?",
+      "count": 109
+    },
+    {
+      "question": "How many giraffes are there?",
+      "count": 30
+    },
+    {
+      "question": "How many people are in the photo?",
+      "count": 27
+    },
+    {
+      "question": "How many elephants are there?",
+      "count": 25
+    },
+    {
+      "question": "How many animals are in the picture?",
+      "count": 25
+    },
+    {
+      "question": "What color is the man's shirt?",
+      "count": 21
+    },
+    {
+      "question": "What time does the clock say?",
+      "count": 19
+    },
+    {
+      "question": "How many animals are there?",
+      "count": 19
+    },
+    {
+      "question": "What color is the cat?",
+      "count": 17
+    },
+    {
+      "question": "How many horses are there?",
+      "count": 16
+    }
+  ]
+}

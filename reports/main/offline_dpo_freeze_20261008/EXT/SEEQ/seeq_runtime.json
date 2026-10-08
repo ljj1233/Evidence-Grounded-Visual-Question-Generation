@@ -1,0 +1,22 @@
+{
+  "schema": "seeq-single-question-v1",
+  "model": "gpt-5.6-luna",
+  "status": "VARIANT_DOCUMENTED",
+  "requested": 1117,
+  "cached": 782,
+  "new_requests": 335,
+  "ok": 1113,
+  "failed": 4,
+  "wall_seconds": 88.311,
+  "concurrency": 16,
+  "prompt_hash": "57a357e077e599248bc2212ca1e3d83b42c4ae5ab6448d6fbd26e824773fe133",
+  "failed_error_types": {
+    "HTTPStatusError": 4
+  },
+  "summary": {
+    "visual_search_difficulty": 0.37035040431266847,
+    "visual_evidence_coverage": 0.38957771787960466,
+    "visual_context_reasoning": 0.25858041329739445,
+    "visual_spatial_reasoning": 0.06720575022461815
+  }
+}

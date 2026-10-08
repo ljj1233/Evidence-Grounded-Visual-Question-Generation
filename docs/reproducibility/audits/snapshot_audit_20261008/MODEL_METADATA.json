@@ -1,0 +1,261 @@
+[
+  {
+    "model_name": "Final SFT",
+    "role": "Frozen mainline ancestor / teacher",
+    "checkpoint_path": "outputs/checkpoints/qwen3vl8b_lora_r16_vqav2_50k/checkpoint-final",
+    "global_step": 6250,
+    "status": "FINAL_MAIN",
+    "sha256": {
+      "adapter_model.safetensors": "5fb66c36a2255fb3a9011db198fd55a8be8b9cbb26eef611727a816bc7934e0e"
+    },
+    "paper_usage": "50k VQAv2 image\u2192question SFT; UVFC/teacher source; D1 initialization",
+    "section": "VQAv2 main lineage",
+    "step_source": "training_summary.json / CHECKPOINT.json / FREEZE_RECORD",
+    "size_bytes": 87369152,
+    "checkpoint_directory_bytes": 98810743
+  },
+  {
+    "model_name": "D1",
+    "role": "Frozen mainline ancestor / distillation",
+    "checkpoint_path": "outputs/phase5c_distill_single/checkpoint-final",
+    "global_step": 1250,
+    "status": "FINAL_MAIN",
+    "sha256": {
+      "adapter_model.safetensors": "0c8e51148b9f857d26d5bf811e7217461274b5de37fb49bd0b7265c174a280a7"
+    },
+    "paper_usage": "Single-positive QSE distillation; G2 initialization/reference",
+    "section": "VQAv2 main lineage",
+    "step_source": "training_summary.json / CHECKPOINT.json / FREEZE_RECORD",
+    "size_bytes": 174663096,
+    "checkpoint_directory_bytes": 186099422
+  },
+  {
+    "model_name": "Full Ours",
+    "role": "FINAL PAPER MAIN MODEL",
+    "checkpoint_path": "outputs/phase5c_qse_relativeguard/checkpoints/step_final",
+    "global_step": 256,
+    "status": "FINAL_MAIN",
+    "sha256": {
+      "adapter_model.safetensors": "52ee692ca08737058594fe408a7817419f53532395f9249b2f227b43b4d9a58d"
+    },
+    "paper_usage": "Primary VQAv2 method; frozen final-holdout evaluation",
+    "section": "VQAv2 main lineage",
+    "step_source": "training_summary.json / CHECKPOINT.json / FREEZE_RECORD",
+    "size_bytes": 174663096,
+    "checkpoint_directory_bytes": 535723496
+  },
+  {
+    "model_name": "Full Ours + DPO",
+    "role": "FINAL OPTIONAL DPO MODEL",
+    "checkpoint_path": "reports/offline_dpo_unified_refinement_20261008/dpo/checkpoints/step_00207",
+    "global_step": 207,
+    "status": "FINAL_OPTIONAL_REFINEMENT",
+    "sha256": {
+      "adapter_model.safetensors": "32384eea130274b29be1f1e8a9882faae56c0db274ce219882f07a8bd9c7f07e"
+    },
+    "paper_usage": "Optional post-training refinement; selected/frozen step207",
+    "section": "VQAv2 main lineage",
+    "step_source": "training_summary.json / CHECKPOINT.json / FREEZE_RECORD",
+    "size_bytes": 174663096,
+    "checkpoint_directory_bytes": 535723496
+  },
+  {
+    "model_name": "B2 ConVQG",
+    "role": "Same-backbone published-method comparison",
+    "checkpoint_path": "outputs/same_backbone_baselines/b2_contrastive/full_fast",
+    "global_step": 6250,
+    "status": "ACTIVE_BASELINE",
+    "sha256": {
+      "backbone/adapter_model.safetensors": "4c4f3ac2437a13723f2a9904093bdbf56bf62746a834ea6536dab97c5c2be443",
+      "contrastive_projection.pt": "85c4a550427fbb130cc211d0d36870fe55156ec5197a9d344de7f852871b098a"
+    },
+    "paper_usage": "VQAv2 development comparison; not a Full Ours ancestor",
+    "section": "VQAv2 comparison baselines",
+    "step_source": "outputs/same_backbone_baselines/b2_contrastive/full_fast/checkpoint-6250/trainer_state.json",
+    "size_bytes": 129324573,
+    "checkpoint_directory_bytes": 5227382035
+  },
+  {
+    "model_name": "B3 Guiding-VQG",
+    "role": "Same-backbone published-method comparison",
+    "checkpoint_path": "outputs/same_backbone_baselines/b3_implicit/full_fast",
+    "global_step": 6250,
+    "status": "ACTIVE_BASELINE",
+    "sha256": {
+      "backbone/adapter_model.safetensors": "4b9f4fbabf346270443a461daa2c6785c12eee64517c6466a401cf9a8582e04b",
+      "guided_head.pt": "797579d61281eaa7d3859bf8b657ff08d10e85cf30a4763ddba069ff81c54707"
+    },
+    "paper_usage": "VQAv2 development comparison; not a Full Ours ancestor",
+    "section": "VQAv2 comparison baselines",
+    "step_source": "outputs/same_backbone_baselines/b3_implicit/full_fast/checkpoint-6250/trainer_state.json",
+    "size_bytes": 457047048,
+    "checkpoint_directory_bytes": 18484472532
+  },
+  {
+    "model_name": "Faithful SeeQ M1",
+    "role": "Same-backbone baseline ancestor",
+    "checkpoint_path": "outputs/same_backbone_baselines/seeq_faithful/round1_m1/checkpoint-final",
+    "global_step": 10000,
+    "status": "ACTIVE_BASELINE",
+    "sha256": {
+      "adapter_model.safetensors": "d557d3f90d16bc3d2712c8bd63269dd6a77e30b68ffe3c2135eee435ed299aed"
+    },
+    "paper_usage": "Development1000 comparison; no frozen-protocol final-holdout predictions",
+    "section": "VQAv2 comparison baselines",
+    "step_source": "outputs/same_backbone_baselines/seeq_faithful/round1_m1/training_summary.json",
+    "size_bytes": 174663096,
+    "checkpoint_directory_bytes": 10902478926
+  },
+  {
+    "model_name": "Faithful SeeQ M2",
+    "role": "Same-backbone baseline final",
+    "checkpoint_path": "outputs/same_backbone_baselines/seeq_faithful/round2_m2/checkpoint-final",
+    "global_step": 6961,
+    "status": "ACTIVE_BASELINE",
+    "sha256": {
+      "adapter_model.safetensors": "63fe2a54d3b59a9edd32b4bd1d6a2c0bfde32cb8ea53e55c9227a0ffabf26321"
+    },
+    "paper_usage": "Development1000 comparison; no frozen-protocol final-holdout predictions",
+    "section": "VQAv2 comparison baselines",
+    "step_source": "outputs/same_backbone_baselines/seeq_faithful/round2_m2/training_summary.json",
+    "size_bytes": 174663096,
+    "checkpoint_directory_bytes": 7687281810
+  },
+  {
+    "model_name": "LOVA3 GenQA",
+    "role": "Released published checkpoint",
+    "checkpoint_path": "/hpc2hdd/home/fye374/models/LOVA3-llava-v1.5-7b",
+    "global_step": "NOT_RECORDED (released pretrained model)",
+    "status": "ACTIVE_BASELINE",
+    "sha256": "WEIGHT_SHA256_NOT_RECORDED",
+    "paper_usage": "Inference-only VQAv2/GQA development comparison; not VQAv2 ancestry",
+    "section": "Released published baselines",
+    "step_source": "outputs/published_vqg_baselines/download_manifest.json",
+    "size_bytes": 14128123015,
+    "checkpoint_directory_bytes": 14128123015,
+    "config_sha256": "94a7b0cb34e74fff78fb2a25a3290fe29e73b34d0fe62ab065e3d18feca816f1",
+    "revision": "0a7c184c5d37112f038d3ebb3c612036fa6d7991"
+  },
+  {
+    "model_name": "Genixer-L Common-VQA",
+    "role": "Released published checkpoint",
+    "checkpoint_path": "/hpc2hdd/home/fye374/models/Genixer-llava-v1.5-7b",
+    "global_step": "NOT_RECORDED (released pretrained model)",
+    "status": "ACTIVE_BASELINE",
+    "sha256": "WEIGHT_SHA256_NOT_RECORDED",
+    "paper_usage": "Inference-only VQAv2/GQA development comparison; not VQAv2 ancestry",
+    "section": "Released published baselines",
+    "step_source": "outputs/published_vqg_baselines/download_manifest.json",
+    "size_bytes": 14127620952,
+    "checkpoint_directory_bytes": 14127620952,
+    "config_sha256": "d0e6a66c6425ccef52e85b2bb7ecc243eea35db6115476ad8f6ec215e1fb3323",
+    "revision": "9401b250a704a0806618d508664f24d69057dda4"
+  },
+  {
+    "model_name": "GQA SFT",
+    "role": "ACTIVE COMPARISON / CROSS-DATASET",
+    "checkpoint_path": "outputs/gqa_native/full_ours/sft/checkpoint-final",
+    "global_step": 6250,
+    "status": "ACTIVE_CROSS_DATASET",
+    "sha256": {
+      "adapter_model.safetensors": "8c3cf2d2359efda3723ff041c87d089c7c672548de891fa3e15b2bb236c1d3f4"
+    },
+    "paper_usage": "Separate GQA SFT direction; not the base-init GQA G2 ancestor",
+    "section": "GQA-native models",
+    "step_source": "training_summary.json / CHECKPOINT.json",
+    "size_bytes": 87369152,
+    "checkpoint_directory_bytes": 98808924
+  },
+  {
+    "model_name": "GQA base-init D1",
+    "role": "ACTIVE COMPARISON / CROSS-DATASET",
+    "checkpoint_path": "outputs/gqa_native/full_ours_base/distill_d1/checkpoint-final",
+    "global_step": 1250,
+    "status": "ACTIVE_CROSS_DATASET",
+    "sha256": {
+      "adapter_model.safetensors": "17c66b429aed33655e76e280d79bb564dac7b79d607e8e14c73f8897f4a14b63"
+    },
+    "paper_usage": "Current GQA base-init G2 initialization/reference",
+    "section": "GQA-native models",
+    "step_source": "training_summary.json / CHECKPOINT.json",
+    "size_bytes": 174663096,
+    "checkpoint_directory_bytes": 186099422
+  },
+  {
+    "model_name": "GQA Full Ours (base-init)",
+    "role": "ACTIVE COMPARISON / CROSS-DATASET",
+    "checkpoint_path": "outputs/gqa_native/full_ours_base/g2/checkpoints/step_final",
+    "global_step": 1000,
+    "status": "ACTIVE_CROSS_DATASET",
+    "sha256": {
+      "adapter_model.safetensors": "5a0c720f07c3eb33ea668add63c5e39423ebf2bffeae12d15af7a1ff9c2777a7"
+    },
+    "paper_usage": "Current GQA final comparison row; no VQAv2 learned weights reused",
+    "section": "GQA-native models",
+    "step_source": "training_summary.json / CHECKPOINT.json",
+    "size_bytes": 174663096,
+    "checkpoint_directory_bytes": 535723497
+  },
+  {
+    "model_name": "GQA B2 ConVQG (10k)",
+    "role": "Current GQA final comparison baseline",
+    "checkpoint_path": "outputs/gqa_native/baselines_10k/b2_contrastive/full_fast",
+    "global_step": 1250,
+    "status": "ACTIVE_BASELINE",
+    "sha256": {
+      "backbone/adapter_model.safetensors": "fe8f984217b98b856f752bd7188dc3e4a1de8ee303de257b2d1343392b786b44",
+      "contrastive_projection.pt": "3c30c51e6ed3482ac65caaceb9fbebac69e3d07b2057f5f6324c9b3de8e3d0ee"
+    },
+    "paper_usage": "Chosen by gqa_full_ours_final_report.py; 10k method-training comparison",
+    "section": "GQA comparison baselines",
+    "step_source": "outputs/gqa_native/baselines_10k/b2_contrastive/full_fast/checkpoint-1250/trainer_state.json",
+    "size_bytes": 129324573,
+    "checkpoint_directory_bytes": 1297143852
+  },
+  {
+    "model_name": "GQA B3 Guiding-VQG (10k)",
+    "role": "Current GQA final comparison baseline",
+    "checkpoint_path": "outputs/gqa_native/baselines_10k/b3_implicit/full_fast",
+    "global_step": 1250,
+    "status": "ACTIVE_BASELINE",
+    "sha256": {
+      "backbone/adapter_model.safetensors": "26163110bd2505c99f030510c69184fe1912aab3c8e4164cbb87d0331036b3e9",
+      "guided_head.pt": "255ff18ffa8b6b212c60705fd51df11e03b2626216dd4f5201ea629b9cd567c1"
+    },
+    "paper_usage": "Chosen by gqa_full_ours_final_report.py; 10k method-training comparison",
+    "section": "GQA comparison baselines",
+    "step_source": "outputs/gqa_native/baselines_10k/b3_implicit/full_fast/checkpoint-1250/trainer_state.json",
+    "size_bytes": 457047048,
+    "checkpoint_directory_bytes": 4619371906
+  },
+  {
+    "model_name": "GQA SeeQ M1",
+    "role": "GQA baseline ancestor",
+    "checkpoint_path": "outputs/gqa_native/published_baselines/seeq/round1_m1/checkpoint-final",
+    "global_step": 1392,
+    "status": "ACTIVE_BASELINE",
+    "sha256": {
+      "adapter_model.safetensors": "d458a8d3b9466d89e9907153cd9a59b814e41f241a4ff976db229172ed91e869"
+    },
+    "paper_usage": "GQA final comparison uses M2; M1 retained as its ancestor",
+    "section": "GQA comparison baselines",
+    "step_source": "outputs/gqa_native/published_baselines/seeq/round1_m1/training_summary.json",
+    "size_bytes": 174663096,
+    "checkpoint_directory_bytes": 1793342910
+  },
+  {
+    "model_name": "GQA SeeQ M2",
+    "role": "GQA baseline final",
+    "checkpoint_path": "outputs/gqa_native/published_baselines/seeq/round2_m2/checkpoint-final",
+    "global_step": 1427,
+    "status": "ACTIVE_BASELINE",
+    "sha256": {
+      "adapter_model.safetensors": "4ab15ba8306330b3b859ceb24096fe6c3d2f38da91328716d925342e782bc079"
+    },
+    "paper_usage": "GQA final comparison uses M2; M1 retained as its ancestor",
+    "section": "GQA comparison baselines",
+    "step_source": "outputs/gqa_native/published_baselines/seeq/round2_m2/training_summary.json",
+    "size_bytes": 174663096,
+    "checkpoint_directory_bytes": 1793343493
+  }
+]

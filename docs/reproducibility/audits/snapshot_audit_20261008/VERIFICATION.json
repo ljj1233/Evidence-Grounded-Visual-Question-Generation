@@ -1,0 +1,142 @@
+{
+  "copied_entries_verified": 714,
+  "original_retained_files_unchanged": 44135,
+  "original_gitignore_unchanged": true,
+  "original_code_and_records_byte_identical": true,
+  "source_writes_this_stage": [
+    "CURRENT_PROJECT.md",
+    "MODEL_REGISTRY.md"
+  ],
+  "git_actions": "NONE",
+  "model_binaries": [],
+  "raw_data": [],
+  "venv": [],
+  "secret_candidates": [
+    {
+      "path": "tests/test_phase4a4_audit.py",
+      "line": 105,
+      "kind": "CREDENTIAL_LITERAL",
+      "review": "REVIEWED_TEST_PLACEHOLDER: literal in isolated monkeypatch/env fixture; no provider-token shape; value withheld"
+    },
+    {
+      "path": "tests/test_judge_roles.py",
+      "line": 17,
+      "kind": "CREDENTIAL_LITERAL",
+      "review": "REVIEWED_TEST_PLACEHOLDER: literal in isolated monkeypatch/env fixture; no provider-token shape; value withheld"
+    },
+    {
+      "path": "tests/test_judge_roles.py",
+      "line": 23,
+      "kind": "CREDENTIAL_LITERAL",
+      "review": "REVIEWED_TEST_PLACEHOLDER: literal in isolated monkeypatch/env fixture; no provider-token shape; value withheld"
+    },
+    {
+      "path": "tests/test_judge_roles.py",
+      "line": 40,
+      "kind": "CREDENTIAL_LITERAL",
+      "review": "REVIEWED_TEST_PLACEHOLDER: literal in isolated monkeypatch/env fixture; no provider-token shape; value withheld"
+    },
+    {
+      "path": "tests/test_judge_roles.py",
+      "line": 49,
+      "kind": "CREDENTIAL_LITERAL",
+      "review": "REVIEWED_TEST_PLACEHOLDER: literal in isolated monkeypatch/env fixture; no provider-token shape; value withheld"
+    },
+    {
+      "path": "tests/test_judge_roles.py",
+      "line": 100,
+      "kind": "CREDENTIAL_LITERAL",
+      "review": "REVIEWED_TEST_PLACEHOLDER: literal in isolated monkeypatch/env fixture; no provider-token shape; value withheld"
+    }
+  ],
+  "private_hpc_path_occurrences": 364,
+  "private_hpc_path_files": 177,
+  "private_hpc_path_context_counts": {
+    "DOCUMENTATION_OR_PROVENANCE": 208,
+    "EXECUTABLE_OR_CONFIG": 156
+  },
+  "import_main_scripts": 15,
+  "import_main_modules": 10,
+  "import_eval_scripts": 22,
+  "import_module_origin": "snapshot; all imported vvqg/vqg modules asserted under snapshot",
+  "pytest": {
+    "passed": 138,
+    "failed": 17,
+    "warnings": 1,
+    "status": "FAIL_EXTERNAL_DATA_EXCLUDED",
+    "all_failures": "FileNotFoundError",
+    "full_collection": 155
+  },
+  "test_external_dependencies": [
+    {
+      "snapshot_missing_path": "data/train_resources/image_split_manifest.json",
+      "original_path": "/hpc2hdd/home/fye374/LJJ/qg/data/train_resources/image_split_manifest.json",
+      "size_bytes": 4650684,
+      "sha256": "NOT_RECORDED",
+      "required_for": "data-dependent pytest integrity checks",
+      "source_present": true
+    },
+    {
+      "snapshot_missing_path": "outputs/phase3a_fixed_group_relative/monitor128.jsonl",
+      "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/phase3a_fixed_group_relative/monitor128.jsonl",
+      "size_bytes": 20608,
+      "sha256": "NOT_RECORDED",
+      "required_for": "data-dependent pytest integrity checks",
+      "source_present": true
+    },
+    {
+      "snapshot_missing_path": "outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl",
+      "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl",
+      "size_bytes": 3333647,
+      "sha256": "NOT_RECORDED",
+      "required_for": "data-dependent pytest integrity checks",
+      "source_present": true
+    },
+    {
+      "snapshot_missing_path": "outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl",
+      "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl",
+      "size_bytes": 243955,
+      "sha256": "NOT_RECORDED",
+      "required_for": "data-dependent pytest integrity checks",
+      "source_present": true
+    },
+    {
+      "snapshot_missing_path": "outputs/phase4b_online_uvfc/data/train_10000.jsonl",
+      "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/phase4b_online_uvfc/data/train_10000.jsonl",
+      "size_bytes": 2029364,
+      "sha256": "NOT_RECORDED",
+      "required_for": "data-dependent pytest integrity checks",
+      "source_present": true
+    },
+    {
+      "snapshot_missing_path": "outputs/same_backbone_baselines/manifests/development1000_images.jsonl",
+      "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/same_backbone_baselines/manifests/development1000_images.jsonl",
+      "size_bytes": 111827,
+      "sha256": "NOT_RECORDED",
+      "required_for": "data-dependent pytest integrity checks",
+      "source_present": true
+    },
+    {
+      "snapshot_missing_path": "outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl",
+      "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl",
+      "size_bytes": 1063595,
+      "sha256": "NOT_RECORDED",
+      "required_for": "data-dependent pytest integrity checks",
+      "source_present": true
+    }
+  ],
+  "split_manifests": "ID/path metadata only; no image/question records",
+  "snapshot_path": "/hpc2hdd/home/fye374/LJJ/look-before-you-ask",
+  "recheck_20261008": {
+    "copied_entries_verified": 714,
+    "copy_mismatches": [],
+    "external_symlinks": [],
+    "provider_token_candidates": [],
+    "pytest": "138 passed, 17 failed, 1 warning; 125.74s; all failures FileNotFoundError for excluded artifacts",
+    "imports": "PASS: 15 main scripts, 10 core modules, 22 evaluation scripts",
+    "source_files_written": 0,
+    "source_files_deleted": 0,
+    "source_files_moved": 0,
+    "git_actions": "NONE"
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "base_tag": "base",
+  "bootstrap": {
+    "n": 10000,
+    "seed": 42
+  },
+  "results": {
+    "base": {
+      "flat_supported": {
+        "valid_n": 720,
+        "base": 0.7458333333333333,
+        "value": 0.7458333333333333,
+        "delta": 0.0,
+        "ci_lo": 0.0,
+        "ci_hi": 0.0,
+        "up": 0,
+        "down": 0,
+        "tied": 720
+      },
+      "flat_unsupported": {
+        "valid_n": 720,
+        "base": 0.21666666666666667,
+        "value": 0.21666666666666667,
+        "delta": 0.0,
+        "ci_lo": 0.0,
+        "ci_hi": 0.0,
+        "up": 0,
+        "down": 0,
+        "tied": 720
+      },
+      "flat_uncertain": {
+        "valid_n": 720,
+        "base": 0.0375,
+        "value": 0.0375,
+        "delta": 0.0,
+        "ci_lo": 0.0,
+        "ci_hi": 0.0,
+        "up": 0,
+        "down": 0,
+        "tied": 720
+      },
+      "gpt_supported": {
+        "valid_n": 0
+      },
+      "gpt_unsupported": {
+        "valid_n": 0
+      },
+      "gpt_uncertain": {
+        "valid_n": 0
+      },
+      "coverage": {
+        "valid_n": 0
+      },
+      "search": {
+        "valid_n": 0
+      },
+      "context": {
+        "valid_n": 0
+      },
+      "spatial": {
+        "valid_n": 0
+      }
+    },
+    "dpo": {
+      "flat_supported": {
+        "valid_n": 717,
+        "base": 0.7447698744769874,
+        "value": 0.7894002789400278,
+        "delta": 0.044630404463040445,
+        "ci_lo": 0.01394700139470014,
+        "ci_hi": 0.07531380753138076,
+        "up": 81,
+        "down": 49,
+        "tied": 587
+      },
+      "flat_unsupported": {
+        "valid_n": 717,
+        "base": 0.2175732217573222,
+        "value": 0.19804741980474197,
+        "delta": -0.019525801952580194,
+        "ci_lo": -0.04881450488145049,
+        "ci_hi": 0.009762900976290097,
+        "up": 51,
+        "down": 65,
+        "tied": 601
+      },
+      "flat_uncertain": {
+        "valid_n": 717,
+        "base": 0.03765690376569038,
+        "value": 0.012552301255230125,
+        "delta": -0.02510460251046025,
+        "ci_lo": -0.03905160390516039,
+        "ci_hi": -0.012552301255230125,
+        "up": 4,
+        "down": 22,
+        "tied": 691
+      },
+      "gpt_supported": {
+        "valid_n": 0
+      },
+      "gpt_unsupported": {
+        "valid_n": 0
+      },
+      "gpt_uncertain": {
+        "valid_n": 0
+      },
+      "coverage": {
+        "valid_n": 0
+      },
+      "search": {
+        "valid_n": 0
+      },
+      "context": {
+        "valid_n": 0
+      },
+      "spatial": {
+        "valid_n": 0
+      }
+    }
+  }
+}

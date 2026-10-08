@@ -1,0 +1,24 @@
+{
+  "original_pairs": 6633,
+  "original_unique_images": 6633,
+  "same_type_pairs": 3734,
+  "same_type_unique_images": 3734,
+  "fraction_of_original": 0.5629,
+  "pair_type_counts": {
+    "yes/no": 1923,
+    "what": 1415,
+    "count": 242,
+    "color": 154
+  },
+  "pair_type_balance": {
+    "yes/no": 0.515,
+    "count": 0.0648,
+    "color": 0.0412,
+    "what": 0.379,
+    "other": 0.0
+  },
+  "mean_token_length_chosen": 5.79,
+  "mean_token_length_rejected": 5.475,
+  "mean_length_diff": 0.315,
+  "selection_rule": "per image: chosen=max UVFC supported, rejected=min UVFC unsupported, within first type in fixed order (yes/no,count,color,what,other) having both; one pair/image"
+}

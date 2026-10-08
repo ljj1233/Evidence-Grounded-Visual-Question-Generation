@@ -1,0 +1,210 @@
+...................................F.............F......FFFFF.FFFFF..... [ 46%]
+.....FFF...F.................F.......................................... [ 92%]
+...........                                                              [100%]
+=================================== FAILURES ===================================
+___________________ test_train_and_development_are_disjoint ____________________
+tests/test_evidence_constrained.py:110: in test_train_and_development_are_disjoint
+    train = [json.loads(line) for line in (ROOT / "outputs/phase4b_online_uvfc/data/train_10000.jsonl").read_text().splitlines() if line.strip()]
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase4b_online_uvfc/data/train_10000.jsonl'
+___________________________ test_no_holdout_leakage ____________________________
+tests/test_fixed_group_relative.py:211: in test_no_holdout_leakage
+    for line in (ROOT / "outputs/phase3a_fixed_group_relative/monitor128.jsonl").read_text().splitlines()
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase3a_fixed_group_relative/monitor128.jsonl'
+______________ ManifestTest.test_counts_and_official_split_names _______________
+tests/test_image_split_integrity.py:27: in setUp
+    self.manifest = S.load_manifest()
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+________ ManifestTest.test_gqa_train_and_eval_are_nonempty_and_disjoint ________
+tests/test_image_split_integrity.py:27: in setUp
+    self.manifest = S.load_manifest()
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+____________ ManifestTest.test_image_id_list_hashes_are_consistent _____________
+tests/test_image_split_integrity.py:27: in setUp
+    self.manifest = S.load_manifest()
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+____________ ManifestTest.test_schema_and_manifest_path_resolution _____________
+tests/test_image_split_integrity.py:27: in setUp
+    self.manifest = S.load_manifest()
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+_______________ ManifestTest.test_source_sha256_matches_raw_file _______________
+tests/test_image_split_integrity.py:27: in setUp
+    self.manifest = S.load_manifest()
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+______ TrainOnlyGateTest.test_assert_no_eval_overlap_raises_on_eval_image ______
+tests/test_image_split_integrity.py:97: in test_assert_no_eval_overlap_raises_on_eval_image
+    eval_id = sorted(S.eval_image_ids("gqa"))[0]
+src/vqg/image_splits.py:106: in eval_image_ids
+    payload = _dataset_payload(dataset, path)
+src/vqg/image_splits.py:80: in _dataset_payload
+    manifest = load_manifest(path)
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+________ TrainOnlyGateTest.test_filter_drops_injected_val_and_test_rows ________
+tests/test_image_split_integrity.py:79: in test_filter_drops_injected_val_and_test_rows
+    rows = self._rows()
+tests/test_image_split_integrity.py:69: in _rows
+    train_id = sorted(S.train_image_ids("gqa"))[0]
+src/vqg/image_splits.py:101: in train_image_ids
+    return image_ids(dataset, "train", path)
+src/vqg/image_splits.py:90: in image_ids
+    payload = _dataset_payload(dataset, path)
+src/vqg/image_splits.py:80: in _dataset_payload
+    manifest = load_manifest(path)
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+______________ TrainOnlyGateTest.test_filter_never_mutates_input _______________
+tests/test_image_split_integrity.py:91: in test_filter_never_mutates_input
+    rows = self._rows()
+tests/test_image_split_integrity.py:69: in _rows
+    train_id = sorted(S.train_image_ids("gqa"))[0]
+src/vqg/image_splits.py:101: in train_image_ids
+    return image_ids(dataset, "train", path)
+src/vqg/image_splits.py:90: in image_ids
+    payload = _dataset_payload(dataset, path)
+src/vqg/image_splits.py:80: in _dataset_payload
+    manifest = load_manifest(path)
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+___________ TrainOnlyGateTest.test_summarize_rows_flags_eval_overlap ___________
+tests/test_image_split_integrity.py:120: in test_summarize_rows_flags_eval_overlap
+    summary = S.summarize_rows(self._rows(), "gqa")
+tests/test_image_split_integrity.py:69: in _rows
+    train_id = sorted(S.train_image_ids("gqa"))[0]
+src/vqg/image_splits.py:101: in train_image_ids
+    return image_ids(dataset, "train", path)
+src/vqg/image_splits.py:90: in image_ids
+    payload = _dataset_payload(dataset, path)
+src/vqg/image_splits.py:80: in _dataset_payload
+    manifest = load_manifest(path)
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+_______________ TrainOnlyGateTest.test_vqav2_train_rows_are_kept _______________
+tests/test_image_split_integrity.py:104: in test_vqav2_train_rows_are_kept
+    train_id = sorted(S.train_image_ids("vqav2"))[0]
+src/vqg/image_splits.py:101: in train_image_ids
+    return image_ids(dataset, "train", path)
+src/vqg/image_splits.py:90: in image_ids
+    payload = _dataset_payload(dataset, path)
+src/vqg/image_splits.py:80: in _dataset_payload
+    manifest = load_manifest(path)
+src/vqg/image_splits.py:74: in load_manifest
+    with resolved.open(encoding="utf-8") as handle:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+_______________ test_uvfc_violation_selection_alignment_from_raw _______________
+tests/test_phase4a4_audit.py:32: in test_uvfc_violation_selection_alignment_from_raw
+    uvfc = _read(ROOT / "outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl")
+tests/test_phase4a4_audit.py:27: in _read
+    return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl'
+___________ test_replay_and_selected_share_image_ids_and_mixed_size ____________
+tests/test_phase4a4_audit.py:49: in test_replay_and_selected_share_image_ids_and_mixed_size
+    selected = _read(ROOT / "outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl")
+tests/test_phase4a4_audit.py:27: in _read
+    return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl'
+___________ test_sampled4_has_exactly_four_candidates_per_dev_image ____________
+tests/test_phase4a4_audit.py:60: in test_sampled4_has_exactly_four_candidates_per_dev_image
+    dev = {str(r["image_id"]) for r in _read(ROOT / "outputs/same_backbone_baselines/manifests/development1000_images.jsonl")}
+tests/test_phase4a4_audit.py:27: in _read
+    return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl'
+____________ test_development_and_final_holdout_images_are_disjoint ____________
+tests/test_phase4a4_audit.py:158: in test_development_and_final_holdout_images_are_disjoint
+    dev = {str(r["image_id"]) for r in _read(ROOT / "outputs/same_backbone_baselines/manifests/development1000_images.jsonl")}
+tests/test_phase4a4_audit.py:27: in _read
+    return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl'
+________________ test_train_pool_disjoint_from_dev_and_holdout _________________
+tests/test_seeq_faithful.py:88: in test_train_pool_disjoint_from_dev_and_holdout
+    train = _ids(REPO / "outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl")
+tests/test_seeq_faithful.py:84: in _ids
+    return {str(json.loads(line)["image_id"]) for line in path.read_text().splitlines() if line.strip()}
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+E   FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl'
+=============================== warnings summary ===============================
+tests/test_trainer_base.py::test_plain_sft_forward_loss_regression_matches_shared_hook
+  /hpc2hdd/home/fye374/LJJ/look-before-you-ask/tests/test_trainer_base.py:37: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+    assert abs(float(got - expected)) < 1e-6
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_evidence_constrained.py::test_train_and_development_are_disjoint
+FAILED tests/test_fixed_group_relative.py::test_no_holdout_leakage - FileNotF...
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_counts_and_official_split_names
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_gqa_train_and_eval_are_nonempty_and_disjoint
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_image_id_list_hashes_are_consistent
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_schema_and_manifest_path_resolution
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_source_sha256_matches_raw_file
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_assert_no_eval_overlap_raises_on_eval_image
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_filter_drops_injected_val_and_test_rows
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_filter_never_mutates_input
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_summarize_rows_flags_eval_overlap
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_vqav2_train_rows_are_kept
+FAILED tests/test_phase4a4_audit.py::test_uvfc_violation_selection_alignment_from_raw
+FAILED tests/test_phase4a4_audit.py::test_replay_and_selected_share_image_ids_and_mixed_size
+FAILED tests/test_phase4a4_audit.py::test_sampled4_has_exactly_four_candidates_per_dev_image
+FAILED tests/test_phase4a4_audit.py::test_development_and_final_holdout_images_are_disjoint
+FAILED tests/test_seeq_faithful.py::test_train_pool_disjoint_from_dev_and_holdout
+17 failed, 138 passed, 1 warning in 125.74s (0:02:05)

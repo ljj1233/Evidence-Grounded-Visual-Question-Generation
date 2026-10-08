@@ -1,0 +1,42 @@
+{
+  "train_images": 578,
+  "fresh_pilot_images": 256,
+  "train_pairs": 712,
+  "pair_weights": {
+    "S>U": 1.0,
+    "U>X": 1.5,
+    "S>X": 0.25
+  },
+  "class_definitions": {
+    "S": "supported & support_floor>=0.75 & no uncertain/unsupported requirement",
+    "U": "overall uncertain",
+    "X": "unsupported or CONFIRMED_VIOLATION"
+  },
+  "train_pair_counts": {
+    "S>X": 578,
+    "S>U": 67,
+    "U>X": 67
+  },
+  "all_pair_counts": {
+    "S>X": 706,
+    "S>U": 134,
+    "U>X": 95
+  },
+  "class_image_counts_train": {
+    "S": 578,
+    "U": 67,
+    "X": 578
+  },
+  "class_image_counts_all": {
+    "S": 956,
+    "U": 147,
+    "X": 750
+  },
+  "guards": {
+    "S>U>=25": true,
+    "U>X>=25": true,
+    "S>X>=100": true
+  },
+  "filters": {},
+  "uvfc_hard_filter_used": false
+}

@@ -1,0 +1,4 @@
+variant,coverage,supported,unsupported,duplicate_rate,teacher_student_coverage_delta,teacher_student_supported_delta,status
+D1-original,,,,,,NOT_RUN
+D1-aligned,,,,,,NOT_RUN
+D1-ECS,,,,,,NOT_RUN

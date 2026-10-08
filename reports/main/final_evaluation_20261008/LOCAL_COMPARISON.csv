@@ -1,0 +1,3 @@
+system,n,empty_or_malformed,bleu4,cider,qbleu4_variant,mean_question_length_tokens,exact_duplicate_rate,normalized_unique_rate,type_entropy_bits,what_rate,count_yesno_rate
+full_ours,2000,0,0.264508,0.421468,0.255817,5.8500,0.4665,0.5335,1.7547,0.2060,0.7370
+full_ours_dpo,2000,0,0.259458,0.426153,0.250811,6.2535,0.5045,0.4955,1.7824,0.2055,0.6595

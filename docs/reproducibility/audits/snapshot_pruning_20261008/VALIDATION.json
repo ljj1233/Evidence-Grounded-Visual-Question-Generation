@@ -1,0 +1,21 @@
+{
+  "markdown_documents": 143,
+  "relative_links": 326,
+  "broken_links": [],
+  "python_compile_files": 241,
+  "shell_syntax_files": 12,
+  "protected_runtime_files_unchanged": 268,
+  "scientific_prose_changes": [],
+  "dependency_gate": {
+    "retained_code_files": 270,
+    "deleted_references": []
+  },
+  "pytest": {
+    "pass": 150,
+    "skip": 12,
+    "fail": 0,
+    "warning": 1
+  },
+  "import_failures": 0,
+  "exact_duplicates_deleted": 18
+}

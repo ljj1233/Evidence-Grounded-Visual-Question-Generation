@@ -1,0 +1,7 @@
+pool,run,run_dir,coverage_normalized,coverage_raw,supported,unsupported,support_flips_vs_run1,seeq_score_flips_vs_run1,valid_seeq,valid_support
+a1,1,reports/coverage_iteration_20261004T023610Z/pools/a1/selected/evaluation,0.3754,1.877,0.7512639029322548,0.09706774519716886,0,0,1000,989
+a1,2,reports/coverage_iteration_20261004T023610Z/pools/a1/selected/evaluation_run2,0.3767767767767768,1.8838838838838838,0.7552657973921765,0.09227683049147442,53,452,999,997
+a1,3,reports/coverage_iteration_20261004T023610Z/pools/a1/selected/evaluation_run3,0.37639999999999996,1.882,0.7259036144578314,0.10642570281124498,72,470,1000,996
+a2,1,reports/coverage_iteration_20261004T023610Z/pools/a2/selected/evaluation,0.38639999999999997,1.932,0.7487487487487487,0.1061061061061061,0,0,1000,999
+a2,2,reports/coverage_iteration_20261004T023610Z/pools/a2/selected/evaluation_run2,0.3836,1.918,0.718,0.107,96,461,1000,1000
+a2,3,reports/coverage_iteration_20261004T023610Z/pools/a2/selected/evaluation_run3,0.3862,1.931,0.721,0.103,84,482,1000,1000

@@ -1,0 +1,50 @@
+{
+  "n": 2000,
+  "corpus_bleu4": 0.26450848887471035,
+  "corpus_qbleu4_variant": 0.2558165388790596,
+  "corpus_cider": 0.4214675254987294,
+  "distinct_2": 0.164578,
+  "normalized_excess_duplicate_rate": 0.4665,
+  "most_frequent": [
+    {
+      "question": "How many people are in the picture?",
+      "count": 60
+    },
+    {
+      "question": "How many giraffes are there?",
+      "count": 27
+    },
+    {
+      "question": "How many elephants are there?",
+      "count": 23
+    },
+    {
+      "question": "How many animals are in the picture?",
+      "count": 22
+    },
+    {
+      "question": "How many animals are there?",
+      "count": 19
+    },
+    {
+      "question": "What time does the clock say?",
+      "count": 16
+    },
+    {
+      "question": "Is the man wearing a hat?",
+      "count": 16
+    },
+    {
+      "question": "What time is it?",
+      "count": 16
+    },
+    {
+      "question": "How many people are in the photo?",
+      "count": 15
+    },
+    {
+      "question": "Is the surfer wearing a wetsuit?",
+      "count": 15
+    }
+  ]
+}

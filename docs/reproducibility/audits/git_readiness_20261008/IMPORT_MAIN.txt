@@ -1,0 +1,1 @@
+PASS: 15 main scripts, 10 core modules; all project imports resolve inside snapshot

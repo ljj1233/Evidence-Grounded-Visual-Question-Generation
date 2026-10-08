@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "new_vqg/sft/schema.json",
+  "title": "VQG SFT record",
+  "description": "Supervised fine-tuning record for Image -> Question.",
+  "type": "object",
+  "required": ["image", "question"],
+  "additionalProperties": false,
+  "properties": {
+    "image": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to the input image (path, not embedded bytes)."
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Target generated question for this image."
+    }
+  }
+}

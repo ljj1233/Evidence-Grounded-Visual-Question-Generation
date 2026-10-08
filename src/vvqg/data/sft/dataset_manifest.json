@@ -1,0 +1,64 @@
+{
+  "schema": "vvqg-sft-dataset-manifest-1.0",
+  "created_utc": "2026-09-25T15:46:43.859384+00:00",
+  "task": "Image -> Question",
+  "seed": 42,
+  "source": {
+    "dataset": "VQAv2",
+    "train_questions": {
+      "path": "data/vqav2/raw/questions/v2_OpenEnded_mscoco_train2014_questions.json",
+      "sha256": "cb671e77b52a86fc3722b2a0ffc456c8199240391bfd97eaf2d850448404845c",
+      "n_questions": 443757,
+      "usage": "sampled for train/dev/test"
+    },
+    "val_questions": {
+      "path": "data/vqav2/raw/questions/v2_OpenEnded_mscoco_val2014_questions.json",
+      "sha256": "f34d9c9909dea76700d361baddd63dd47b4494945097459b542d9fe840244811",
+      "usage": "reserved_for_evaluation (not used for SFT)"
+    },
+    "eval_image_manifest": {
+      "path": "data/train_resources/image_split_manifest.json",
+      "sha256": "e0386abfad939cde5cfbbd6246e287d2c8be0e94bc28555c39b707ca9a3f9e04"
+    },
+    "holdout": {
+      "path": "data/vqav2/splits/val_debug.jsonl",
+      "sha256": "97de620916b0752b18e4b7fb54d85804ad8890d1e0e829a127ae6ff6aa939149"
+    },
+    "images_dir": "data/vqav2/raw/images/train2014"
+  },
+  "splits": {
+    "train": {
+      "samples": 50000,
+      "images": 9184,
+      "dataset_file": "train.jsonl",
+      "manifest_file": "train_manifest.jsonl",
+      "dataset_sha256": "17b7892dc74fec76dccdc0a278db986d5ceb91ae7c5ce671247f247df1ecf1f1",
+      "manifest_sha256": "f21f90b29fec673334f12128efe85317a86753710fe460318d2b2f46e51f036c"
+    },
+    "dev": {
+      "samples": 2000,
+      "images": 423,
+      "dataset_file": "dev.jsonl",
+      "manifest_file": "dev_manifest.jsonl",
+      "dataset_sha256": "6da428b5c6b211cd59aeae0722e17fff3a1a1d1783c498c605ee7bc6c9181005",
+      "manifest_sha256": "a64b5eca8038ebde528545b223b345234b890d8477f957129675aba207fe6bb0"
+    },
+    "test": {
+      "samples": 2000,
+      "images": 351,
+      "dataset_file": "test.jsonl",
+      "manifest_file": "test_manifest.jsonl",
+      "dataset_sha256": "e5e4325ef9d4f1d242051f84091299967d08f635796597d4121f88cdb01fb491",
+      "manifest_sha256": "8a00624f37406e35c20be5b92422cc3761ea1c31f44ab7d92c8d0605181897f8"
+    }
+  },
+  "excluded": {
+    "eval_images": 40504,
+    "train2014_images_overlapping_eval": 0
+  },
+  "notes": [
+    "Records contain only {image, question} (no answer/rationale/reward/evidence).",
+    "Splits are image-disjoint; each image belongs to exactly one split.",
+    "val2014 and the frozen val_debug benchmark are reserved for evaluation."
+  ]
+}

@@ -1,0 +1,423 @@
+[
+  {
+    "logical_name": "Final SFT",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/checkpoints/qwen3vl8b_lora_r16_vqav2_50k/checkpoint-final",
+    "size_bytes": 98810743,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "5fb66c36a2255fb3a9011db198fd55a8be8b9cbb26eef611727a816bc7934e0e"
+    },
+    "paper_role": "50k VQAv2 image\u2192question SFT; UVFC/teacher source; D1 initialization",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "D1",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/phase5c_distill_single/checkpoint-final",
+    "size_bytes": 186099422,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "0c8e51148b9f857d26d5bf811e7217461274b5de37fb49bd0b7265c174a280a7"
+    },
+    "paper_role": "Single-positive QSE distillation; G2 initialization/reference",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "Full Ours",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/phase5c_qse_relativeguard/checkpoints/step_final",
+    "size_bytes": 535723496,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "52ee692ca08737058594fe408a7817419f53532395f9249b2f227b43b4d9a58d"
+    },
+    "paper_role": "Primary VQAv2 method; frozen final-holdout evaluation",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "Full Ours + DPO",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_unified_refinement_20261008/dpo/checkpoints/step_00207",
+    "size_bytes": 535723496,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "32384eea130274b29be1f1e8a9882faae56c0db274ce219882f07a8bd9c7f07e"
+    },
+    "paper_role": "Optional post-training refinement; selected/frozen step207",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "B2 ConVQG",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/same_backbone_baselines/b2_contrastive/full_fast",
+    "size_bytes": 5227382035,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "backbone/adapter_model.safetensors": "4c4f3ac2437a13723f2a9904093bdbf56bf62746a834ea6536dab97c5c2be443",
+      "contrastive_projection.pt": "85c4a550427fbb130cc211d0d36870fe55156ec5197a9d344de7f852871b098a"
+    },
+    "paper_role": "VQAv2 development comparison; not a Full Ours ancestor",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "B3 Guiding-VQG",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/same_backbone_baselines/b3_implicit/full_fast",
+    "size_bytes": 18484472532,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "backbone/adapter_model.safetensors": "4b9f4fbabf346270443a461daa2c6785c12eee64517c6466a401cf9a8582e04b",
+      "guided_head.pt": "797579d61281eaa7d3859bf8b657ff08d10e85cf30a4763ddba069ff81c54707"
+    },
+    "paper_role": "VQAv2 development comparison; not a Full Ours ancestor",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "Faithful SeeQ M1",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/same_backbone_baselines/seeq_faithful/round1_m1/checkpoint-final",
+    "size_bytes": 10902478926,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "d557d3f90d16bc3d2712c8bd63269dd6a77e30b68ffe3c2135eee435ed299aed"
+    },
+    "paper_role": "Development1000 comparison; no frozen-protocol final-holdout predictions",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "Faithful SeeQ M2",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/same_backbone_baselines/seeq_faithful/round2_m2/checkpoint-final",
+    "size_bytes": 7687281810,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "63fe2a54d3b59a9edd32b4bd1d6a2c0bfde32cb8ea53e55c9227a0ffabf26321"
+    },
+    "paper_role": "Development1000 comparison; no frozen-protocol final-holdout predictions",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "LOVA3 GenQA",
+    "original_path": "/hpc2hdd/home/fye374/models/LOVA3-llava-v1.5-7b",
+    "size_bytes": 14128123015,
+    "size_basis": "published download manifest recorded size",
+    "sha256": "WEIGHT_SHA256_NOT_RECORDED",
+    "paper_role": "Inference-only VQAv2/GQA development comparison; not VQAv2 ancestry",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "Genixer-L Common-VQA",
+    "original_path": "/hpc2hdd/home/fye374/models/Genixer-llava-v1.5-7b",
+    "size_bytes": 14127620952,
+    "size_basis": "published download manifest recorded size",
+    "sha256": "WEIGHT_SHA256_NOT_RECORDED",
+    "paper_role": "Inference-only VQAv2/GQA development comparison; not VQAv2 ancestry",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "GQA SFT",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/gqa_native/full_ours/sft/checkpoint-final",
+    "size_bytes": 98808924,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "8c3cf2d2359efda3723ff041c87d089c7c672548de891fa3e15b2bb236c1d3f4"
+    },
+    "paper_role": "Separate GQA SFT direction; not the base-init GQA G2 ancestor",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "GQA base-init D1",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/gqa_native/full_ours_base/distill_d1/checkpoint-final",
+    "size_bytes": 186099422,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "17c66b429aed33655e76e280d79bb564dac7b79d607e8e14c73f8897f4a14b63"
+    },
+    "paper_role": "Current GQA base-init G2 initialization/reference",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "GQA Full Ours (base-init)",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/gqa_native/full_ours_base/g2/checkpoints/step_final",
+    "size_bytes": 535723497,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "5a0c720f07c3eb33ea668add63c5e39423ebf2bffeae12d15af7a1ff9c2777a7"
+    },
+    "paper_role": "Current GQA final comparison row; no VQAv2 learned weights reused",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "GQA B2 ConVQG (10k)",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/gqa_native/baselines_10k/b2_contrastive/full_fast",
+    "size_bytes": 1297143852,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "backbone/adapter_model.safetensors": "fe8f984217b98b856f752bd7188dc3e4a1de8ee303de257b2d1343392b786b44",
+      "contrastive_projection.pt": "3c30c51e6ed3482ac65caaceb9fbebac69e3d07b2057f5f6324c9b3de8e3d0ee"
+    },
+    "paper_role": "Chosen by gqa_full_ours_final_report.py; 10k method-training comparison",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "GQA B3 Guiding-VQG (10k)",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/gqa_native/baselines_10k/b3_implicit/full_fast",
+    "size_bytes": 4619371906,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "backbone/adapter_model.safetensors": "26163110bd2505c99f030510c69184fe1912aab3c8e4164cbb87d0331036b3e9",
+      "guided_head.pt": "255ff18ffa8b6b212c60705fd51df11e03b2626216dd4f5201ea629b9cd567c1"
+    },
+    "paper_role": "Chosen by gqa_full_ours_final_report.py; 10k method-training comparison",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "GQA SeeQ M1",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/gqa_native/published_baselines/seeq/round1_m1/checkpoint-final",
+    "size_bytes": 1793342910,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "d458a8d3b9466d89e9907153cd9a59b814e41f241a4ff976db229172ed91e869"
+    },
+    "paper_role": "GQA final comparison uses M2; M1 retained as its ancestor",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "GQA SeeQ M2",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/gqa_native/published_baselines/seeq/round2_m2/checkpoint-final",
+    "size_bytes": 1793343493,
+    "size_basis": "directory size including nested saved checkpoints",
+    "sha256": {
+      "adapter_model.safetensors": "4ab15ba8306330b3b859ceb24096fe6c3d2f38da91328716d925342e782bc079"
+    },
+    "paper_role": "GQA final comparison uses M2; M1 retained as its ancestor",
+    "why_excluded": "Model checkpoint and training-state binaries belong outside Git"
+  },
+  {
+    "logical_name": "UVFC sae.pt",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/phase26/vfc/sae.pt",
+    "size_bytes": 67127173,
+    "size_basis": "file stat",
+    "sha256": "7b7f5a4dda626742d01b0ddee9516693eeb43ffb1877f1b23ca96a5d10404fac",
+    "paper_role": "Frozen VQAv2 UVFC training/scoring asset",
+    "why_excluded": "Learned binary tensor asset"
+  },
+  {
+    "logical_name": "UVFC weights.pt",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs/phase26/vfc/weights.pt",
+    "size_bytes": 100885,
+    "size_basis": "file stat",
+    "sha256": "1594a26c5cf475eadedd5454a032a4cb15db9e7068896e7c3117ece856138028",
+    "paper_role": "Frozen VQAv2 UVFC training/scoring asset",
+    "why_excluded": "Learned binary tensor asset"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/final_evaluation_20261008",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/final_evaluation_20261008/*.jsonl",
+    "size_bytes": 739508,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/final_evaluation_20261008/FLAT",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/final_evaluation_20261008/FLAT/*.jsonl",
+    "size_bytes": 1123685,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/final_evaluation_20261008/GENERATIONS",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/final_evaluation_20261008/GENERATIONS/*.jsonl",
+    "size_bytes": 660913,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/final_evaluation_20261008/SEEQ",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/final_evaluation_20261008/SEEQ/*.jsonl",
+    "size_bytes": 1695988,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/final_evaluation_20261008/SUPPORT",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/final_evaluation_20261008/SUPPORT/*.jsonl",
+    "size_bytes": 10025385,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/final_evaluation_20261008/TRAD/full_ours",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/final_evaluation_20261008/TRAD/full_ours/*.jsonl",
+    "size_bytes": 190743,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/final_evaluation_20261008/TRAD/full_ours_dpo",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/final_evaluation_20261008/TRAD/full_ours_dpo/*.jsonl",
+    "size_bytes": 195954,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/*.jsonl",
+    "size_bytes": 353232,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/ANALYZE_GEN",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/ANALYZE_GEN/*.jsonl",
+    "size_bytes": 250477,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/EXT",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/EXT/*.jsonl",
+    "size_bytes": 176801,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/EXT/SEEQ",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/EXT/SEEQ/*.jsonl",
+    "size_bytes": 1173406,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/EXT/SUPPORT",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/EXT/SUPPORT/*.jsonl",
+    "size_bytes": 6075534,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/FLAT",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/FLAT/*.jsonl",
+    "size_bytes": 418556,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/GEN",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/GEN/*.jsonl",
+    "size_bytes": 250477,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/POOLED_GEN",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/POOLED_GEN/*.jsonl",
+    "size_bytes": 332333,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/POOLED_SUPPORT",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/POOLED_SUPPORT/*.jsonl",
+    "size_bytes": 2960162,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/TRAD/base",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/TRAD/base/*.jsonl",
+    "size_bytes": 70633,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "Raw evaluation rows: reports/offline_dpo_freeze_20261008/TRAD/dpo",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/reports/offline_dpo_freeze_20261008/TRAD/dpo/*.jsonl",
+    "size_bytes": 73222,
+    "size_basis": "sum of direct .jsonl files (includes references, generation, evaluator and cache rows)",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Frozen holdout/development raw evidence; summary reports copied",
+    "why_excluded": "Raw generation / API cache / row-level evaluation data"
+  },
+  {
+    "logical_name": "VQAv2 raw images/annotations/archives",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/data/vqav2/raw",
+    "size_bytes": 40920225526,
+    "size_basis": "recorded 2026-10-08 repository audit; no raw data rescan",
+    "sha256": "DIRECTORY_HASH_NOT_RECORDED",
+    "paper_role": "Training and evaluation datasets; split manifests remain in source",
+    "why_excluded": "Raw dataset and image/archive files"
+  },
+  {
+    "logical_name": "GQA raw images/questions",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/data/raw/gqa",
+    "size_bytes": 38275742920,
+    "size_basis": "recorded 2026-10-08 repository audit; no raw data rescan",
+    "sha256": "DIRECTORY_HASH_NOT_RECORDED",
+    "paper_role": "Training and evaluation datasets; split manifests remain in source",
+    "why_excluded": "Raw dataset and image/archive files"
+  },
+  {
+    "logical_name": "VQAv2 SFT records train.jsonl",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/src/vvqg/data/sft/train.jsonl",
+    "size_bytes": 6195901,
+    "size_basis": "file stat",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Image/question data records (split manifests copied)",
+    "why_excluded": "Dataset content excluded from code backup"
+  },
+  {
+    "logical_name": "VQAv2 SFT records dev.jsonl",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/src/vvqg/data/sft/dev.jsonl",
+    "size_bytes": 247779,
+    "size_basis": "file stat",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Image/question data records (split manifests copied)",
+    "why_excluded": "Dataset content excluded from code backup"
+  },
+  {
+    "logical_name": "VQAv2 SFT records test.jsonl",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/src/vvqg/data/sft/test.jsonl",
+    "size_bytes": 247375,
+    "size_basis": "file stat",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Image/question data records (split manifests copied)",
+    "why_excluded": "Dataset content excluded from code backup"
+  },
+  {
+    "logical_name": "External test data / experiment fixtures",
+    "original_path": "/hpc2hdd/home/fye374/LJJ/qg/outputs and /hpc2hdd/home/fye374/LJJ/qg/data/train_resources",
+    "size_bytes": "NOT_AGGREGATED",
+    "size_basis": "multiple paths; see PYTEST audit for required files",
+    "sha256": "NOT_RECORDED",
+    "paper_role": "Data-dependent integrity tests and historical reproducibility inputs",
+    "why_excluded": "Current outputs, raw datasets and raw generated experiments excluded by snapshot scope"
+  }
+]

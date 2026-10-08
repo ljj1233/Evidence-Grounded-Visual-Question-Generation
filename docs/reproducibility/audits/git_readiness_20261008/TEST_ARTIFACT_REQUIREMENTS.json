@@ -1,0 +1,32 @@
+{
+  "tests/test_evidence_constrained.py::test_train_and_development_are_disjoint": [
+    "outputs/phase4b_online_uvfc/data/train_10000.jsonl",
+    "outputs/same_backbone_baselines/manifests/development1000_images.jsonl"
+  ],
+  "tests/test_fixed_group_relative.py::test_no_holdout_leakage": [
+    "outputs/phase3a_fixed_group_relative/monitor128.jsonl"
+  ],
+  "tests/test_phase4a4_audit.py::test_uvfc_violation_selection_alignment_from_raw": [
+    "outputs/phase3a_grpo_pilot/preflight/rollouts_flat.jsonl",
+    "outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl",
+    "outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl"
+  ],
+  "tests/test_phase4a4_audit.py::test_replay_and_selected_share_image_ids_and_mixed_size": [
+    "outputs/phase4a2_rft_replay/data/human_replay_2000.jsonl",
+    "outputs/phase4a2_rft_replay/data/mixed_uvfc_violation_replay_1to1.jsonl",
+    "outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl"
+  ],
+  "tests/test_phase4a4_audit.py::test_sampled4_has_exactly_four_candidates_per_dev_image": [
+    "outputs/phase4a2_rft_replay/generation/sampled4x1000.jsonl",
+    "outputs/phase4a3_rft_replay_multiseed/seed43/generation/sampled4x1000.jsonl",
+    "outputs/same_backbone_baselines/manifests/development1000_images.jsonl"
+  ],
+  "tests/test_phase4a4_audit.py::test_development_and_final_holdout_images_are_disjoint": [
+    "outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl",
+    "outputs/same_backbone_baselines/manifests/development1000_images.jsonl"
+  ],
+  "tests/test_seeq_faithful.py::test_train_pool_disjoint_from_dev_and_holdout": [
+    "outputs/same_backbone_baselines/manifests/development1000_images.jsonl",
+    "outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl"
+  ]
+}

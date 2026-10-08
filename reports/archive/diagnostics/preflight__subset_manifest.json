@@ -1,0 +1,12 @@
+{
+  "records": 2000,
+  "unique_images": 2000,
+  "seed": 42,
+  "source": "src/vvqg/data/sft/train.jsonl",
+  "excluded": [
+    "development1000",
+    "reward_calibration",
+    "val_debug",
+    "final_holdout"
+  ]
+}

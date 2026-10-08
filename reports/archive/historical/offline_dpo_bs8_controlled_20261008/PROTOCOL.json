@@ -1,0 +1,56 @@
+{
+  "task": "controlled_batch8_dpo",
+  "frozen_before_training": true,
+  "base_model": "/hpc2hdd/home/fye374/models/Qwen3-VL-8B-Instruct",
+  "init_and_reference": "outputs/phase5c_qse_relativeguard/checkpoints/step_final",
+  "reference_frozen": true,
+  "pairs": "outputs/offline_dpo_v1_formal_20261007T102440Z/data/pairs_train.jsonl",
+  "pairs_sha256": "d6341bcb9b9146d4ec4610d5f108b7def939b1d6e155eaf4c7ed8dcc70cc3e71",
+  "pairs_count": 6633,
+  "unchanged": [
+    "beta=0.1",
+    "lr=5e-6",
+    "scheduler=constant",
+    "LoRA r16 alpha32 dropout0.05",
+    "AdamW 0.9/0.999 wd0 gradclip1.0",
+    "seed=42",
+    "reference frozen",
+    "pair set",
+    "one full pass max"
+  ],
+  "only_change": "effective batch size = 8 (batch_size=8, no gradient accumulation)",
+  "expected_optimizer_steps": 830,
+  "max_pair_exposures": 6633,
+  "checkpoints": [
+    100,
+    200,
+    400,
+    600,
+    800,
+    "final"
+  ],
+  "hard_stops": [
+    "NaN/Inf loss",
+    "corrupted checkpoint",
+    "reference mismatch",
+    "unrecoverable runtime failure"
+  ],
+  "no_early_stop_on_drift": true,
+  "training_api_calls": 0,
+  "monitor": [
+    "train_loss",
+    "preference_margin",
+    "chosen_seq_logp_policy_and_ref",
+    "rejected_seq_logp_policy_and_ref",
+    "token_normalized_chosen_rejected_log_ratio",
+    "grad_norm",
+    "fraction_loss_gt5",
+    "consumed_pairs",
+    "optimizer_steps"
+  ],
+  "reference_sanity": {
+    "initial_policy_equals_reference": true,
+    "initial_logratio_approx_0": true,
+    "initial_loss_approx_ln2": true
+  }
+}

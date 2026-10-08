@@ -1,0 +1,8 @@
+snapshot_missing_path	original_path	size_bytes	sha256	required_for	source_present
+data/train_resources/image_split_manifest.json	/hpc2hdd/home/fye374/LJJ/qg/data/train_resources/image_split_manifest.json	4650684	NOT_RECORDED	data-dependent pytest integrity checks	True
+outputs/phase3a_fixed_group_relative/monitor128.jsonl	/hpc2hdd/home/fye374/LJJ/qg/outputs/phase3a_fixed_group_relative/monitor128.jsonl	20608	NOT_RECORDED	data-dependent pytest integrity checks	True
+outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl	/hpc2hdd/home/fye374/LJJ/qg/outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl	3333647	NOT_RECORDED	data-dependent pytest integrity checks	True
+outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl	/hpc2hdd/home/fye374/LJJ/qg/outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl	243955	NOT_RECORDED	data-dependent pytest integrity checks	True
+outputs/phase4b_online_uvfc/data/train_10000.jsonl	/hpc2hdd/home/fye374/LJJ/qg/outputs/phase4b_online_uvfc/data/train_10000.jsonl	2029364	NOT_RECORDED	data-dependent pytest integrity checks	True
+outputs/same_backbone_baselines/manifests/development1000_images.jsonl	/hpc2hdd/home/fye374/LJJ/qg/outputs/same_backbone_baselines/manifests/development1000_images.jsonl	111827	NOT_RECORDED	data-dependent pytest integrity checks	True
+outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl	/hpc2hdd/home/fye374/LJJ/qg/outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl	1063595	NOT_RECORDED	data-dependent pytest integrity checks	True

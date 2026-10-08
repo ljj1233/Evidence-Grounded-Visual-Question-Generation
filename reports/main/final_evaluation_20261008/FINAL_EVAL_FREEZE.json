@@ -1,0 +1,77 @@
+{
+  "frozen": true,
+  "date": "20261008",
+  "systems": {
+    "full_ours": "outputs/phase5c_qse_relativeguard/checkpoints/step_final",
+    "full_ours_dpo_step00207": "reports/offline_dpo_unified_refinement_20261008/dpo/checkpoints/step_00207"
+  },
+  "dpo_adapter_sha256": "32384eea130274b29be1f1e8a9882faae56c0db274ce219882f07a8bd9c7f07e",
+  "dpo_global_step": 207,
+  "dpo_pair_manifest": "reports/offline_dpo_unified_refinement_20261008/UNIFIED_PAIRS.jsonl",
+  "dpo_pair_manifest_sha256": "ae27e2ee32a0314378d1b4c334e07a91afb089aec15cc7d771b1a188dd59c94e",
+  "primary_metrics": [
+    "gpt_supported",
+    "gpt_unsupported",
+    "gpt_uncertain",
+    "seeq_coverage",
+    "seeq_search",
+    "seeq_context",
+    "seeq_spatial"
+  ],
+  "reference_metrics": [
+    "bleu4",
+    "cider",
+    "qbleu4_variant"
+  ],
+  "diagnostics": [
+    "generation_failures",
+    "parser_failures",
+    "question_length",
+    "duplicate_rate",
+    "question_type_distribution"
+  ],
+  "statistics": {
+    "unit": "image_id",
+    "paired": true,
+    "bootstrap_resamples": 10000,
+    "seed": 42,
+    "ci": "95% percentile"
+  },
+  "evaluators": {
+    "seeq": {
+      "model": "gpt-5.6-luna",
+      "prompt_hash": "57a357e077e599248bc2212ca1e3d83b42c4ae5ab6448d6fbd26e824773fe133",
+      "dimensions": [
+        "visual_search_difficulty",
+        "visual_evidence_coverage",
+        "visual_context_reasoning",
+        "visual_spatial_reasoning"
+      ],
+      "status": "VARIANT_DOCUMENTED"
+    },
+    "visual_support": {
+      "model": "gpt-4o",
+      "version": "visual-support-phase23-v1.0"
+    }
+  },
+  "generation": {
+    "instruction": "Generate a question about this image.",
+    "decoding": {
+      "do_sample": false,
+      "temperature": 0.0,
+      "top_p": 1.0,
+      "max_new_tokens": 32
+    },
+    "seed": 42,
+    "batch_size": 16,
+    "identical_batching_both_systems": true,
+    "batching_note": "final run used batch_size=16 for BOTH systems (gen.log); DEV256/DEV744 used 8. Paired comparison is internally consistent; absolute questions may differ slightly from batch-8 chunking."
+  },
+  "frozen_rule": "after final_holdout results are visible: no retraining, checkpoint/step switching, pair reconstruction, seed/LR/beta/scheduler/decoding/prompt/evaluator changes",
+  "provenance_verified": {
+    "full_ours_checkpoint": "outputs/phase5c_qse_relativeguard/checkpoints/step_final",
+    "dpo_checkpoint": "reports/offline_dpo_unified_refinement_20261008/dpo/checkpoints/step_00207",
+    "confirmed_in": "reports/final_evaluation_20261008/gen.log",
+    "adapter_sha256": "32384eea130274b29be1f1e8a9882faae56c0db274ce219882f07a8bd9c7f07e"
+  }
+}

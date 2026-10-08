@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "new_vqg/rollout/schema.json",
+  "title": "VQG RL rollout record",
+  "description": "Cached rollout sample for GRPO (image-conditioned prompt, response, scalar reward).",
+  "type": "object",
+  "required": ["image", "prompt", "response", "reward"],
+  "additionalProperties": false,
+  "properties": {
+    "image": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to the input image (path, not embedded bytes)."
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Image-conditioned prompt fed to the policy."
+    },
+    "response": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Sampled policy response (generated question)."
+    },
+    "reward": {
+      "type": "number",
+      "description": "Scalar reward assigned to the response."
+    }
+  }
+}

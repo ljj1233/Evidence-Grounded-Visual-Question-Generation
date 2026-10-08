@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "classification": "CURRENT_EVAL",
+  "script_count": 22,
+  "scripts": [
+    "scripts/vvqg/collect_all_metrics.py",
+    "scripts/vvqg/dpo_v1_formal_dev.py",
+    "scripts/vvqg/evaluate.py",
+    "scripts/vvqg/evaluate_seeq_diversity.py",
+    "scripts/vvqg/evaluate_visual_centric.py",
+    "scripts/vvqg/evaluate_visual_support.py",
+    "scripts/vvqg/generate.py",
+    "scripts/vvqg/generate_b2.py",
+    "scripts/vvqg/generate_b3.py",
+    "scripts/vvqg/gqa_baseline_table.py",
+    "scripts/vvqg/gqa_evaluate.py",
+    "scripts/vvqg/gqa_full_ours_final_report.py",
+    "scripts/vvqg/overnight_analyze.py",
+    "scripts/vvqg/overnight_build_dev256.py",
+    "scripts/vvqg/overnight_flat.py",
+    "scripts/vvqg/overnight_paired_stats.py",
+    "scripts/vvqg/phase4b_evaluate.py",
+    "scripts/vvqg/phase5a_evaluate.py",
+    "scripts/vvqg/phase5a_generate_checkpoints.py",
+    "scripts/vvqg/published_vqg_compare.py",
+    "scripts/vvqg/published_vqg_inference.py",
+    "scripts/vvqg/seeq_faithful_compare.py"
+  ],
+  "modules": []
+}

@@ -1,0 +1,1 @@
+PASS: 22 evaluation scripts; all project imports resolve inside snapshot

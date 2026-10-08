@@ -1,0 +1,42 @@
+# Local environments and runtime products
+.venv*
+__pycache__/
+.pytest_cache/
+*.log
+*.tmp
+*.pyc
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.npy
+*.npz
+**/checkpoint-*/
+**/checkpoint_*/
+**/checkpoints/
+**/training_state*
+**/optimizer*
+# Datasets, raw artifacts and caches stay external
+/data/
+/outputs/
+/models/
+/.pytest_tmp/
+data/**/raw/
+**/cache/
+**/api_cache/
+**/activation_cache/
+**/activations/
+**/GENERATIONS/
+**/generations/
+# Local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Keep small checkpoint-provenance audit records
+!docs/reproducibility/audits/checkpoint_cleanup_20261008/
+!docs/reproducibility/audits/checkpoint_cleanup_20261008/*.md
+!docs/reproducibility/audits/checkpoint_cleanup_20261008/*.tsv

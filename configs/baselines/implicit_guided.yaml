@@ -1,0 +1,26 @@
+seed: 42
+backbone: models/Qwen3-VL-8B-Instruct
+train_manifest: outputs/same_backbone_baselines/manifests/train50k_records.jsonl
+dev_manifest: outputs/same_backbone_baselines/manifests/development1000_images.jsonl
+classification: SAME_BACKBONE_DOCUMENTED_ADAPTATION
+raw_inference: DIRECT_IMAGE_ONLY_BASELINE
+inference_annotation: WITH_INTERNAL_PREDICTED_GUIDANCE
+precision: bf16
+max_seq_length: 512
+training:
+  epochs: 2
+  effective_batch_size: 16
+  per_device_batch_size: 2
+  gradient_accumulation_steps: 8
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+guidance:
+  categories: [count, binary, predicate, material, time, color, attribute, object, stuff, food, shape, other, location, animal, spatial, activity]
+  k: 2
+  guide_tokens: 4
+  detector: torchvision_COCO_FasterRCNN_resnet50_fpn_v2_frozen_substitution
+  detector_role: frozen_top36_region_feature_and_normalized_box_provider
+  detector_weights: torchvision.models.detection.FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT

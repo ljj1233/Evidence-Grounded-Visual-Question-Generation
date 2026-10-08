@@ -1,0 +1,44 @@
+# Phase 4A RFT — SFT on UVFC+violation selected train questions (2000 pairs, 2 epochs).
+stage: rft
+task: image_to_question
+base_model: /hpc2hdd/home/fye374/models/Qwen3-VL-8B-Instruct
+sft_checkpoint: outputs/checkpoints/qwen3vl8b_lora_r16_vqav2_50k/checkpoint-final
+train_data: outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl
+output_dir: outputs/phase4a_uvfc_rft/uvfc_violation
+seed: 42
+max_seq_length: 512
+instruction: "Generate a question about this image."
+
+image:
+  min_pixels: 4096
+  max_pixels: 147456
+
+precision:
+  bf16: true
+
+lora:
+  enabled: true
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+training:
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8
+  num_train_epochs: 2
+  learning_rate: 2.0e-4
+  warmup_ratio: 0.03
+  logging_steps: 5
+  save_steps: 100
+  save_total_limit: 1
+  dataloader_num_workers: 8
+  gradient_checkpointing: true
+  attn_implementation: flash_attention_2

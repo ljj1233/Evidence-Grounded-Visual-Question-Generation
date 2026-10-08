@@ -1,0 +1,36 @@
+{
+  "base": {
+    "counts": {
+      "yes/no": 328,
+      "count": 214,
+      "color": 50,
+      "what": 152,
+      "other": 0
+    },
+    "rates": {
+      "yes/no": 0.4409,
+      "count": 0.2876,
+      "color": 0.0672,
+      "what": 0.2043,
+      "other": 0.0
+    },
+    "entropy_bits": 1.7679
+  },
+  "dpo": {
+    "counts": {
+      "yes/no": 118,
+      "count": 373,
+      "color": 102,
+      "what": 151,
+      "other": 0
+    },
+    "rates": {
+      "yes/no": 0.1586,
+      "count": 0.5013,
+      "color": 0.1371,
+      "what": 0.203,
+      "other": 0.0
+    },
+    "entropy_bits": 1.7807
+  }
+}

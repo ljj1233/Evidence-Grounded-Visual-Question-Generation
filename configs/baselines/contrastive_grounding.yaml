@@ -1,0 +1,28 @@
+seed: 42
+backbone: models/Qwen3-VL-8B-Instruct
+train_manifest: outputs/same_backbone_baselines/manifests/train50k_records.jsonl
+dev_manifest: outputs/same_backbone_baselines/manifests/development1000_images.jsonl
+classification: SAME_BACKBONE_DOCUMENTED_ADAPTATION
+raw_inference: DIRECT_RAW_IMAGE_BASELINE
+inference_annotation: WITH_INTERNAL_FROZEN_CAPTIONER
+precision: bf16
+max_seq_length: 512
+training:
+  epochs: 2
+  effective_batch_size: 16
+  per_device_batch_size: 2
+  gradient_accumulation_steps: 8
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+contrastive:
+  alpha: 0.2
+  margin: 0.5
+  beta_start: 10.0
+  beta_step: 10.0
+cache:
+  caption_model: models/Qwen3-VL-8B-Instruct
+  embedding_model: models/Qwen3-Embedding-4B
+  dtype: float16

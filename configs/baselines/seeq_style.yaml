@@ -1,0 +1,25 @@
+seed: 42
+backbone: models/Qwen3-VL-8B-Instruct
+starting_checkpoint: outputs/checkpoints/qwen3vl8b_lora_r16_vqav2_50k/checkpoint-final
+train_image_manifest: outputs/same_backbone_baselines/manifests/train50k_images.jsonl
+dev_manifest: outputs/same_backbone_baselines/manifests/development1000_images.jsonl
+classification: SEEQ_STYLE_POST_SFT_ADAPTATION
+raw_inference: DIRECT_IMAGE_ONLY_BASELINE
+precision: bf16
+rounds: 2
+retained_per_round: 10000
+training:
+  batch_size: 2
+  learning_rate: 0.00002
+  scheduler: cosine
+  warmup_ratio: 0.1
+  epochs_per_round: 1
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+official_seeq_commit: 18e795293808c5cf9f69f1e980577ab40b3faa95
+provenance:
+  proposal_answer_rewrite_filter: official SeeQ generation pipeline adapted to local Qwen3-VL
+  rag: official image-fact cache and sample-bank path

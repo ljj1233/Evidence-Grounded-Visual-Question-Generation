@@ -1,0 +1,35 @@
+{
+  "task": "k4_within_image_diversity",
+  "frozen_before_generation": true,
+  "dev256_manifest": "reports/offline_dpo_checkpoint_trajectory_20261008/DEV256_MANIFEST.jsonl",
+  "dev256_manifest_sha256": "afc3825c1f19d9acda459b27a3ef6534a409a6e87aff9d58c727dc378957a590",
+  "checkpoints": [
+    "base",
+    "step1000",
+    "step2000",
+    "step3000",
+    "final"
+  ],
+  "sampling": {
+    "schema": "sampled",
+    "num_samples": 4,
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "max_new_tokens": 32,
+    "seed": 42,
+    "batch_size": 16,
+    "instruction": "Generate a question about this image."
+  },
+  "no_api": true,
+  "metrics": [
+    "per_image_normalized_unique_questions_over_4",
+    "per_image_unique_types_over_4",
+    "within_image_exact_duplicate",
+    "distinct1",
+    "distinct2",
+    "type_entropy",
+    "all_four_same_type",
+    "type_distribution",
+    "base_relative_diversity_delta"
+  ]
+}

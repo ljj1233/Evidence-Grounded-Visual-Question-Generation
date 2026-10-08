@@ -1,0 +1,14 @@
+
+==================================== ERRORS ====================================
+_____________ ERROR collecting tests/test_evidence_constrained.py ______________
+tests/test_evidence_constrained.py:10: in <module>
+    from vvqg.evidence_constrained.counterfactual import (
+src/vvqg/evidence_constrained/counterfactual.py:38: in <module>
+    _EXISTING = _load_existing_transforms()
+src/vvqg/evidence_constrained/counterfactual.py:31: in _load_existing_transforms
+    raise FileNotFoundError(f"missing existing transform implementation: {_TRANSFORM_SRC}")
+E   FileNotFoundError: missing existing transform implementation: /hpc2hdd/home/fye374/LJJ/look-before-you-ask/reports/published_baseline_intervention_20261004T032525Z/scripts/build_transforms.py
+=========================== short test summary info ============================
+ERROR tests/test_evidence_constrained.py - FileNotFoundError: missing existin...
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 18.77s

@@ -1,0 +1,893 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /hpc2hdd/home/fye374/LJJ/look-before-you-ask
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 155 items
+
+tests/test_b2_contrastive.py ...                                         [  1%]
+tests/test_b3_implicit_guided.py ......                                  [  5%]
+tests/test_cer_signal_audit.py ....                                      [  8%]
+tests/test_corpus_bootstrap.py ..                                        [  9%]
+tests/test_evaluation_metrics.py .........                               [ 15%]
+tests/test_evidence_constrained.py ...........F                          [ 23%]
+tests/test_fixed_group_relative.py .............F                        [ 32%]
+tests/test_generation.py ...                                             [ 34%]
+tests/test_guard_patience.py ...                                         [ 36%]
+tests/test_image_split_integrity.py FFFFF.FFFFF                          [ 43%]
+tests/test_judge_roles.py ..........                                     [ 49%]
+tests/test_phase4a4_audit.py FFF...F                                     [ 54%]
+tests/test_repo_cleanup.py ....                                          [ 56%]
+tests/test_same_backbone_baselines.py .....                              [ 60%]
+tests/test_seeq_faithful.py ........F..                                  [ 67%]
+tests/test_seeq_pipeline.py ........                                     [ 72%]
+tests/test_slot_assignment_v2.py ..........                              [ 78%]
+tests/test_support_delta.py ......                                       [ 82%]
+tests/test_trainer_base.py ..                                            [ 83%]
+tests/test_vc_qse.py ......                                              [ 87%]
+tests/test_visual_information_contribution.py ...                        [ 89%]
+tests/test_visual_information_scorer.py ..                               [ 90%]
+tests/test_visual_support_calibration.py .......                         [ 95%]
+tests/test_vqg_loader_contract.py .......                                [100%]
+
+=================================== FAILURES ===================================
+___________________ test_train_and_development_are_disjoint ____________________
+
+    def test_train_and_development_are_disjoint():
+>       train = [json.loads(line) for line in (ROOT / "outputs/phase4b_online_uvfc/data/train_10000.jsonl").read_text().splitlines() if line.strip()]
+
+tests/test_evidence_constrained.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase4b_online_uvfc/data/train_10000.jsonl')
+encoding = 'locale', errors = None
+
+    def read_text(self, encoding=None, errors=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        encoding = io.text_encoding(encoding)
+>       with self.open(mode='r', encoding=encoding, errors=errors) as f:
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase4b_online_uvfc/data/train_10000.jsonl')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase4b_online_uvfc/data/train_10000.jsonl'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+___________________________ test_no_holdout_leakage ____________________________
+
+    def test_no_holdout_leakage():
+        holdout = {
+            json.loads(line)["image_id"]
+            for line in (ROOT / "src/vvqg/data/evaluation/final_holdout_manifest.jsonl").read_text().splitlines()
+            if line.strip()
+        }
+        monitor = [
+            json.loads(line)
+>           for line in (ROOT / "outputs/phase3a_fixed_group_relative/monitor128.jsonl").read_text().splitlines()
+            if line.strip()
+        ]
+
+tests/test_fixed_group_relative.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase3a_fixed_group_relative/monitor128.jsonl')
+encoding = 'locale', errors = None
+
+    def read_text(self, encoding=None, errors=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        encoding = io.text_encoding(encoding)
+>       with self.open(mode='r', encoding=encoding, errors=errors) as f:
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase3a_fixed_group_relative/monitor128.jsonl')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase3a_fixed_group_relative/monitor128.jsonl'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+______________ ManifestTest.test_counts_and_official_split_names _______________
+
+self = <test_image_split_integrity.ManifestTest testMethod=test_counts_and_official_split_names>
+
+    def setUp(self) -> None:
+>       self.manifest = S.load_manifest()
+
+tests/test_image_split_integrity.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+________ ManifestTest.test_gqa_train_and_eval_are_nonempty_and_disjoint ________
+
+self = <test_image_split_integrity.ManifestTest testMethod=test_gqa_train_and_eval_are_nonempty_and_disjoint>
+
+    def setUp(self) -> None:
+>       self.manifest = S.load_manifest()
+
+tests/test_image_split_integrity.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+____________ ManifestTest.test_image_id_list_hashes_are_consistent _____________
+
+self = <test_image_split_integrity.ManifestTest testMethod=test_image_id_list_hashes_are_consistent>
+
+    def setUp(self) -> None:
+>       self.manifest = S.load_manifest()
+
+tests/test_image_split_integrity.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+____________ ManifestTest.test_schema_and_manifest_path_resolution _____________
+
+self = <test_image_split_integrity.ManifestTest testMethod=test_schema_and_manifest_path_resolution>
+
+    def setUp(self) -> None:
+>       self.manifest = S.load_manifest()
+
+tests/test_image_split_integrity.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+_______________ ManifestTest.test_source_sha256_matches_raw_file _______________
+
+self = <test_image_split_integrity.ManifestTest testMethod=test_source_sha256_matches_raw_file>
+
+    def setUp(self) -> None:
+>       self.manifest = S.load_manifest()
+
+tests/test_image_split_integrity.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+______ TrainOnlyGateTest.test_assert_no_eval_overlap_raises_on_eval_image ______
+
+self = <test_image_split_integrity.TrainOnlyGateTest testMethod=test_assert_no_eval_overlap_raises_on_eval_image>
+
+    def test_assert_no_eval_overlap_raises_on_eval_image(self) -> None:
+>       eval_id = sorted(S.eval_image_ids("gqa"))[0]
+
+tests/test_image_split_integrity.py:97: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', path = None
+
+    def eval_image_ids(dataset: str, path: str | Path | None = None) -> set[str]:
+        """Union of the dataset's held-out (eval) split image ids."""
+>       payload = _dataset_payload(dataset, path)
+
+src/vqg/image_splits.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', path = None
+
+    def _dataset_payload(dataset: str, path: str | Path | None = None) -> dict:
+>       manifest = load_manifest(path)
+
+src/vqg/image_splits.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+________ TrainOnlyGateTest.test_filter_drops_injected_val_and_test_rows ________
+
+self = <test_image_split_integrity.TrainOnlyGateTest testMethod=test_filter_drops_injected_val_and_test_rows>
+
+    def test_filter_drops_injected_val_and_test_rows(self) -> None:
+>       rows = self._rows()
+
+tests/test_image_split_integrity.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_image_split_integrity.TrainOnlyGateTest testMethod=test_filter_drops_injected_val_and_test_rows>
+
+    def _rows(self) -> list[dict]:
+>       train_id = sorted(S.train_image_ids("gqa"))[0]
+
+tests/test_image_split_integrity.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', path = None
+
+    def train_image_ids(dataset: str, path: str | Path | None = None) -> set[str]:
+        """Official training image ids for ``dataset``."""
+>       return image_ids(dataset, "train", path)
+
+src/vqg/image_splits.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', split = 'train', path = None
+
+    def image_ids(dataset: str, split: str, path: str | Path | None = None) -> set[str]:
+        """Set of image ids for one dataset/split from the manifest."""
+>       payload = _dataset_payload(dataset, path)
+
+src/vqg/image_splits.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', path = None
+
+    def _dataset_payload(dataset: str, path: str | Path | None = None) -> dict:
+>       manifest = load_manifest(path)
+
+src/vqg/image_splits.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+______________ TrainOnlyGateTest.test_filter_never_mutates_input _______________
+
+self = <test_image_split_integrity.TrainOnlyGateTest testMethod=test_filter_never_mutates_input>
+
+    def test_filter_never_mutates_input(self) -> None:
+>       rows = self._rows()
+
+tests/test_image_split_integrity.py:91: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_image_split_integrity.TrainOnlyGateTest testMethod=test_filter_never_mutates_input>
+
+    def _rows(self) -> list[dict]:
+>       train_id = sorted(S.train_image_ids("gqa"))[0]
+
+tests/test_image_split_integrity.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', path = None
+
+    def train_image_ids(dataset: str, path: str | Path | None = None) -> set[str]:
+        """Official training image ids for ``dataset``."""
+>       return image_ids(dataset, "train", path)
+
+src/vqg/image_splits.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', split = 'train', path = None
+
+    def image_ids(dataset: str, split: str, path: str | Path | None = None) -> set[str]:
+        """Set of image ids for one dataset/split from the manifest."""
+>       payload = _dataset_payload(dataset, path)
+
+src/vqg/image_splits.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', path = None
+
+    def _dataset_payload(dataset: str, path: str | Path | None = None) -> dict:
+>       manifest = load_manifest(path)
+
+src/vqg/image_splits.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+___________ TrainOnlyGateTest.test_summarize_rows_flags_eval_overlap ___________
+
+self = <test_image_split_integrity.TrainOnlyGateTest testMethod=test_summarize_rows_flags_eval_overlap>
+
+    def test_summarize_rows_flags_eval_overlap(self) -> None:
+>       summary = S.summarize_rows(self._rows(), "gqa")
+
+tests/test_image_split_integrity.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_image_split_integrity.TrainOnlyGateTest testMethod=test_summarize_rows_flags_eval_overlap>
+
+    def _rows(self) -> list[dict]:
+>       train_id = sorted(S.train_image_ids("gqa"))[0]
+
+tests/test_image_split_integrity.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', path = None
+
+    def train_image_ids(dataset: str, path: str | Path | None = None) -> set[str]:
+        """Official training image ids for ``dataset``."""
+>       return image_ids(dataset, "train", path)
+
+src/vqg/image_splits.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', split = 'train', path = None
+
+    def image_ids(dataset: str, split: str, path: str | Path | None = None) -> set[str]:
+        """Set of image ids for one dataset/split from the manifest."""
+>       payload = _dataset_payload(dataset, path)
+
+src/vqg/image_splits.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'gqa', path = None
+
+    def _dataset_payload(dataset: str, path: str | Path | None = None) -> dict:
+>       manifest = load_manifest(path)
+
+src/vqg/image_splits.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+_______________ TrainOnlyGateTest.test_vqav2_train_rows_are_kept _______________
+
+self = <test_image_split_integrity.TrainOnlyGateTest testMethod=test_vqav2_train_rows_are_kept>
+
+    def test_vqav2_train_rows_are_kept(self) -> None:
+>       train_id = sorted(S.train_image_ids("vqav2"))[0]
+
+tests/test_image_split_integrity.py:104: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'vqav2', path = None
+
+    def train_image_ids(dataset: str, path: str | Path | None = None) -> set[str]:
+        """Official training image ids for ``dataset``."""
+>       return image_ids(dataset, "train", path)
+
+src/vqg/image_splits.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'vqav2', split = 'train', path = None
+
+    def image_ids(dataset: str, split: str, path: str | Path | None = None) -> set[str]:
+        """Set of image ids for one dataset/split from the manifest."""
+>       payload = _dataset_payload(dataset, path)
+
+src/vqg/image_splits.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+dataset = 'vqav2', path = None
+
+    def _dataset_payload(dataset: str, path: str | Path | None = None) -> dict:
+>       manifest = load_manifest(path)
+
+src/vqg/image_splits.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = None
+
+    def load_manifest(path: str | Path | None = None) -> dict:
+        """Load (and cache) the frozen image-split manifest."""
+        resolved = Path(path) if path is not None else MANIFEST_PATH
+        key = str(resolved)
+        if key not in _MANIFEST_CACHE:
+>           with resolved.open(encoding="utf-8") as handle:
+
+src/vqg/image_splits.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/data/train_resources/image_split_manifest.json'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+_______________ test_uvfc_violation_selection_alignment_from_raw _______________
+
+    def test_uvfc_violation_selection_alignment_from_raw():
+        select_mod = _load(ROOT / "scripts/vvqg/phase4a_select.py", "p4a_select")
+>       uvfc = _read(ROOT / "outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl")
+
+tests/test_phase4a4_audit.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl')
+
+    def _read(path: Path) -> list[dict]:
+>       return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+
+tests/test_phase4a4_audit.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl')
+encoding = 'utf-8', errors = None
+
+    def read_text(self, encoding=None, errors=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        encoding = io.text_encoding(encoding)
+>       with self.open(mode='r', encoding=encoding, errors=errors) as f:
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase3a_grpo_pilot/preflight/rollouts_uvfc.jsonl'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+___________ test_replay_and_selected_share_image_ids_and_mixed_size ____________
+
+    def test_replay_and_selected_share_image_ids_and_mixed_size():
+>       selected = _read(ROOT / "outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl")
+
+tests/test_phase4a4_audit.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl')
+
+    def _read(path: Path) -> list[dict]:
+>       return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+
+tests/test_phase4a4_audit.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl')
+encoding = 'utf-8', errors = None
+
+    def read_text(self, encoding=None, errors=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        encoding = io.text_encoding(encoding)
+>       with self.open(mode='r', encoding=encoding, errors=errors) as f:
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/phase4a_uvfc_rft/data/uvfc_violation_train.jsonl'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+___________ test_sampled4_has_exactly_four_candidates_per_dev_image ____________
+
+    def test_sampled4_has_exactly_four_candidates_per_dev_image():
+>       dev = {str(r["image_id"]) for r in _read(ROOT / "outputs/same_backbone_baselines/manifests/development1000_images.jsonl")}
+
+tests/test_phase4a4_audit.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl')
+
+    def _read(path: Path) -> list[dict]:
+>       return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+
+tests/test_phase4a4_audit.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl')
+encoding = 'utf-8', errors = None
+
+    def read_text(self, encoding=None, errors=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        encoding = io.text_encoding(encoding)
+>       with self.open(mode='r', encoding=encoding, errors=errors) as f:
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+____________ test_development_and_final_holdout_images_are_disjoint ____________
+
+    def test_development_and_final_holdout_images_are_disjoint():
+>       dev = {str(r["image_id"]) for r in _read(ROOT / "outputs/same_backbone_baselines/manifests/development1000_images.jsonl")}
+
+tests/test_phase4a4_audit.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl')
+
+    def _read(path: Path) -> list[dict]:
+>       return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+
+tests/test_phase4a4_audit.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl')
+encoding = 'utf-8', errors = None
+
+    def read_text(self, encoding=None, errors=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        encoding = io.text_encoding(encoding)
+>       with self.open(mode='r', encoding=encoding, errors=errors) as f:
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/development1000_images.jsonl'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+________________ test_train_pool_disjoint_from_dev_and_holdout _________________
+
+    def test_train_pool_disjoint_from_dev_and_holdout():
+>       train = _ids(REPO / "outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl")
+
+tests/test_seeq_faithful.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl')
+
+    def _ids(path: Path) -> set[str]:
+>       return {str(json.loads(line)["image_id"]) for line in path.read_text().splitlines() if line.strip()}
+
+tests/test_seeq_faithful.py:84: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl')
+encoding = 'locale', errors = None
+
+    def read_text(self, encoding=None, errors=None):
+        """
+        Open the file in text mode, read it, and close the file.
+        """
+        encoding = io.text_encoding(encoding)
+>       with self.open(mode='r', encoding=encoding, errors=errors) as f:
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/hpc2hdd/home/fye374/LJJ/look-before-you-ask/outputs/same_backbone_baselines/manifests/train_unlabeled_images.jsonl'
+
+/opt/miniconda3/lib/python3.10/pathlib.py:1119: FileNotFoundError
+=============================== warnings summary ===============================
+tests/test_trainer_base.py::test_plain_sft_forward_loss_regression_matches_shared_hook
+  /hpc2hdd/home/fye374/LJJ/look-before-you-ask/tests/test_trainer_base.py:37: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+    assert abs(float(got - expected)) < 1e-6
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_evidence_constrained.py::test_train_and_development_are_disjoint
+FAILED tests/test_fixed_group_relative.py::test_no_holdout_leakage - FileNotF...
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_counts_and_official_split_names
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_gqa_train_and_eval_are_nonempty_and_disjoint
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_image_id_list_hashes_are_consistent
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_schema_and_manifest_path_resolution
+FAILED tests/test_image_split_integrity.py::ManifestTest::test_source_sha256_matches_raw_file
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_assert_no_eval_overlap_raises_on_eval_image
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_filter_drops_injected_val_and_test_rows
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_filter_never_mutates_input
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_summarize_rows_flags_eval_overlap
+FAILED tests/test_image_split_integrity.py::TrainOnlyGateTest::test_vqav2_train_rows_are_kept
+FAILED tests/test_phase4a4_audit.py::test_uvfc_violation_selection_alignment_from_raw
+FAILED tests/test_phase4a4_audit.py::test_replay_and_selected_share_image_ids_and_mixed_size
+FAILED tests/test_phase4a4_audit.py::test_sampled4_has_exactly_four_candidates_per_dev_image
+FAILED tests/test_phase4a4_audit.py::test_development_and_final_holdout_images_are_disjoint
+FAILED tests/test_seeq_faithful.py::test_train_pool_disjoint_from_dev_and_holdout
+================== 17 failed, 138 passed, 1 warning in 28.90s ==================

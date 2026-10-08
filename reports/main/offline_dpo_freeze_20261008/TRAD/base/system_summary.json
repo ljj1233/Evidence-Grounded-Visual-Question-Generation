@@ -1,0 +1,50 @@
+{
+  "n": 744,
+  "corpus_bleu4": 0.2675764311464206,
+  "corpus_qbleu4_variant": 0.2568111484981155,
+  "corpus_cider": 0.41343604604346174,
+  "distinct_2": 0.237122,
+  "normalized_excess_duplicate_rate": 0.326613,
+  "most_frequent": [
+    {
+      "question": "How many people are in the picture?",
+      "count": 26
+    },
+    {
+      "question": "How many giraffes are there?",
+      "count": 11
+    },
+    {
+      "question": "Is the man wearing a hat?",
+      "count": 8
+    },
+    {
+      "question": "How many horses are there?",
+      "count": 7
+    },
+    {
+      "question": "How many people are in the photo?",
+      "count": 7
+    },
+    {
+      "question": "Is this a cloudy day?",
+      "count": 6
+    },
+    {
+      "question": "Is the man wearing a tie?",
+      "count": 5
+    },
+    {
+      "question": "How many cows are there?",
+      "count": 5
+    },
+    {
+      "question": "Is the woman wearing glasses?",
+      "count": 5
+    },
+    {
+      "question": "How many dogs are there?",
+      "count": 5
+    }
+  ]
+}

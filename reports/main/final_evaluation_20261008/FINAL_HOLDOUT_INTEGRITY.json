@@ -1,0 +1,35 @@
+{
+  "holdout_manifest": "src/vvqg/data/evaluation/final_holdout_manifest.jsonl",
+  "holdout_manifest_sha256": "eedd8b3ae1164729e166429cd6d467a22c67ca658e5ce2fc62194c24a414f54c",
+  "holdout_unique_ids": 2000,
+  "expected_count": 2000,
+  "count_ok": true,
+  "pools": {
+    "sft_base_train": 9184,
+    "formal_method_train": 9184,
+    "dpo_6633_pairs": 6633,
+    "historical_dpo_train": 578,
+    "historical_dpo_pilot": 128,
+    "uvfc_discovery": 7963,
+    "uvfc_calibration": 3593,
+    "dev256": 256,
+    "dev744": 744,
+    "development1000": 1000,
+    "val_debug": 1000
+  },
+  "overlaps": {
+    "sft_base_train": 0,
+    "formal_method_train": 0,
+    "dpo_6633_pairs": 0,
+    "historical_dpo_train": 0,
+    "historical_dpo_pilot": 0,
+    "uvfc_discovery": 0,
+    "uvfc_calibration": 0,
+    "dev256": 0,
+    "dev744": 0,
+    "development1000": 0,
+    "val_debug": 0
+  },
+  "any_overlap": false,
+  "unexpected_overlaps": {}
+}

@@ -1,0 +1,8 @@
+{
+  "task": "evidence_answer_diagnostics",
+  "requested": 4000,
+  "cached": 66,
+  "new_requests": 3934,
+  "ok": 3958,
+  "concurrency": 32
+}

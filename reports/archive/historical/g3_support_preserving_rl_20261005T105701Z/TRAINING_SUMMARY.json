@@ -1,0 +1,24 @@
+{
+  "variant": "g3_support_preserving",
+  "steps": 300,
+  "max_steps": 300,
+  "stop_reason": null,
+  "checkpoints": [
+    "step_0000",
+    "step_0050",
+    "step_0100",
+    "step_0150",
+    "step_0200",
+    "step_0250",
+    "step_0300",
+    "step_final"
+  ],
+  "parameters": {
+    "total": 8810770672,
+    "trainable": 43646976,
+    "trainable_pct": 0.49538204573530636
+  },
+  "wall_seconds": 9350.82,
+  "seed": 42,
+  "base_checkpoint": "outputs/phase5c_qse_relativeguard/checkpoints/step_final"
+}
