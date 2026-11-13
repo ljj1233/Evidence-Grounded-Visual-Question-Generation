@@ -368,25 +368,6 @@ class ScoreRecord:
 
 
 @dataclass
-class ReviewRecord:
-    """Human review entry. Stage A defines the format but does not populate it."""
-
-    review_id: str
-    run_id: str
-    protocol_version: str
-    question_id: str
-    target_type: str
-    target_id: str
-    reviewer: str
-    decision: str
-    notes: str
-    created_at: str = field(default_factory=utc_now)
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-
-@dataclass
 class CallRecord:
     call_id: str
     run_id: str
@@ -451,16 +432,6 @@ class ExperimentStore:
                 raise ValueError(f'cannot change frozen {key}')
         return atomic_upsert(self.path, 'attempt_id', record, allow_insert=False,
                              expected_sha256=sha256_text(canonical_json(previous)))
-
-
-def write_result(*, run_dir: Path, attempt_id: str, record: dict,
-                 expected_run_fingerprint: str, previous: dict) -> dict:
-    store = ExperimentStore(run_dir)
-    if store.manifest['fingerprint'] != expected_run_fingerprint or record['attempt_id'] != attempt_id:
-        raise ValueError('run or attempt identity mismatch')
-    action = store.put(record, previous=previous)
-    return {'attempt_id': attempt_id, 'action': action,
-            'record_sha256': sha256_text(canonical_json(record)), 'records_path': str(store.path)}
 
 
 def material_metadata(material):

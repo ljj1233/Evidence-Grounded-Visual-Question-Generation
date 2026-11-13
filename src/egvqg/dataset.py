@@ -336,17 +336,3 @@ def normalize_materials(*, input_path: Path, output_path: Path, dataset_name: st
     return {'materials':str(destination),'n_materials':len(rows),
             **({'questions':str(qdestination),'n_supplied_questions':len(questions)} if qdestination else {})}
 
-
-def load_material(*, materials_path: Path, material_id: str,
-                  expected_selection_hash: str, project_root: Path = Path('.')) -> dict:
-    """Load one material after validating the frozen material file and image bytes."""
-    from .pipeline import load_materials
-    from .records import material_metadata
-    from .records import sha256_file
-    root = project_root.resolve(); path = root / materials_path
-    if sha256_file(path) != expected_selection_hash:
-        raise ValueError('frozen material selection changed')
-    matches = [m for m in load_materials(root, path) if m['material_id'] == material_id]
-    if len(matches) != 1:
-        raise ValueError('material_id must identify exactly one material')
-    return material_metadata(matches[0])
