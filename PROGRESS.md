@@ -338,3 +338,12 @@
 - 验证：`.venv/bin/python -m pytest -q -o addopts=''` 177通过（原147 + 新30）；对9处关键逻辑做突变检查，8处被测试发现，1处（见证答案与完整答案相同的检查）在槽位相等传递的前提下逻辑冗余，已删除而不是补测试；用`outputs/necessity-v3-full-v1/results.jsonl`做零调用重放，新模块与旧脚本在1099题上的B、D_T、D_I零差异（`code_snapshots/compat.py`）；真实模型预检`necessity-ensemble-smoke-v1`，10题、84次HTTP、约6.5万词元，费用未返回。预检中发现并修复了新子命令漏加`--run-id`的CLI问题（现有parse测试覆盖）。
 - 文档：新增`docs/references.md`（数学命题索引、论文与数据来源，均取自`story.md`、`VQG_Proposal.md`、README的原有引用，未增补标题；3个arXiv编号和SynMQG链接沿用原文，未联网核对）；README改为简短当前状态、文档地图表和必要性评估入口；`docs/evaluation_design_v2_draft.md`、`docs/implementation_plan.md`加状态说明；`docs/evaluation_protocol_v1.0.md`未改。相对链接检查无断链。改动前备份在`outputs/_doc_backup_2026-11-13/`。
 - 未做：`tmp/`里试验脚本和`tmp/review64`的清理或移动（权限未批准，用户决定），脚本已复制进`outputs/necessity-v3-pilot-v1/code_snapshots/`和`necessity-v3-full-v1/code_snapshots/`；PROGRESS.md（约145KB）、README后半的历史命令段、`implementation_plan.md`按时间的历史段未压缩；旧的评估/生成模块与约60个CLI子命令未清理（冻结运行的哈希依赖它们）；仓库一个提交且全部文件未跟踪，未做git提交或推送。
+
+
+### 2026-11-13：卡3本地Qwen3-VL-8B跑全1257组baseline、评估器只跑可能被确认的题
+
+- 用户要用卡3在ScienceQA test上跑本地Qwen3-VL-8B（Qwen3.5-9B暂缓：其`model_type`为`qwen3_5`，共享venv的transformers 4.57.6不识别，需另装更新版，用户选择以后再说）。只使用卡3（`CUDA_VISIBLE_DEVICES=3`），共享venv`Video-skill-transfer/.venv`可用于Qwen3-VL-8B（torch 2.8.0+cu128、transformers 4.57.6、Blackwell sm_120），该venv无pip、无vllm。
+- 新增`src/egvqg/local_vision.py`（`BatchingProvider`动态批处理 + Qwen3-VL后端，贪心、bf16、sdpa）和`simple-baseline-run --local-model-path/--device/--max-batch/--max-new-tokens`，5项测试；批大小不进模型身份。预检16题21秒（含模型加载）；全量`qwen3vl8b-baseline-test1257-simple-v1`：1257题全部生成（0生成失败）、回答1119、拒答75、内容合同失败63；与luna baseline相比回答失败多（63对1）、重复问题字符串多（414对237）。输出尚未评估。
+- 成本分析（对全量评估器结果拆分）：9,888次调用、743万词元，平均每题约9次；唯一可能被确认的74题（两方向都有反例）只占994次调用、15%词元，其余1025题（93%）占90%调用、85%词元却不可能被确认。单模态充分性筛查把94%的题判为单模态可答，对审计确认的真双必要误砍0/19（含漏判共1/23），并去掉38个确认项里的6个。上游原评估器本身另有661万词元。
+- `necessity-ensemble`默认只评估两方向都有反例的题（`--all-items`可全量诊断），其余记为“无双向反例，未运行”并计入未确认；31项测试。旧run的manifest无该设置，按全量处理，结果不变。
+- 未做：对Qwen baseline的评估（拟采用“有效性 → 单模态筛查 → 仅幸存题做反例与评估器”的顺序，需先改评估流程）；Qwen3.5；本地模型用作筛查器的误砍率检验。

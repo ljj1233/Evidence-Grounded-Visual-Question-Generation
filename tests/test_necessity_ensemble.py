@@ -167,11 +167,11 @@ def go(tmp_path, mock, **kw):
 def test_end_to_end_isolation_arbiter_scope_resume_and_denominator(tmp_path):
     build_source(tmp_path)
     assert init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb',
-                         project_root=tmp_path, concurrency=4)['n_slots'] == 4
+                         project_root=tmp_path, concurrency=4, candidates_only=False)['n_slots'] == 4
     assert init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb',
-                         project_root=tmp_path, concurrency=4)['resumed']
+                         project_root=tmp_path, concurrency=4, candidates_only=False)['resumed']
     with pytest.raises(ValueError, match='frozen'):
-        init_ensemble(run_id='ens', source_run='source', model_a='other', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=4)
+        init_ensemble(run_id='ens', source_run='source', model_a='other', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=4, candidates_only=False)
     mock = Mock()
     go(tmp_path, mock)
     for model, r in mock.calls:                                           # material isolation and no reference leakage
@@ -204,7 +204,7 @@ def test_end_to_end_isolation_arbiter_scope_resume_and_denominator(tmp_path):
 
 def test_failed_calls_are_recorded_not_cached_and_retried_on_resume(tmp_path):
     build_source(tmp_path)
-    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2)
+    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2, candidates_only=False)
     target = lambda model, r: model == 'model-b' and r.condition == 'T' and '情形1' not in r.prompt and '固定问题：\nQ2' in r.prompt
     go(tmp_path, Mock(fail=target), phase='screen')
     rows = read_jsonl(tmp_path / 'outputs/ens/results.jsonl')
@@ -220,7 +220,7 @@ def test_failed_calls_are_recorded_not_cached_and_retried_on_resume(tmp_path):
 def test_http_cap_stops_the_run(tmp_path):
     build_source(tmp_path)
     init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path,
-                  concurrency=1, max_http=3)
+                  concurrency=1, max_http=3, candidates_only=False)
     with pytest.raises(RuntimeError, match='HTTP cap'):
         go(tmp_path, Mock())
     assert len(read_jsonl(tmp_path / 'outputs/ens/results.jsonl')) <= 3
@@ -237,7 +237,18 @@ def test_cli_exposes_the_three_commands_with_the_common_run_arguments():
 
 def test_partial_run_reports_unevaluated_slots_separately(tmp_path):
     build_source(tmp_path)
-    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2)
+    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2, candidates_only=False)
     go(tmp_path, Mock(), phase='screen', limit=1)
     detail = report_ensemble(run_id='ens', project_root=tmp_path)['detail']
     assert detail['not_yet_evaluated'] == 1 and detail['necessity_undecided'] == 1 and detail['necessity_undecided_why']
+
+
+def test_default_mode_runs_only_items_that_can_be_confirmed(tmp_path):
+    build_source(tmp_path)
+    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2)
+    mock = Mock()
+    go(tmp_path, mock)
+    assert {r.metadata['key'].split('|')[-1] for _, r in mock.calls} == {'attempt_0'}       # Q2 has no two-way witness: no call at all
+    result = report_ensemble(run_id='ens', project_root=tmp_path)
+    assert result['detail']['no_two_way_witness_not_run'] == 1 and result['confirmed_dual'] == 1
+    assert result['confirmed_dual'] + result['not_confirmed'] == result['n_slots'] == 4

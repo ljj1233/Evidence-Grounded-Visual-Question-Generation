@@ -55,7 +55,7 @@ uv sync
 | 阶段 | 命令 | 说明 |
 |---|---|---|
 | 数据 | `download-data`、`fetch-dataset`、`normalize-materials` | 见下节 |
-| baseline生成 | `simple-baseline-init/run/report` | 只见hint与原图，生成问题并做独立完整图文回答；异步并发，图片有大小硬限 |
+| baseline生成 | `simple-baseline-init/run/report` | 只见hint与原图，生成问题并做独立完整图文回答；异步并发，图片有大小硬限。`run`加`--local-model-path <Qwen3-VL目录> --device cuda:0 --max-batch 16`可改用本地模型（单卡动态批处理，用`CUDA_VISIBLE_DEVICES`指定卡） |
 | 基础评估 | `simple-baseline-eval-init/run/report` | 全批生成完成后才能创建；分别评可答性/忠实性、原回答支持、双必要性 |
 | **必要性评估（推荐）** | `necessity-ensemble-init/run/report` | 见下节 |
 | 方法实验框架 | `experiment-init/run/review`、`records-metrics`、`records-patterns`、`stage-two`、`reference-review`、`review-packet`、`freeze-evaluation`、`probe-*`、`retry-evaluation` | 四种生成方法（plain、strong、anchored、no_image_anchor）与四条件作答的固定名额实验，指标分母为预安排名额N；详见[实施路线第6节](docs/implementation_plan.md) |
@@ -76,7 +76,7 @@ $E necessity-ensemble-report --run-id $R                # 固定分母报告；�
 
 - 并发默认32，每次调用至多重试一次，HTTP硬上限默认16000；失败的调用留在`results.jsonl`但不缓存，恢复时补跑。
 - 报告只分“确认双必要”与“未确认”；确认项必须人工复核后才计入，评估器自身会误放行（对称方格、被预设绑定的交换题等）。
-- 只有原评估器给出两个方向假想情形的题才可能被确认双必要；其余只能被否定或保持未决。
+- 只有原评估器给出两个方向假想情形的题才可能被确认双必要，所以默认只评估这些题（约占可答题的7%，却是确认项的全部来源）；`init --all-items`才会评估其余题，仅作诊断，花费约为10倍。
 
 ## 数据
 

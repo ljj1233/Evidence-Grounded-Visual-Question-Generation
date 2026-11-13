@@ -168,6 +168,11 @@ class Evaluation:
         return [i for i in self.items if self.decide(i, GROUPS)['B'] is None]
 
 
+def has_two_way_witness(i):
+    """Only an item with a proposed witness in both directions can be confirmed dual."""
+    return bool(i['witness_text_removed'] and i['witness_image_removed'])
+
+
 # ----------------------------------------------------------------------------- prompts
 
 def sufficiency_prompt(prompts, i, mod, knowledge):
@@ -191,7 +196,7 @@ def extract_prompt(prompts, i, schema, strings):
 # ----------------------------------------------------------------------------- init / run / report
 
 def init_ensemble(*, run_id, source_run, model_a, model_b, arbiter, project_root='.', output_root='outputs',
-                  concurrency=32, max_http=16000):
+                  concurrency=32, max_http=16000, candidates_only=True):
     """Freeze the item list, prompts and settings from a finished simple-baseline evaluation run."""
     root = Path(project_root).resolve()
     _validate_run_id(run_id)
@@ -216,7 +221,7 @@ def init_ensemble(*, run_id, source_run, model_a, model_b, arbiter, project_root
             raise ValueError('evaluation image changed: ' + i['item_id'])
     prompts = PromptSet(root / 'prompts', names=TEMPLATES)
     settings = {'models': {'a': model_a, 'b': model_b, ARBITER: arbiter}, 'concurrency': concurrency, 'max_http': max_http,
-                'source_run': source_run, 'knowledge': knowledge}
+                'source_run': source_run, 'knowledge': knowledge, 'candidates_only': candidates_only}
     fingerprint = sha256_text(canonical_json({'items': items, 'prompts': prompts.snapshot(), 'settings': settings}))
     out.mkdir(parents=True, exist_ok=True)
     with file_lock(out / '.init.lock'):
@@ -230,7 +235,7 @@ def init_ensemble(*, run_id, source_run, model_a, model_b, arbiter, project_root
             (out / 'prompts' / f'{name}.txt').write_text(text, encoding='utf-8')
         write_json(out / 'manifest.json', {
             'fingerprint': fingerprint, 'created_at': utc_now(), 'settings': settings, 'prompt_sha256': prompts.snapshot_sha256(),
-            'n_slots': len(items), 'n_evaluated': sum(i['validity'] == 1 and bool(i['question'] and i['reference']) for i in items)})
+            'n_slots': len(items), 'n_evaluated': sum(i['validity'] == 1 and bool(i['question'] and i['reference']) and (not candidates_only or has_two_way_witness(i)) for i in items)})
     return {'n_slots': len(items), 'resumed': False}
 
 
@@ -279,7 +284,8 @@ def run_ensemble(*, run_id, phase='all', limit=None, project_root='.', output_ro
     store = _Store(out / 'results.jsonl')
     (out / 'requests').mkdir(exist_ok=True)
     factory = provider_factory or _default_factory(root, out)
-    evaluated = [i for i in items if i['validity'] == 1 and i['question'] and i['reference']]
+    only = settings.get('candidates_only', False)
+    evaluated = [i for i in items if i['validity'] == 1 and i['question'] and i['reference'] and (not only or has_two_way_witness(i))]
     if limit:
         evaluated = evaluated[:limit]
     guard = threading.Lock()
@@ -349,15 +355,17 @@ def report_ensemble(*, run_id, project_root='.', output_root='outputs'):
     root = Path(project_root).resolve()
     _validate_run_id(run_id)
     out = root / output_root / run_id
-    _, _, items = _load(out)
+    manifest, _, items = _load(out)
+    only = manifest['settings'].get('candidates_only', False)
     store = _Store(out / 'results.jsonl')
-    evaluation = Evaluation(items, store.ok)
+    evaluation = Evaluation([i for i in items if not only or has_two_way_witness(i)], store.ok)
     screened = {i['attempt_id'] for i in evaluation.items if any(evaluation.p(r, 'S', i['attempt_id'], m) is not None for r in GROUPS for m in 'TI')}
     by_b = collections.Counter(r['B'] if i['attempt_id'] in screened or r['B'] is not None else 'pending'
                                for i in evaluation.items for r in [evaluation.results[i['attempt_id']]])
     invalid = sum(i['validity'] == 0 for i in items)
     validity_pending = sum(i['validity'] is None for i in items)
-    no_input = sum(i['validity'] == 1 for i in items) - len(evaluation.items)
+    no_input = sum(i['validity'] == 1 and not (i['question'] and i['reference']) for i in items)
+    no_two_way = sum(only and i['validity'] == 1 and bool(i['question'] and i['reference']) and not has_two_way_witness(i) for i in items)
     tokens = collections.Counter()
     for r in store.ok.values():
         tokens[r['key'].split('|')[0]] += r.get('tokens') or 0
@@ -368,9 +376,9 @@ def report_ensemble(*, run_id, project_root='.', output_root='outputs'):
             why['no witness in a direction' if 'nowit' in (r['D_T_why'], r['D_I_why']) else 'groups split or slots undecided'] += 1
     undecided = by_b[None]
     result = {'n_slots': len(items), 'confirmed_dual': by_b[1],
-              'not_confirmed': invalid + by_b[0] + validity_pending + no_input + undecided + by_b['pending'],
+              'not_confirmed': invalid + by_b[0] + validity_pending + no_input + no_two_way + undecided + by_b['pending'],
               'detail': {'invalid_question': invalid, 'single_modality_sufficient': by_b[0], 'validity_pending': validity_pending,
-                         'no_question_or_reference': no_input, 'necessity_undecided': undecided, 'necessity_undecided_why': dict(why),
+                         'no_question_or_reference': no_input, 'no_two_way_witness_not_run': no_two_way, 'necessity_undecided': undecided, 'necessity_undecided_why': dict(why),
                          'not_yet_evaluated': by_b['pending']},
               'arbitrated_items': len(evaluation.arbitrated), 'slot_extraction_failures': dict(evaluation.failures),
               'tokens': dict(tokens), 'http_requests': store.http,

@@ -48,6 +48,7 @@
 | `pipeline.py`、`evaluation.py`、`metrics.py` | 阶段A闭环、候选答案/有效性/四条件作答/评分、固定分母指标 |
 | `generation.py`、`experiments.py`、`batch.py` | 四种生成方法与固定名额实验、阶段二批处理 |
 | `simple_baseline.py`、`simple_baseline_evaluation.py` | 异步baseline生成与回答；整批完成后的评估 |
+| `local_vision.py` | 本地Qwen3-VL提供者：动态批处理，接口与API提供者一致 |
 | `baseline_analysis.py`、`faithfulness.py`、`evidence_verification.py`、`assessment_rules.py` | 定向复核、忠实性派生、证据核验闸门、知识范围配置 |
 | `necessity_ensemble.py` | 两组加仲裁的必要性评估器，决策逻辑为纯函数 |
 

@@ -194,6 +194,10 @@ def build_parser() -> argparse.ArgumentParser:
     sbinit.add_argument('--reuse-run',default=None)
     sbrun=subparsers.add_parser('simple-baseline-run',help='async generation+TI answering only; no evaluation')
     sbrun.add_argument('--limit',type=int,default=None)
+    sbrun.add_argument('--local-model-path',default=None,help='run a local Qwen3-VL model instead of the API (single GPU, dynamic batching)')
+    sbrun.add_argument('--device',default='cuda:0')
+    sbrun.add_argument('--max-batch',type=int,default=8)
+    sbrun.add_argument('--max-new-tokens',type=int,default=1024)
     sbreport=subparsers.add_parser('simple-baseline-report',help='report generation and answering progress without quality labels')
     seinit=subparsers.add_parser('simple-baseline-eval-init',help='freeze evaluation only after all simple baseline generation+TI answers finish')
     seinit.add_argument('--source-run',required=True)
@@ -209,6 +213,7 @@ def build_parser() -> argparse.ArgumentParser:
     nei.add_argument('--arbiter',default='gpt-5.6-terra')
     nei.add_argument('--concurrency',type=int,default=32)
     nei.add_argument('--max-http',type=int,default=16000)
+    nei.add_argument('--all-items',action='store_true',help='also evaluate items without a witness in both directions (diagnostic; they can never be confirmed dual)')
     ner=subparsers.add_parser('necessity-ensemble-run',help='async sufficiency screening, witness recompute and answer-slot extraction; arbiter only for open items')
     ner.add_argument('--phase',choices=('screen','arbitrate','all'),default='all')
     ner.add_argument('--limit',type=int,default=None)
@@ -240,7 +245,7 @@ def main(argv: list[str] | None = None) -> int:
             common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
             if args.command=='necessity-ensemble-init':
                 result=init_ensemble(**common,source_run=args.source_run,model_a=args.model_a,model_b=args.model_b,arbiter=args.arbiter,
-                    concurrency=args.concurrency,max_http=args.max_http)
+                    concurrency=args.concurrency,max_http=args.max_http,candidates_only=not args.all_items)
             elif args.command=='necessity-ensemble-run':result=run_ensemble(**common,phase=args.phase,limit=args.limit)
             else:result=report_ensemble(**common)
             print(json.dumps(result,ensure_ascii=False,indent=2))
@@ -250,7 +255,13 @@ def main(argv: list[str] | None = None) -> int:
             if args.command=='simple-baseline-init':
                 result=init_simple_baseline(**common,materials_path=args.materials,model=args.model,concurrency=args.concurrency,
                     max_image_edge=args.max_image_edge,max_image_pixels=args.max_image_pixels,max_image_bytes=args.max_image_bytes,reuse_run=args.reuse_run)
-            elif args.command=='simple-baseline-run':result=run_simple_baseline(**common,limit=args.limit)
+            elif args.command=='simple-baseline-run':
+                factory=None
+                if args.local_model_path:
+                    from .local_vision import local_provider
+                    local=local_provider(args.local_model_path,device=args.device,max_batch=args.max_batch,max_new_tokens=args.max_new_tokens)
+                    factory=lambda item,tokens:local
+                result=run_simple_baseline(**common,limit=args.limit,provider_factory=factory)
             else:result=report_simple_baseline(**common)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='baseline-analysis-report':
