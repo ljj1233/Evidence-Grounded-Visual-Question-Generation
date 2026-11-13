@@ -1,0 +1,15 @@
+检查当前问题的五类捷径，逐类判断，允许多标签重叠。
+text_only：Q+T足以完整回答，无需I独有信息；不要求I答错。
+image_only：Q+I足以完整回答，无需T独有信息；不要求T答错。
+common_knowledge：Q加通常学科知识足以回答，无需特定材料事实。
+question_leakage：Q直接给出、等价复述或逻辑包含关键答案信息。
+independent_stitching：拆成分别依赖模态但互不影响的独立子问题。
+文本：<T>$T</T>
+图像通过图像输入提供。
+问题：<Q>$Q</Q>
+参考信息及核验来源：$REFERENCE
+四条件结果：$FOUR_CONDITION_RESULTS
+单次答对/答错只作线索，不替代证据。对存在的捷径给可核验的替代解法/泄露位置。
+不推断模型内部知识来源。证据不足用null。
+每项格式：{"value":1或0或null,"reason":"理由","evidence":[],"alternative_solution":null}
+只输出JSON，键为text_only、image_only、common_knowledge、question_leakage、independent_stitching。

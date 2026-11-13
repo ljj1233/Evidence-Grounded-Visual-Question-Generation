@@ -1,0 +1,3 @@
+提取实际图像中直接可见、可定位的事实，不补外部背景，不生成问题或答案。
+图像通过图像输入提供。推断不作为观察事实；不确定读数标uncertain。
+只输出JSON：{"image_evidence":[{"id":"i1","location":"图中位置","bbox_norm":null,"fact":"可见事实","type":"reading或label或state或structure或relation","status":"clear或uncertain"}],"issues":[]}

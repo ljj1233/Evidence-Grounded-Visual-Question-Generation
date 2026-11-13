@@ -1,0 +1,870 @@
+{
+  "description": "Synthetic engineering fixture for Stage A only. Not real data or model output.",
+  "materials": {
+    "m_circuit": {
+      "answers": {
+        "图中电流表的读数是多少？": {
+          "candidate": {
+            "acceptable_answers": [
+              "2A"
+            ],
+            "answer": "2A",
+            "evidence_image": [
+              "电流表读数"
+            ],
+            "evidence_text": [
+              "电路说明"
+            ],
+            "rubric": "电流表读数为2A",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "2A",
+              "2 A"
+            ],
+            "answer": "2A",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "电流表读数为2A",
+            "status": "verified"
+          }
+        },
+        "电源电压是多少伏特？": {
+          "candidate": {
+            "acceptable_answers": [
+              "6V"
+            ],
+            "answer": "6V",
+            "evidence_image": [],
+            "evidence_text": [
+              "6V电源"
+            ],
+            "rubric": "文本给出电源电压6V",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "6V",
+              "6 V",
+              "6伏"
+            ],
+            "answer": "6V",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "文本给出电源电压6V",
+            "status": "verified"
+          }
+        },
+        "该电路的电流表读数是多少？": {
+          "candidate": {
+            "acceptable_answers": [
+              "2A"
+            ],
+            "answer": "2A",
+            "evidence_image": [
+              "电流表读数"
+            ],
+            "evidence_text": [
+              "电路说明"
+            ],
+            "rubric": "电流表读数为2A",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "2A",
+              "2 A"
+            ],
+            "answer": "2A",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "电流表读数为2A",
+            "status": "verified"
+          }
+        }
+      },
+      "evidence": {
+        "image": [
+          {
+            "content": "电流表读数2A",
+            "location": "image:meter"
+          }
+        ],
+        "text": [
+          {
+            "content": "电路由6V电源供电",
+            "location": "text:1"
+          }
+        ]
+      },
+      "methods": {
+        "evidence_anchored": {
+          "question": "该电路的电流表读数是多少？"
+        },
+        "plain": {
+          "question": "图中电流表的读数是多少？"
+        },
+        "strong": {
+          "question": "电源电压是多少伏特？"
+        }
+      },
+      "responses": {
+        "图中电流表的读数是多少？": {
+          "0": {
+            "answer": "2A",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "2A",
+            "status": "answered"
+          },
+          "T": {
+            "answer": null,
+            "status": "refused"
+          },
+          "TI": {
+            "answer": "2A",
+            "status": "answered"
+          }
+        },
+        "电源电压是多少伏特？": {
+          "0": {
+            "answer": "3V",
+            "status": "answered"
+          },
+          "I": {
+            "answer": null,
+            "status": "refused"
+          },
+          "T": {
+            "answer": "6V",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "6V",
+            "status": "answered"
+          }
+        },
+        "该电路的电流表读数是多少？": {
+          "0": {
+            "answer": "2A",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "2A",
+            "status": "answered"
+          },
+          "T": {
+            "answer": null,
+            "status": "refused"
+          },
+          "TI": {
+            "answer": "2A",
+            "status": "answered"
+          }
+        }
+      },
+      "validity": {
+        "图中电流表的读数是多少？": {
+          "reasons": [
+            "题意明确，图像可支持读数"
+          ],
+          "status": "valid"
+        },
+        "电源电压是多少伏特？": {
+          "reasons": [
+            "题意明确，文本给出电源电压"
+          ],
+          "status": "valid"
+        },
+        "该电路的电流表读数是多少？": {
+          "reasons": [
+            "题意明确，图像可支持读数"
+          ],
+          "status": "valid"
+        }
+      }
+    },
+    "m_device": {
+      "answers": {
+        "装置中哪个部分用于加热？": {
+          "candidate": {
+            "acceptable_answers": [
+              "加热器"
+            ],
+            "answer": "加热器",
+            "evidence_image": [],
+            "evidence_text": [],
+            "rubric": "图示加热器负责加热",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "加热器"
+            ],
+            "answer": "加热器",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "图示加热器负责加热",
+            "status": "verified"
+          }
+        }
+      },
+      "evidence": {
+        "image": [
+          {
+            "content": "装置标注：加热器、温度计",
+            "location": "image:labels"
+          }
+        ],
+        "text": [
+          {
+            "content": "加热部件使液体升温",
+            "location": "text:1"
+          }
+        ]
+      },
+      "methods": {
+        "evidence_anchored": {
+          "finish_reason": "refusal",
+          "raw": "抱歉，我无法完成这个请求。"
+        },
+        "plain": {
+          "question": "装置中哪个部分用于加热？"
+        },
+        "strong": {
+          "technical_failure": "simulated upstream timeout"
+        }
+      },
+      "responses": {
+        "装置中哪个部分用于加热？": {
+          "0": {
+            "answer": "温度计",
+            "status": "answered"
+          },
+          "I": {
+            "answer": null,
+            "status": "refused"
+          },
+          "T": {
+            "answer": "加热器",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "加热器",
+            "status": "answered"
+          }
+        }
+      },
+      "validity": {
+        "装置中哪个部分用于加热？": {
+          "reasons": [
+            "题意明确，材料可支持答案"
+          ],
+          "status": "valid"
+        }
+      }
+    },
+    "m_invalid": {
+      "evidence": {
+        "image": [
+          {
+            "content": "安全标识占位图",
+            "location": "image:sign"
+          }
+        ],
+        "text": [
+          {
+            "content": "实验室安全注意事项",
+            "location": "text:1"
+          }
+        ]
+      },
+      "methods": {
+        "evidence_anchored": {
+          "question": "这个实验说明了什么？"
+        },
+        "plain": {
+          "question": "为什么？"
+        },
+        "strong": {
+          "question": "下列哪一项是正确的？"
+        }
+      },
+      "responses": {
+        "下列哪一项是正确的？": {
+          "0": {
+            "answer": null,
+            "status": "refused"
+          },
+          "I": {
+            "answer": null,
+            "status": "refused"
+          },
+          "T": {
+            "answer": null,
+            "status": "refused"
+          },
+          "TI": {
+            "answer": null,
+            "status": "refused"
+          }
+        },
+        "为什么？": {
+          "0": {
+            "answer": null,
+            "status": "refused"
+          },
+          "I": {
+            "answer": null,
+            "status": "refused"
+          },
+          "T": {
+            "answer": null,
+            "status": "refused"
+          },
+          "TI": {
+            "answer": null,
+            "status": "refused"
+          }
+        },
+        "这个实验说明了什么？": {
+          "0": {
+            "answer": null,
+            "status": "refused"
+          },
+          "I": {
+            "answer": null,
+            "status": "refused"
+          },
+          "T": {
+            "answer": null,
+            "status": "refused"
+          },
+          "TI": {
+            "answer": null,
+            "status": "refused"
+          }
+        }
+      },
+      "validity": {
+        "下列哪一项是正确的？": {
+          "reasons": [
+            "没有给出选项，题意不完整"
+          ],
+          "status": "invalid"
+        },
+        "为什么？": {
+          "reasons": [
+            "指代不明，缺少可回答对象"
+          ],
+          "status": "invalid"
+        },
+        "这个实验说明了什么？": {
+          "reasons": [
+            "材料没有描述实验，问题预设不成立"
+          ],
+          "status": "invalid"
+        }
+      }
+    },
+    "m_material": {
+      "answers": {
+        "制作散热片时应选择表中哪种材料？": {
+          "candidate": {
+            "acceptable_answers": [
+              "铜"
+            ],
+            "answer": "铜",
+            "evidence_image": [],
+            "evidence_text": [],
+            "rubric": "导热性越高越适合，铜的导热系数更高",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "铜",
+              "铜（Cu）"
+            ],
+            "answer": "铜",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "导热性越高越适合，铜的导热系数更高",
+            "status": "verified"
+          }
+        },
+        "根据表中数据，哪种材料的导热性最好？": {
+          "candidate": {
+            "acceptable_answers": [
+              "铜"
+            ],
+            "answer": "铜",
+            "evidence_image": [],
+            "evidence_text": [],
+            "rubric": "铜的导热系数401，高于铝237",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "铜",
+              "铜（Cu）"
+            ],
+            "answer": "铜",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "铜的导热系数401，高于铝237",
+            "status": "verified"
+          }
+        },
+        "铜和铝中，哪种材料的导热性更好？": {
+          "candidate": {
+            "acceptable_answers": [
+              "铜"
+            ],
+            "answer": "铜",
+            "evidence_image": [],
+            "evidence_text": [],
+            "rubric": "铜的导热系数高于铝",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "铜",
+              "铜（Cu）"
+            ],
+            "answer": "铜",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "铜的导热系数高于铝",
+            "status": "verified"
+          }
+        }
+      },
+      "evidence": {
+        "image": [
+          {
+            "content": "导热系数：铜401，铝237",
+            "location": "image:table"
+          }
+        ],
+        "text": [
+          {
+            "content": "导热性越高越适合制作散热片",
+            "location": "text:1"
+          }
+        ]
+      },
+      "methods": {
+        "evidence_anchored": {
+          "question": "制作散热片时应选择表中哪种材料？"
+        },
+        "plain": {
+          "question": "根据表中数据，哪种材料的导热性最好？"
+        },
+        "strong": {
+          "question": "铜和铝中，哪种材料的导热性更好？"
+        }
+      },
+      "responses": {
+        "制作散热片时应选择表中哪种材料？": {
+          "0": {
+            "answer": "铝",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "铜",
+            "status": "answered"
+          },
+          "T": {
+            "answer": "铝",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "铜",
+            "status": "answered"
+          }
+        },
+        "根据表中数据，哪种材料的导热性最好？": {
+          "0": {
+            "answer": "铜",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "铝",
+            "status": "answered"
+          },
+          "T": {
+            "answer": "铝",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "铜",
+            "status": "answered"
+          }
+        },
+        "铜和铝中，哪种材料的导热性更好？": {
+          "0": {
+            "answer": "铜",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "铝",
+            "status": "answered"
+          },
+          "T": {
+            "answer": "铜",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "铜",
+            "status": "answered"
+          }
+        }
+      },
+      "validity": {
+        "制作散热片时应选择表中哪种材料？": {
+          "reasons": [
+            "题意明确，材料可支持答案"
+          ],
+          "status": "valid"
+        },
+        "根据表中数据，哪种材料的导热性最好？": {
+          "reasons": [
+            "等待人工复核问题是否完全对应表格"
+          ],
+          "status": "unresolved"
+        },
+        "铜和铝中，哪种材料的导热性更好？": {
+          "reasons": [
+            "等待人工复核"
+          ],
+          "status": "unresolved"
+        }
+      }
+    },
+    "m_reagent": {
+      "answers": {
+        "按照实验规则，应选用哪种试剂？": {
+          "candidate": {
+            "acceptable_answers": [
+              "B"
+            ],
+            "answer": "B",
+            "evidence_image": [],
+            "evidence_text": [],
+            "rubric": "显色为蓝色，按规则选B",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "B",
+              "试剂B"
+            ],
+            "answer": "B",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "显色为蓝色，按规则选B",
+            "status": "verified"
+          }
+        },
+        "本次实验最终应选用哪种试剂？": {
+          "candidate": {
+            "acceptable_answers": [
+              "B"
+            ],
+            "answer": "B",
+            "evidence_image": [],
+            "evidence_text": [],
+            "rubric": "显色为蓝色，按规则选B",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "B",
+              "试剂B"
+            ],
+            "answer": "B",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "显色为蓝色，按规则选B",
+            "status": "verified"
+          }
+        },
+        "根据规则和结果表，哪种试剂应被选用？": {
+          "candidate": {
+            "acceptable_answers": [
+              "B"
+            ],
+            "answer": "B",
+            "evidence_image": [],
+            "evidence_text": [],
+            "rubric": "显色为蓝色，按规则选B",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "B",
+              "试剂B"
+            ],
+            "answer": "B",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "显色为蓝色，按规则选B",
+            "status": "verified"
+          }
+        }
+      },
+      "evidence": {
+        "image": [
+          {
+            "content": "显色结果为蓝色",
+            "location": "image:result"
+          }
+        ],
+        "text": [
+          {
+            "content": "蓝色选B，否则选A",
+            "location": "text:1"
+          }
+        ]
+      },
+      "methods": {
+        "evidence_anchored": {
+          "question": "本次实验最终应选用哪种试剂？"
+        },
+        "plain": {
+          "question": "按照实验规则，应选用哪种试剂？"
+        },
+        "strong": {
+          "question": "根据规则和结果表，哪种试剂应被选用？"
+        }
+      },
+      "responses": {
+        "按照实验规则，应选用哪种试剂？": {
+          "0": {
+            "answer": "B",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "?",
+            "status": "unparseable"
+          },
+          "T": {
+            "answer": "A",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "B",
+            "status": "answered"
+          }
+        },
+        "本次实验最终应选用哪种试剂？": {
+          "0": {
+            "answer": "B",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "B",
+            "status": "answered"
+          },
+          "T": {
+            "answer": "A",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "B",
+            "status": "answered"
+          }
+        },
+        "根据规则和结果表，哪种试剂应被选用？": {
+          "0": {
+            "answer": "A",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "A",
+            "status": "answered"
+          },
+          "T": {
+            "answer": "A",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "B",
+            "status": "answered"
+          }
+        }
+      },
+      "validity": {
+        "按照实验规则，应选用哪种试剂？": {
+          "reasons": [
+            "题意明确，规则与结果可支持答案"
+          ],
+          "status": "valid"
+        },
+        "本次实验最终应选用哪种试剂？": {
+          "reasons": [
+            "题意明确，规则与结果可支持答案"
+          ],
+          "status": "valid"
+        },
+        "根据规则和结果表，哪种试剂应被选用？": {
+          "reasons": [
+            "题意明确，规则与结果可支持答案"
+          ],
+          "status": "valid"
+        }
+      }
+    },
+    "m_thermo": {
+      "answers": {
+        "按照本次实验的筛选规则，应选择哪个测试温度运行？": {
+          "candidate": {
+            "acceptable_answers": [
+              "30℃"
+            ],
+            "answer": "30℃",
+            "evidence_image": [
+              "20、30、40、50℃对应活性22、47、61、29"
+            ],
+            "evidence_text": [
+              "活性不低于最高值75%的温度为候选"
+            ],
+            "rubric": "阈值45.75℃，候选30℃和40℃，选较低者30℃",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "30℃",
+              "30 ℃",
+              "30度"
+            ],
+            "answer": "30℃",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "阈值45.75℃，候选30℃和40℃，选较低者30℃",
+            "status": "verified"
+          }
+        },
+        "结合文本中的筛选规则和柱状图中的活性数据，应选择哪个测试温度运行？": {
+          "candidate": {
+            "acceptable_answers": [
+              "30℃"
+            ],
+            "answer": "30℃",
+            "evidence_image": [
+              "柱状图读数"
+            ],
+            "evidence_text": [
+              "阈值规则"
+            ],
+            "rubric": "候选30℃和40℃，选较低者30℃",
+            "status": "candidate"
+          },
+          "verification": {
+            "acceptable_answers": [
+              "30℃",
+              "30 ℃",
+              "30度"
+            ],
+            "answer": "30℃",
+            "notes": "synthetic fixture verification; not a real human or model label",
+            "rubric": "候选30℃和40℃，选较低者30℃",
+            "status": "verified"
+          }
+        }
+      },
+      "evidence": {
+        "image": [
+          {
+            "content": "20、30、40、50℃对应活性22、47、61、29",
+            "location": "image:bars"
+          }
+        ],
+        "text": [
+          {
+            "content": "活性不低于最高测量值75%的温度为候选，再选最低温度",
+            "location": "text:1"
+          }
+        ]
+      },
+      "methods": {
+        "evidence_anchored": {
+          "question": "本次实验应在哪个温度下运行？请按规则选择候选中的最低温度。"
+        },
+        "plain": {
+          "question": "按照本次实验的筛选规则，应选择哪个测试温度运行？"
+        },
+        "strong": {
+          "question": "结合文本中的筛选规则和柱状图中的活性数据，应选择哪个测试温度运行？"
+        }
+      },
+      "responses": {
+        "按照本次实验的筛选规则，应选择哪个测试温度运行？": {
+          "0": {
+            "answer": "30℃",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "40℃",
+            "status": "answered"
+          },
+          "T": {
+            "answer": "40℃",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "30℃",
+            "status": "answered"
+          }
+        },
+        "本次实验应在哪个温度下运行？请按规则选择候选中的最低温度。": {
+          "0": {
+            "answer": "40℃",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "40℃",
+            "status": "answered"
+          },
+          "T": {
+            "answer": "40℃",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "30℃",
+            "status": "answered"
+          }
+        },
+        "结合文本中的筛选规则和柱状图中的活性数据，应选择哪个测试温度运行？": {
+          "0": {
+            "answer": "40℃",
+            "status": "answered"
+          },
+          "I": {
+            "answer": "40℃",
+            "status": "answered"
+          },
+          "T": {
+            "answer": "30℃",
+            "status": "answered"
+          },
+          "TI": {
+            "answer": "30℃",
+            "status": "answered"
+          }
+        }
+      },
+      "validity": {
+        "按照本次实验的筛选规则，应选择哪个测试温度运行？": {
+          "reasons": [
+            "题意明确，规则与图像数据可支持唯一答案"
+          ],
+          "status": "valid"
+        },
+        "本次实验应在哪个温度下运行？请按规则选择候选中的最低温度。": {
+          "reasons": [
+            "题意明确，材料可支持答案"
+          ],
+          "status": "valid"
+        },
+        "结合文本中的筛选规则和柱状图中的活性数据，应选择哪个测试温度运行？": {
+          "reasons": [
+            "题意明确，材料可支持答案"
+          ],
+          "status": "valid"
+        }
+      }
+    }
+  }
+}

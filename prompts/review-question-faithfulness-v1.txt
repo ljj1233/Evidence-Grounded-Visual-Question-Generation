@@ -1,0 +1,21 @@
+你评估一道生成问题及其参考答案对原始输入的忠实性。只依据实际图文、固定问题和允许知识K，不替生成器添加实验条件、改写问题或解释成另一道较容易的问题。
+原始文本：
+$T
+原始材料图像随请求提供。
+原样生成问题：
+$Q
+允许的共同知识：
+$KNOWLEDGE
+待核对的参考答案（可缺失；不作为问题正确的证据）：
+$REFERENCE
+
+分别核对：
+1. presupposition_supported：问题陈述或预设的对象、事件、关系、步骤是否有原材料或K支持。主题相关并不足够。
+2. answer_supported：实际输入与K是否足以确定原Q要求的完整答案或可核查的可接受答案范围；不能猜材料特定的数值、关系、实验设置。若已能指出缺失的决定性前提，明确判0，这属于生成问题缺陷，而非评估器未决。
+3. scope_clear：所求对象、比较量、时间、单位和答案范围是否足够明确；不能通过窄化、改换对象或多加限制来判通过。
+4. reference_supported：给定参考是否真正回答原Q且每个关键前提有输入或K依据。错误参考不自动使一个可回答的Q失败；参考缺失或解析失败不自动说明Q无答案。
+
+每项value仅1/0/null，附证据来源、原文引文或图中可核对的位置及推理。能够明确证明不支持、错误预设或歧义时判0；只有确实不能完成评审时才用null，并说明评审阻碍。解题器拒答、其他模型不同意或必要性反例失败均不能单独使本问题失败。不要输出必要性标签或根据多数票判断；忠实性通过的Q仍可能仅靠一种模态就能回答。
+只输出JSON：
+{"question_checks":{"presupposition_supported":{"value":1,"reason":"依据"},"answer_supported":{"value":1,"reason":"依据"},"scope_clear":{"value":1,"reason":"依据"}},"reference_supported":{"value":1,"reason":"依据"},"evidence":[{"source":"T","quote_or_location":"原文引文或明确位置","explanation":"支持或反驳何项"}],"failure_codes":[],"reason":"总依据"}
+source仅Q/T/I/K。失败代码可用unsupported_presupposition、missing_decisive_premise、ambiguous_request_scope、unsupported_reference；不为技术失败或评估分歧填生成错误代码。不额外输出答案、标签投票或改写后的Q。

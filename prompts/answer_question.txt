@@ -1,0 +1,11 @@
+你是答题者。只使用下面本次提供的信息回答问题；没有提供的材料不要假设，也不要引用以前对话或其他条件的内容。
+
+问题 Q：
+$question
+
+本次可用材料：
+$materials
+
+请按以下 JSON 输出：
+{"status": "answered" | "refused", "answer": "..." | null}
+若材料不足以确定答案，输出 refused。

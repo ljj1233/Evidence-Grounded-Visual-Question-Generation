@@ -1,0 +1,10 @@
+核验两份独立求解结果是否都正确支持当前问题。措辞不同不等于答案不同。
+原始文本：<T>$T</T>
+原图通过图像输入提供。
+当前问题：<Q>$Q</Q>
+候选求解：$CANDIDATE
+盲独立求解：$INDEPENDENT
+逐项核对材料证据、答案、单位、限定条件和当前Q要求的评分范围。
+仅在材料足够且可确认两份结果实质一致、正确时输出verified；否则输出unresolved。
+本判断为自动审核，不是人工金标准。不要重新出题或补造事实。
+只输出JSON：{"status":"verified或unresolved","answer":null或"统一答案","acceptable_answers":[],"rubric":["必要评分要点"],"text_evidence":[],"image_evidence":[],"reason":"简短核验理由"}

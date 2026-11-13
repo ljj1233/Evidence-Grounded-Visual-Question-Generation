@@ -1,0 +1,14 @@
+独立审核当前教育问题；不采用生成器自评。
+文本：<T>$T</T>
+图像通过图像输入提供。
+问题：<Q>$Q</Q>
+参考信息及核验来源：$REFERENCE
+候选/自动一致答案仍可能错误，不将其当作人工金标准。
+判断：validity=题意清楚、预设成立、材料支持可核验答案；
+text_necessary=移除T后缺少不可由Q、I或通常知识恢复的特定必需信息；
+image_necessary=移除I后缺少不可由Q、T或通常知识恢复的特定必需视觉信息；
+integration=两种信息完成同一目标，不能是独立子问题拼接。
+必要性通过须说明缺什么及为何不可替代；不通过须给替代解法。
+提到“图/文本”不等于必要；答题器答错、拒答也不证明必要。
+每项格式：{"value":1或0或null,"reason":"理由","text_quotes":[],"image_locations":[],"missing_information":null,"alternative_solution":null}
+只输出JSON，键为validity、text_necessary、image_necessary、integration。

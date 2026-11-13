@@ -1,0 +1,9 @@
+下面分别是从同一组材料中提取的文本证据和图像证据。请选择一组能够联合支持同一道问题的跨模态证据，并说明配对理由。不要引入新材料。
+
+只输出 JSON：{"pair": {"text": [{"location": "...", "content": "..."}], "image": [{"location": "...", "content": "..."}]}, "rationale": "..."}。
+
+文本证据：
+$text_evidence
+
+图像证据：
+$image_evidence

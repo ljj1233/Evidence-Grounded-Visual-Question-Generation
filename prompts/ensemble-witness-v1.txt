@@ -1,0 +1,10 @@
+固定问题：
+$Q
+$FIXED
+共同知识约定K：
+$KNOWLEDGE
+
+情形1：$SCENARIO_A
+情形2：$SCENARIO_B
+
+请你独立判断（没有任何人给出过期望答案）：先列出题干本身蕴含的预设（包括该问题要求答案真实存在、可行等隐含预设）。再对每个情形判断：presup_ok=该情形是否满足题干全部预设；consistent=是否与固定材料及题干选项、所问对象不矛盾；answer=在（固定材料+该情形）下该问题的唯一完整答案，若不能唯一回答则null。只输出一个JSON对象，不要Markdown。格式：{"presuppositions":["..."],"s":[{"presup_ok":true,"consistent":true,"answer":"..."},{"presup_ok":true,"consistent":true,"answer":"..."}]}

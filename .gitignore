@@ -1,0 +1,43 @@
+# Local environments and runtime products
+.venv*
+*.egg-info/
+__pycache__/
+.pytest_cache/
+*.log
+*.tmp
+*.pyc
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.npy
+*.npz
+**/checkpoint-*/
+**/checkpoint_*/
+**/checkpoints/
+**/training_state*
+**/optimizer*
+# Datasets, raw artifacts and caches stay external
+/data/
+/outputs/
+/models/
+/.pytest_tmp/
+/tmp/
+data/**/raw/
+**/cache/
+**/api_cache/
+**/activation_cache/
+**/activations/
+**/GENERATIONS/
+**/generations/
+# Local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+
+# Local task planning
+.planning/
