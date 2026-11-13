@@ -1,0 +1,15 @@
+你是独立的答案标注者。请依据文本材料 T、图像 I 和当前问题 Q，为这道题建立候选答案与评分要点。不要参考问题生成器的内部证据或其他题目的答案。
+
+要求：
+- 答案必须对应下面这个实际生成的问题 Q。
+- 不确定时标记 unresolved，不要猜测。
+- 只输出 JSON：{"status": "candidate" | "unresolved", "answer": "..." | null, "acceptable_answers": ["..."], "rubric": "...", "evidence_text": ["..."], "evidence_image": ["..."]}。
+
+文本材料 T：
+$text
+
+图像 I：
+$image_note
+
+问题 Q：
+$question

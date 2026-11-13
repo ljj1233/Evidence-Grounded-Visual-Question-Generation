@@ -1,0 +1,8 @@
+{
+  "protocol_version": "open-answer-identifiability-dev-v2",
+  "analysis_template": "open-necessity-v2",
+  "verification_template": "verify-necessity-evidence-v2",
+  "analysis_max_tokens": 4096,
+  "verification_max_tokens": 3072,
+  "knowledge": "K=ordinary-school-knowledge-v1。两角色采用完全相同的知识范围：允许普通语言、逻辑、算术和通常中学课程中的通用科学知识、常见物体类别及常用术语定义。允许例如磁极规律、气体与光的区别、普通岩石分类、科学名称的格式；不因这些通用事实未逐字写在材料中而否定证明。不得使用这份材料特定的数值、实验设置、人的拥有物、对象强弱、未标注尺度或未给出的关系。外观或图标相同不能证明物理强度相同。稀有物种的精确拉丁名对应、具体事件年份等专门记忆不默认属于K；若解法关键依赖此类记忆且Q和保留材料没有支持，标未决。不允许暗用原缺失模态、数据集答案或例题记忆。K是预先冻结的可操作知识约定，不是对所有人的常识能力的断言。"
+}

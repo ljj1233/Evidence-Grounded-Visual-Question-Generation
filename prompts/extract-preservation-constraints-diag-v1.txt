@@ -1,0 +1,14 @@
+你只负责从固定输入独立列出必须保持的约束，不评价任何候选证明，也不求参考答案。
+固定问题（含全部选项）：
+$Q
+缺失模态：$REMOVED
+保留材料：
+$VISIBLE
+共同知识约定：
+$KNOWLEDGE
+
+逐字检查问题与保留材料。列出问题的所问对象、关系、范围、量词、时间、单位、选项及使问题成立的预设；列出保留材料中对任何缺失材料补全有约束的事实。逐项给原文短引文和精确解释，勿凭空加条件。图像事实引用可见文字；没有文字的事实以明确的视觉定位描述填quote。区分固定事实与允许变化的缺失内容；不把未提供的事实猜成固定事实。保留材料中的例示不自动成为一般限定。
+单独列出问题中的每个指代表达、其所指，以及所指是否位于缺失模态。所指在缺失模态不自动说明任何结论，但仍须保持其身份和范围。没有可靠依据时明确uncertain，不代补信息。题目中已明示的内容不能成为自由变量。
+只输出JSON，不输出Markdown。id在两个数组中均唯一，使用c1,c2...及r1,r2...；constraints至少一项。
+{"constraints":[{"id":"c1","source":"question","quote":"原文短引文","constraint":"必须保持的具体含义","type":"constraint"}],"referring_expressions":[{"id":"r1","quote":"问题中的原文指代表达","referent":"指向的对象或内容","in_removed_modality":"yes"}]}
+source仅question或retained；type仅constraint或presupposition；in_removed_modality仅yes/no/uncertain。若没有指代表达，第二数组为空。

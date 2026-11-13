@@ -1,0 +1,16 @@
+只在原材料支持时配对必要证据，构造一个单一求解目标。
+原文：<T>$T</T>
+原图随图像输入提供。
+文本证据：$TEXT_EVIDENCE
+图像证据：$IMAGE_EVIDENCE
+
+先在内部验证，不输出长推理：
+1. 用全部图像事实尝试无T解法。可数出的相同粒子数不再是T独有；同形未标度容器不能证明真实容积相同。
+2. 对选中T事实，构造两个与I相容的不同取值/映射，确认拟求答案会不同。缺某事实不等于答案不确定：共同编码在比例中消去、相同频数交换表型仍得相同比例，都不支持必要性。
+3. 只依赖真正进入所求量的变量。时长不能使温差计算依赖T，真实体积不能使总质量计算依赖T。可在原材料内另选目标；不得补造实验事实。
+4. 平均速率不是RMS，未给平衡分布不能据其算压强/平均动能；溶剂体积不是溶液体积。核查字母大小写的证据和原图，模糊时uncertain，不把抽取自称clear当真值。
+5. 一个目标必须同时需要T特定事实和I特定事实；不拼接独立子题。目标必须允许Q不复述T独有规则、时长、表型映射或关键数值。
+未找到合规目标则no_pair；不为产出Q强行通过。不要输出最终问题、答案或展开的例题。
+
+严格压缩输出：所有reason各不超过35个汉字，其他说明字段各不超过70字；整个JSON不超过450汉字，不能在内部分析耗尽输出预算。只输出以下JSON：
+{"status":"ready或no_pair或uncertain","text_ids":[],"image_ids":[],"target":"目标","joint_operation":"实际运算/决策依赖","without_text":"两种T解释导致不同答案的简短见证；或无必要性","without_image":"缺失的I事实","protected_text_facts":["留在T、不写进Q的事实"],"redundancy_check":{"passed":true或false或null,"reason":"含比例消去检查"},"common_knowledge_check":{"passed":true或false或null,"reason":"含科学前提检查"},"integration_check":{"passed":true或false或null,"reason":"共同目标"},"issues":[]}

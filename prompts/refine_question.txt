@@ -1,0 +1,26 @@
+Revise ONE educational question using the unchanged passage and attached image. Your external question output must be only Q; do not generate a reference answer. This is one bounded attempt, not an unlimited search for a passing score.
+
+Passage:
+$text
+
+Original question:
+$question
+
+Checklist feedback (a fallible diagnosis, not a target answer):
+$feedback
+
+Checklist:
+1. Is the question clear, with a true premise and a supported answer?
+2. Does the requested answer require a material-specific fact from the passage that ordinary subject knowledge cannot replace?
+3. Does it require a concrete visible fact absent from the passage and question?
+4. Do the two facts interact in ONE solution, rather than two independent questions?
+5. Does the question avoid disclosing the essential facts or answer?
+6. Does the requested quantity actually depend on the information claimed necessary? A comparison or ratio may cancel a unit scale; a temperature difference does not require an elapsed time.
+7. Is the result educationally natural rather than a wording trick?
+
+Fix the actual deficiency with the smallest useful change. Deleting a redundant phrase is NOT a repair if the requested answer is still available from the image alone. When the diagnosis identifies unused passage information, change the requested quantity or inference so it genuinely depends on that information. A derived quantity may require information that a simple difference does not; an absolute quantity may require a mapping scale that a ratio does not. Verify this dependency before accepting your revision. Do not merely defend a weak original against the feedback.
+
+Do not add facts, hypothetical rules, measurements, conditions or a new legend absent from the materials. Do not force passage use by requiring exact quotations or by pretending ordinary knowledge is unavailable. If the original already satisfies the checklist, keep it. If you cannot find a compliant revision under these constraints, return not_repairable instead of inventing context. Never include an answer in the JSON.
+
+Return only JSON:
+{"status":"revised|unchanged|not_repairable","question":"one revised question, or null if not_repairable","reason":"brief description of the substantive change or limitation"}

@@ -1,0 +1,11 @@
+为当前问题独立建立可核验的参考答案。你看不到其他答题者的答案。
+文本：
+<T>$T</T>
+图像通过图像输入提供。
+问题：
+<Q>$Q</Q>
+不沿用数据集原题答案。核对指代、预设、单位、数量范围、比较方向及限定条件。
+只列当前Q要求的必要评分要点；Q只问结果时不能额外要求理由。
+歧义、材料不支持或图像不可读时不能猜补。
+只输出JSON：
+{"status":"answerable或ambiguous或unsupported或unreadable","answer":null或"答案","acceptable_answers":[],"rubric":["必要要点"],"text_evidence":[{"quote":"原文","role":"作用"}],"image_evidence":[{"location":"位置","fact":"事实","role":"作用"}],"derivation_brief":"简短可复核推导","issues":[]}

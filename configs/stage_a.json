@@ -1,0 +1,25 @@
+{
+  "protocol_version": "stage-a-mock-v1",
+  "evidence_class": "synthetic_engineering_fixture",
+  "provider": "mock",
+  "methods": ["plain", "strong", "evidence_anchored"],
+  "models": {
+    "generator": "mock-generator-v1",
+    "annotator": "mock-answer-annotator-v1",
+    "verifier": "mock-answer-verifier-v1",
+    "validator": "mock-validity-validator-v1",
+    "answerer": "mock-condition-answerer-v1",
+    "scorer": "normalized-exact-match-v1"
+  },
+  "run": {
+    "default_run_id": "stage-a-smoke",
+    "output_root": "outputs",
+    "max_attempts": 2,
+    "limit": null
+  },
+  "paths": {
+    "materials": "tests/fixtures/stage_a/materials.jsonl",
+    "mock_script": "tests/fixtures/stage_a/mock_script.json",
+    "prompts": "prompts"
+  }
+}

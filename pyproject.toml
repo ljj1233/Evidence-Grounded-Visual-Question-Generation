@@ -1,0 +1,34 @@
+[project]
+name = "egvqg"
+version = "0.1.0"
+description = "Evidence-grounded educational visual question generation (Stage A offline skeleton)"
+requires-python = ">=3.11"
+dependencies = [
+    "pillow>=11",
+    "python-dotenv>=1.2.4",
+]
+
+[project.scripts]
+egvqg = "egvqg.cli:main"
+
+[project.optional-dependencies]
+local-inference = [
+    "accelerate>=1.10,<2",
+    "torch>=2.8,<2.10",
+    "torchvision>=0.23,<0.25",
+    "transformers>=4.57,<5",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3"]
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/egvqg"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

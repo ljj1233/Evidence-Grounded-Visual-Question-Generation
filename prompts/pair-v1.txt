@@ -1,0 +1,9 @@
+从两种证据中选择共同支持一个求解目标的必需证据组合。
+原始文本：<T>$T</T>
+原图通过图像输入提供。
+文本证据：$TEXT_EVIDENCE
+图像证据：$IMAGE_EVIDENCE
+不能只按主题配对，不能拼接独立问题，不能编造材料事实。
+分别检查移除T/I后缺少什么、为何不能由另一模态、Q或通常知识恢复。
+不生成最终问题，不输出最终答案。
+只输出JSON：{"status":"ready或no_pair或uncertain","text_ids":[],"image_ids":[],"target":"单一目标","joint_operation":"文本规则如何作用于视觉事实","without_text":"缺失及不可替代原因","without_image":"缺失及不可替代原因","redundancy_check":{"passed":true或false或null,"reason":"理由"},"common_knowledge_check":{"passed":true或false或null,"reason":"理由"},"integration_check":{"passed":true或false或null,"reason":"理由"},"issues":[]}

@@ -1,0 +1,23 @@
+当前且唯一任务：完整回答Q是否需要被移除模态 $REMOVED 的信息？保留的是 $RETAINED 与Q及K。
+T原文：<T>$T</T>
+原始I通过图像输入提供。
+Q：<Q>$Q</Q>
+知识范围K：$KNOWLEDGE
+允许补全空间：$COMPLETION_SPACE
+已审核参考（只核对答案和最小所求，其他合法解法也算）：$REFERENCE
+$ISOLATED_RECORD
+
+每个答案要点只选一种证据，不另填path/witness/proposed/removed字段。
+kind是path：只用Q、保留模态及K推出该要点的完整答案。premises每条写statement、source、locator。source只能为单一字符Q、T、I或K；K条目另写knowledge_item（K1至K4之一），不要把K1写进source。不得用移除模态的材料事实。共同因子或对称性消去时写case_analysis，给space、closure、closure_reason及cases。closure只能是algebraic或enumerated_exhaustive，未穷尽不能判不必要。
+kind是witness：A固定为本题实际原文/原图及已审参考，不重写A或A的答案。只给B及协调修改清单：edits每项含locator、from、to；T的from引实际原文，I的from描述准确图中位置/读数。alternative_content给与原材料同类的完整自洽B（可明确保留未编辑上下文），alternative_values给所有参考组件id下的答案，compatible_because说明与Q、保留模态和K相容。B必须让原Q仍完整可答，当前要点答案必须与实际参考语义不同。表格/方格要协调修改行列标签与内容。空白、模糊、矛盾、不足信息不算B。
+kind是unresolved：给evidence.reason，不能因找不到解法或不知道某事实就判必要。
+
+对每个最终所求重新判断实际依赖：不机械继承中间量的依赖。共同编码在比值中可消去，同频数交换表型仍可得同概率；实验时长不影响温差但影响绝对速率。若另一模态已给同一事实则可直接恢复。
+任何隔离作答只是线索：正确可能靠猜，拒答也可能漏掉不变性；核对其引用事实是否实际在保留输入里，不跟随其结论。
+note是自由说明，若要写完整图文推导、解释必要性或讨论缺失事实，放note；不要当作另一份证据。
+
+decisive_facts默认空数组。只有决定答案的材料特定事实已由Q或K提供时才列：id、fact、carried_by（T/I）、supplied_by（question/general_knowledge）、locator、component_ids。普通算术、表示法、Q说“根据图”都没有提供本例计数/读数/映射。仅实际来源在T或I、或该事实对答案不重要时留空；如需注明未替代，可用supplied_by=none，但不产生捷径标签。不要为填满字段二选一。
+
+输出必须是一个有效JSON，components覆盖参考全部id。下面仅示范unresolved的格式，不是本题结论：
+{"components":{"c1":{"kind":"unresolved","evidence":{"reason":"未能构造证据的具体原因"},"note":"简短说明"}},"decisive_facts":[]}
+若选path，把evidence设为含premises数组及case_analysis（没有则null）的对象；若选witness，把evidence设为仅含edits、alternative_content、alternative_values、compatible_because的对象。只写选中的一种。当前被移除模态固定为 $REMOVED ，不要答成另一模态。

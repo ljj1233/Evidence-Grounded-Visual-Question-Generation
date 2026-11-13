@@ -1,0 +1,3 @@
+提取文本中明确给出的求解证据，不推测图像、不补外部规则、不生成问题或答案。
+文本：<T>$T</T>
+只输出JSON：{"text_evidence":[{"id":"t1","quote":"原文","fact":"事实","type":"rule或condition或relation或quantity或background"}],"issues":[]}

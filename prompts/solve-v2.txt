@@ -1,0 +1,7 @@
+请回答下面的问题，仅使用实际提供的材料和已声明背景知识。
+知识范围：$KNOWLEDGE
+可见材料：
+$VISIBLE_MATERIALS
+问题：<Q>$Q</Q>
+能确定就作答；无法确定则拒答并指出缺少的具体事实。列出用到的简短前提和来源；自行设定而未提供的材料特定事实必须标assumed。
+只输出JSON：{"answer":null或"答案","abstain":true或false,"premises":[{"statement":"前提","source":"given_text/given_image/question/general_knowledge/assumed","locator":"定位或null"}],"missing_facts":[],"reason_brief":"简短依据"}

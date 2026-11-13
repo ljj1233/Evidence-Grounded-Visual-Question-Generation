@@ -1,0 +1,19 @@
+{
+  "protocol_version": "evidence-necessity-v2-probe1",
+  "knowledge_version": "K-v1-probe1",
+  "knowledge": {
+    "K1": "通常算术、代数、比例、百分数和单位换算。",
+    "K2": "中学物理/化学的量的定义与常用公式；遗传题的本探针空间限定单基因、两个互斥表型、完全显性。显性机制可知，物种表型与等位基因的对应不可预设。",
+    "K3": "本探针孟德尔表示法：大写字母表示显性，潘尼特方格行列为配子；表头说明列含义。",
+    "K4": "理解提问所需的一般语言与对象名称。",
+    "not_allowed": "材料特定数值/计数/标签、物种表型映射、实验时长、实际容器等容积、图形编码单位不可当常识；同形未标度图不证明真实体积。"
+  },
+  "completion_space": "保持Q、另一模态与K不变。同类材料可协调修改模态内多处，但必须整体自洽且让原Q仍有完整确定答案。遗传限于上述单基因二表型完全显性空间；图形编码允许统一改变每球代表的正粒子数。不得拿空白、不可读、矛盾或信息不足作替代。对每个所求独立检查抵消/对称性，不继承中间量依赖。",
+  "analysis_template": "modality-necessity-v2",
+  "solve_template": "solve-v2",
+  "max_output_tokens": 4096,
+  "max_http_requests": 24,
+  "max_technical_attempts": 2,
+  "env_prefix": "LLM_JUDGE",
+  "json_repair": "escape_invalid_backslashes"
+}
