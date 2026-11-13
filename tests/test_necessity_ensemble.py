@@ -106,7 +106,7 @@ def test_invalid_or_unanswered_slots_are_not_evaluated():
 SENTINELS = {'text': 'TEXT_SENTINEL', 'ref': 'REF_SENTINEL'}
 
 
-def build_source(tmp_path):
+def build_source(tmp_path, answer=None):
     src = tmp_path / 'outputs/source'
     src.mkdir(parents=True)
     (tmp_path / 'img.png').write_bytes(b'\x89PNG\r\n\x1a\nfixture')
@@ -120,7 +120,7 @@ def build_source(tmp_path):
         records.append({'attempt_id': a, 'material_id': f'm{n}', 'question': {'normalized_text': q}, 'question_answerability': validity,
                         'both_required': None, 'outputs': {'analysis_T': {'output': pair}, 'analysis_I': {'output': pair}} if has_witness else {}})
         sources.append({'attempt_id': a, 'item_id': f'S{n}', 'material': {'text': f'{SENTINELS["text"]} {q}', 'image_path': 'img.png', 'image_sha256': digest},
-                        'responses': {'TI': {'answer': f'{SENTINELS["ref"]} gamma'}}})
+                        'responses': {'TI': {'answer': answer or f'{SENTINELS["ref"]} gamma'}}})
     write_jsonl(src / 'records.jsonl', records)
     write_jsonl(src / 'source_questions.jsonl', sources)
     (tmp_path / 'prompts').mkdir()
@@ -131,8 +131,8 @@ def build_source(tmp_path):
 class Mock:
     """Offline stand-in for the model groups. Q1 is a dual candidate the groups disagree on; Q2 is text-sufficient."""
 
-    def __init__(self, fail=None):
-        self.calls, self.fail = [], fail
+    def __init__(self, fail=None, ref_disagree=False):
+        self.calls, self.fail, self.ref_disagree = [], fail, ref_disagree
 
     def __call__(self, model):
         outer = self
@@ -152,6 +152,8 @@ class Mock:
                     bad = model == 'model-b' and request.condition == 'T'
                     data = {'presuppositions': ['p'], 's': [{'presup_ok': not bad, 'consistent': True, 'answer': 'alpha'},
                                                            {'presup_ok': not bad, 'consistent': True, 'answer': 'beta'}]}
+                elif request.condition is None and request.image_path and '情形1' not in prompt:        # reference answer with the full material
+                    data = {'determinable': True, 'answer': 'delta' if (outer.ref_disagree and model == 'model-b') else 'gamma', 'reason': 'fixture'}
                 elif prompt.split('固定问题：')[1].startswith('\nQ2') and request.condition == 'T':
                     data = {'determinable': True, 'answer': 'gamma', 'reason': 'fixture'}
                 else:
@@ -167,11 +169,11 @@ def go(tmp_path, mock, **kw):
 def test_end_to_end_isolation_arbiter_scope_resume_and_denominator(tmp_path):
     build_source(tmp_path)
     assert init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb',
-                         project_root=tmp_path, concurrency=4, candidates_only=False)['n_slots'] == 4
+                         project_root=tmp_path, concurrency=4, candidates_only=False, reference='baseline')['n_slots'] == 4
     assert init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb',
-                         project_root=tmp_path, concurrency=4, candidates_only=False)['resumed']
+                         project_root=tmp_path, concurrency=4, candidates_only=False, reference='baseline')['resumed']
     with pytest.raises(ValueError, match='frozen'):
-        init_ensemble(run_id='ens', source_run='source', model_a='other', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=4, candidates_only=False)
+        init_ensemble(run_id='ens', source_run='source', model_a='other', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=4, candidates_only=False, reference='baseline')
     mock = Mock()
     go(tmp_path, mock)
     for model, r in mock.calls:                                           # material isolation and no reference leakage
@@ -204,7 +206,7 @@ def test_end_to_end_isolation_arbiter_scope_resume_and_denominator(tmp_path):
 
 def test_failed_calls_are_recorded_not_cached_and_retried_on_resume(tmp_path):
     build_source(tmp_path)
-    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2, candidates_only=False)
+    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2, candidates_only=False, reference='baseline')
     target = lambda model, r: model == 'model-b' and r.condition == 'T' and '情形1' not in r.prompt and '固定问题：\nQ2' in r.prompt
     go(tmp_path, Mock(fail=target), phase='screen')
     rows = read_jsonl(tmp_path / 'outputs/ens/results.jsonl')
@@ -220,7 +222,7 @@ def test_failed_calls_are_recorded_not_cached_and_retried_on_resume(tmp_path):
 def test_http_cap_stops_the_run(tmp_path):
     build_source(tmp_path)
     init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path,
-                  concurrency=1, max_http=3, candidates_only=False)
+                  concurrency=1, max_http=3, candidates_only=False, reference='baseline')
     with pytest.raises(RuntimeError, match='HTTP cap'):
         go(tmp_path, Mock())
     assert len(read_jsonl(tmp_path / 'outputs/ens/results.jsonl')) <= 3
@@ -230,14 +232,14 @@ def test_cli_exposes_the_three_commands_with_the_common_run_arguments():
     from egvqg.cli import build_parser
     parser = build_parser()
     init = parser.parse_args(['necessity-ensemble-init', '--run-id', 'r', '--source-run', 's'])
-    assert (init.run_id, init.source_run, init.max_http) == ('r', 's', 16000) and init.output_root == 'outputs'
+    assert (init.run_id, init.source_run, init.max_http) == ('r', 's', 16000) and init.output_root == 'outputs' and not init.baseline_reference
     assert parser.parse_args(['necessity-ensemble-run', '--run-id', 'r', '--phase', 'arbitrate', '--limit', '3']).phase == 'arbitrate'
     assert parser.parse_args(['necessity-ensemble-report', '--run-id', 'r']).command == 'necessity-ensemble-report'
 
 
 def test_partial_run_reports_unevaluated_slots_separately(tmp_path):
     build_source(tmp_path)
-    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2, candidates_only=False)
+    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2, candidates_only=False, reference='baseline')
     go(tmp_path, Mock(), phase='screen', limit=1)
     detail = report_ensemble(run_id='ens', project_root=tmp_path)['detail']
     assert detail['not_yet_evaluated'] == 1 and detail['necessity_undecided'] == 1 and detail['necessity_undecided_why']
@@ -245,10 +247,46 @@ def test_partial_run_reports_unevaluated_slots_separately(tmp_path):
 
 def test_default_mode_runs_only_items_that_can_be_confirmed(tmp_path):
     build_source(tmp_path)
-    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2)
+    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2, reference='baseline')
     mock = Mock()
     go(tmp_path, mock)
     assert {r.metadata['key'].split('|')[-1] for _, r in mock.calls} == {'attempt_0'}       # Q2 has no two-way witness: no call at all
     result = report_ensemble(run_id='ens', project_root=tmp_path)
     assert result['detail']['no_two_way_witness_not_run'] == 1 and result['confirmed_dual'] == 1
     assert result['confirmed_dual'] + result['not_confirmed'] == result['n_slots'] == 4
+
+
+def test_independent_reference_replaces_the_evaluated_models_own_answer(tmp_path):
+    build_source(tmp_path, answer='WRONG')       # the evaluated model answered every question wrongly
+    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path,
+                  concurrency=2, candidates_only=False)           # default reference: independent
+    mock = Mock()
+    go(tmp_path, mock)
+    refs = [r for _, r in mock.calls if r.metadata['kind'] == 'REF']
+    assert refs and all(r.image_path and r.condition is None and SENTINELS['text'] in r.prompt and 'WRONG' not in r.prompt for r in refs)
+    assert {m for m, r in mock.calls if r.metadata['kind'] == 'REF'} == {'model-a', 'model-b'}
+    report_ensemble(run_id='ens', project_root=tmp_path)
+    final = json.loads((tmp_path / 'outputs/ens/final_items.json').read_text())
+    assert final['S1']['B'] == 0 and final['S0']['B'] == 1          # the text-sufficient item is still recognised: the reference is gamma, not WRONG
+
+
+def test_wrong_baseline_answer_as_reference_cannot_refute_a_sufficient_item(tmp_path):
+    build_source(tmp_path, answer='WRONG')
+    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path,
+                  concurrency=2, candidates_only=False, reference='baseline')
+    go(tmp_path, Mock())
+    report_ensemble(run_id='ens', project_root=tmp_path)
+    final = json.loads((tmp_path / 'outputs/ens/final_items.json').read_text())
+    assert final['S1']['B'] is None                                  # 'gamma' (sufficient) differs from 'WRONG': not shown to be sufficient
+
+
+def test_disagreeing_independent_references_leave_the_item_undecided(tmp_path):
+    build_source(tmp_path)
+    init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path,
+                  concurrency=2, candidates_only=False)
+    mock = Mock(ref_disagree=True)
+    go(tmp_path, mock)
+    result = report_ensemble(run_id='ens', project_root=tmp_path)
+    assert result['confirmed_dual'] == 0 and result['detail']['necessity_undecided'] == 2
+    assert any('reference undecided' in k for k in result['detail']['necessity_undecided_why'])
+    assert not [1 for m, _ in mock.calls if m == 'model-arb']        # nothing to arbitrate without a reference

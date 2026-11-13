@@ -203,6 +203,7 @@ def build_parser() -> argparse.ArgumentParser:
     seinit.add_argument('--source-run',required=True)
     seinit.add_argument('--model',default='gpt-6-luna')
     seinit.add_argument('--concurrency',type=int,default=16)
+    seinit.add_argument('--cascade',action='store_true',help='cheap single-modality screen first; witness proposals only for items it cannot cut, no per-proof verification')
     serun=subparsers.add_parser('simple-baseline-eval-run',help='async post-batch faithfulness, original answer and necessity evaluation')
     serun.add_argument('--limit',type=int,default=None)
     sereport=subparsers.add_parser('simple-baseline-eval-report',help='report post-batch evaluation separately from generation progress')
@@ -213,6 +214,7 @@ def build_parser() -> argparse.ArgumentParser:
     nei.add_argument('--arbiter',default='gpt-5.6-terra')
     nei.add_argument('--concurrency',type=int,default=32)
     nei.add_argument('--max-http',type=int,default=16000)
+    nei.add_argument('--baseline-reference',action='store_true',help="use the evaluated model's own answer as the reference (default: both groups answer independently)")
     nei.add_argument('--all-items',action='store_true',help='also evaluate items without a witness in both directions (diagnostic; they can never be confirmed dual)')
     ner=subparsers.add_parser('necessity-ensemble-run',help='async sufficiency screening, witness recompute and answer-slot extraction; arbiter only for open items')
     ner.add_argument('--phase',choices=('screen','arbitrate','all'),default='all')
@@ -236,7 +238,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command in ('simple-baseline-eval-init','simple-baseline-eval-run','simple-baseline-eval-report'):
             from .simple_baseline_evaluation import init_evaluation,run_evaluation,report_evaluation
             common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
-            if args.command=='simple-baseline-eval-init':result=init_evaluation(**common,source_run=args.source_run,model=args.model,concurrency=args.concurrency)
+            if args.command=='simple-baseline-eval-init':result=init_evaluation(**common,source_run=args.source_run,model=args.model,concurrency=args.concurrency,cascade=args.cascade)
             elif args.command=='simple-baseline-eval-run':result=run_evaluation(**common,limit=args.limit)
             else:result=report_evaluation(**common)
             print(json.dumps(result,ensure_ascii=False,indent=2))
@@ -245,7 +247,7 @@ def main(argv: list[str] | None = None) -> int:
             common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
             if args.command=='necessity-ensemble-init':
                 result=init_ensemble(**common,source_run=args.source_run,model_a=args.model_a,model_b=args.model_b,arbiter=args.arbiter,
-                    concurrency=args.concurrency,max_http=args.max_http,candidates_only=not args.all_items)
+                    concurrency=args.concurrency,max_http=args.max_http,candidates_only=not args.all_items,reference='baseline' if args.baseline_reference else 'independent')
             elif args.command=='necessity-ensemble-run':result=run_ensemble(**common,phase=args.phase,limit=args.limit)
             else:result=report_ensemble(**common)
             print(json.dumps(result,ensure_ascii=False,indent=2))

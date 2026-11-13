@@ -62,8 +62,9 @@ class Evaluation:
     """Every decision as a function of recorded model outputs. `records` maps 'role|kind|mod|attempt' to the stored
     record ({'parsed': ..., 'strings': [...]}); slot extractions carry the exact candidate list they were asked about."""
 
-    def __init__(self, items, records):
-        self.items = [i for i in items if i['validity'] == 1 and i['question'] and i['reference']]
+    def __init__(self, items, records, reference='baseline'):
+        self.reference_mode = reference      # 'baseline': the evaluated model's own answer; 'independent': both groups answer the question themselves
+        self.items = [i for i in items if i['validity'] == 1 and i['question'] and (reference == 'independent' or i['reference'])]
         self.records = records
         self.slots, self.failures = {}, collections.Counter()
         for i in self.items:
@@ -84,16 +85,31 @@ class Evaluation:
                 else:
                     self.failures[role] += 1
                 self.slots[(a, role)] = table
+        self.refs = {i['attempt_id']: self._independent_reference(i) for i in self.items} if reference == 'independent' else {}
         self.arbitrated = {i['attempt_id'] for i in self.items if self.p(ARBITER, 'S', i['attempt_id'], 'T') is not None}
         self.results = {i['attempt_id']: self.decide(i) for i in self.items}
 
     def p(self, role, kind, attempt, mod=None):
         return (self.records.get(key(role, kind, attempt, mod)) or {}).get('parsed')
 
+    def own_reference_answers(self, i):
+        out = []
+        for role in GROUPS:
+            r = self.p(role, 'REF', i['attempt_id']) or {}
+            out.append(r['answer'] if r.get('determinable') and r.get('answer') else None)
+        return out
+
+    def _independent_reference(self, i):
+        ra, rb = self.own_reference_answers(i)
+        return ra if ra and rb and self.same(i['attempt_id'], ra, rb) is True else None
+
+    def reference(self, i):
+        return self.refs.get(i['attempt_id']) if self.reference_mode == 'independent' else i['reference']
+
     def candidate_strings(self, i, roles):
-        """Reference answer plus every complete answer the given roles produced for this item (stable order)."""
+        """Reference answer(s) plus every complete answer the given roles produced for this item (stable order)."""
         a = i['attempt_id']
-        found = {i['reference']}
+        found = {i['reference']} if self.reference_mode == 'baseline' else {x for x in self.own_reference_answers(i) if x}
         for role in roles:
             for mod in ('T', 'I'):
                 s = self.p(role, 'S', a, mod) or {}
@@ -129,7 +145,8 @@ class Evaluation:
             return None
         if not (s.get('determinable') and s.get('answer')):
             return False
-        return self.same(i['attempt_id'], s['answer'], i['reference'])
+        ref = self.reference(i)
+        return None if ref is None else self.same(i['attempt_id'], s['answer'], ref)
 
     def witness(self, role, removed, i):
         """Does the recomputed witness pair show that the answer changes when `removed` is replaced? 'nowit' = none proposed."""
@@ -149,6 +166,8 @@ class Evaluation:
 
     def decide(self, i, groups=None):
         a = i['attempt_id']
+        if self.reference(i) is None:        # no usable reference answer: nothing can be compared
+            return {'D_T': None, 'D_I': None, 'D_T_why': 'noref', 'D_I_why': 'noref', 'B': None, 'arbitrated': False}
         roles = groups or GROUPS + ((ARBITER,) if a in self.arbitrated else ())
         out = {}
         for name, single, removed in (('D_T', 'I', 'T'), ('D_I', 'T', 'I')):   # D_T: is the text needed
@@ -180,6 +199,11 @@ def sufficiency_prompt(prompts, i, mod, knowledge):
     return prompts.render('ensemble-sufficiency-v1', Q=i['question'], MATERIAL=material, KNOWLEDGE=knowledge)
 
 
+def reference_prompt(prompts, i, knowledge):
+    material = '<T>' + i['text'] + '</T>\n材料同时包含附图（见图）。'
+    return prompts.render('ensemble-sufficiency-v1', Q=i['question'], MATERIAL=material, KNOWLEDGE=knowledge)
+
+
 def witness_prompt(prompts, i, removed, knowledge):
     scenario = i['witness_text_removed'] if removed == 'T' else i['witness_image_removed']
     fixed = ('原图（见附图，保持不变）。文本被移除，下面两份是假想的替换文本。' if removed == 'T' else
@@ -196,7 +220,7 @@ def extract_prompt(prompts, i, schema, strings):
 # ----------------------------------------------------------------------------- init / run / report
 
 def init_ensemble(*, run_id, source_run, model_a, model_b, arbiter, project_root='.', output_root='outputs',
-                  concurrency=32, max_http=16000, candidates_only=True):
+                  concurrency=32, max_http=16000, candidates_only=True, reference='independent'):
     """Freeze the item list, prompts and settings from a finished simple-baseline evaluation run."""
     root = Path(project_root).resolve()
     _validate_run_id(run_id)
@@ -221,7 +245,7 @@ def init_ensemble(*, run_id, source_run, model_a, model_b, arbiter, project_root
             raise ValueError('evaluation image changed: ' + i['item_id'])
     prompts = PromptSet(root / 'prompts', names=TEMPLATES)
     settings = {'models': {'a': model_a, 'b': model_b, ARBITER: arbiter}, 'concurrency': concurrency, 'max_http': max_http,
-                'source_run': source_run, 'knowledge': knowledge, 'candidates_only': candidates_only}
+                'source_run': source_run, 'knowledge': knowledge, 'candidates_only': candidates_only, 'reference': reference}
     fingerprint = sha256_text(canonical_json({'items': items, 'prompts': prompts.snapshot(), 'settings': settings}))
     out.mkdir(parents=True, exist_ok=True)
     with file_lock(out / '.init.lock'):
@@ -235,7 +259,7 @@ def init_ensemble(*, run_id, source_run, model_a, model_b, arbiter, project_root
             (out / 'prompts' / f'{name}.txt').write_text(text, encoding='utf-8')
         write_json(out / 'manifest.json', {
             'fingerprint': fingerprint, 'created_at': utc_now(), 'settings': settings, 'prompt_sha256': prompts.snapshot_sha256(),
-            'n_slots': len(items), 'n_evaluated': sum(i['validity'] == 1 and bool(i['question'] and i['reference']) and (not candidates_only or has_two_way_witness(i)) for i in items)})
+            'n_slots': len(items), 'n_evaluated': sum(i['validity'] == 1 and bool(i['question'] and (reference == 'independent' or i['reference'])) and (not candidates_only or has_two_way_witness(i)) for i in items)})
     return {'n_slots': len(items), 'resumed': False}
 
 
@@ -285,7 +309,8 @@ def run_ensemble(*, run_id, phase='all', limit=None, project_root='.', output_ro
     (out / 'requests').mkdir(exist_ok=True)
     factory = provider_factory or _default_factory(root, out)
     only = settings.get('candidates_only', False)
-    evaluated = [i for i in items if i['validity'] == 1 and i['question'] and i['reference'] and (not only or has_two_way_witness(i))]
+    ref_mode = settings.get('reference', 'baseline')
+    evaluated = [i for i in items if i['validity'] == 1 and i['question'] and (ref_mode == 'independent' or i['reference']) and (not only or has_two_way_witness(i))]
     if limit:
         evaluated = evaluated[:limit]
     guard = threading.Lock()
@@ -324,6 +349,8 @@ def run_ensemble(*, run_id, phase='all', limit=None, project_root='.', output_ro
             if schema_role:
                 tasks.append((schema_role, 'SCHEMA', a, prompts.render('answer-slots-schema-v1', Q=i['question'])))
             for role in roles:
+                if ref_mode == 'independent' and role in GROUPS:     # the evaluator answers the question itself, with the full material
+                    tasks.append((role, 'REF', a, reference_prompt(prompts, i, knowledge), None, i['image_path']))
                 tasks.append((role, 'S', a, sufficiency_prompt(prompts, i, 'T', knowledge), 'T', None))
                 tasks.append((role, 'S', a, sufficiency_prompt(prompts, i, 'I', knowledge), 'I', i['image_path']))
                 if i['witness_text_removed']:
@@ -331,7 +358,7 @@ def run_ensemble(*, run_id, phase='all', limit=None, project_root='.', output_ro
                 if i['witness_image_removed']:
                     tasks.append((role, 'W', a, witness_prompt(prompts, i, 'I', knowledge), 'I', None))
         run(tasks)
-        snapshot = Evaluation(items, store.ok)
+        snapshot = Evaluation(items, store.ok, ref_mode)
         tasks = []
         for i in subset:
             a = i['attempt_id']
@@ -346,7 +373,8 @@ def run_ensemble(*, run_id, phase='all', limit=None, project_root='.', output_ro
         work(GROUPS, evaluated, schema_role='a')
     if phase in ('arbitrate', 'all'):
         wanted = {i['attempt_id'] for i in evaluated}
-        work((ARBITER,), [i for i in Evaluation(items, store.ok).undecided() if i['attempt_id'] in wanted])
+        ev = Evaluation(items, store.ok, ref_mode)
+        work((ARBITER,), [i for i in ev.undecided() if i['attempt_id'] in wanted and ev.reference(i) is not None])
     return {'n_evaluated': len(evaluated), 'http_requests_total': store.http, 'results': len(store.ok)}
 
 
@@ -358,14 +386,17 @@ def report_ensemble(*, run_id, project_root='.', output_root='outputs'):
     manifest, _, items = _load(out)
     only = manifest['settings'].get('candidates_only', False)
     store = _Store(out / 'results.jsonl')
-    evaluation = Evaluation([i for i in items if not only or has_two_way_witness(i)], store.ok)
+    ref_mode = manifest['settings'].get('reference', 'baseline')
+    evaluation = Evaluation([i for i in items if not only or has_two_way_witness(i)], store.ok, ref_mode)
     screened = {i['attempt_id'] for i in evaluation.items if any(evaluation.p(r, 'S', i['attempt_id'], m) is not None for r in GROUPS for m in 'TI')}
     by_b = collections.Counter(r['B'] if i['attempt_id'] in screened or r['B'] is not None else 'pending'
                                for i in evaluation.items for r in [evaluation.results[i['attempt_id']]])
     invalid = sum(i['validity'] == 0 for i in items)
     validity_pending = sum(i['validity'] is None for i in items)
-    no_input = sum(i['validity'] == 1 and not (i['question'] and i['reference']) for i in items)
-    no_two_way = sum(only and i['validity'] == 1 and bool(i['question'] and i['reference']) and not has_two_way_witness(i) for i in items)
+    usable = lambda i: bool(i['question'] and (ref_mode == 'independent' or i['reference']))
+    no_input = sum(i['validity'] == 1 and not usable(i) for i in items)
+    no_two_way = [i for i in items if only and i['validity'] == 1 and usable(i) and not has_two_way_witness(i)]
+    cut_by_source = sum(i['source_both_required'] == 0 for i in no_two_way)
     tokens = collections.Counter()
     for r in store.ok.values():
         tokens[r['key'].split('|')[0]] += r.get('tokens') or 0
@@ -373,12 +404,13 @@ def report_ensemble(*, run_id, project_root='.', output_root='outputs'):
     for i in evaluation.items:
         r = evaluation.results[i['attempt_id']]
         if r['B'] is None and i['attempt_id'] in screened:
-            why['no witness in a direction' if 'nowit' in (r['D_T_why'], r['D_I_why']) else 'groups split or slots undecided'] += 1
+            why['reference undecided (the two groups disagree or failed)' if 'noref' in (r['D_T_why'], r['D_I_why']) else
+                'no witness in a direction' if 'nowit' in (r['D_T_why'], r['D_I_why']) else 'groups split or slots undecided'] += 1
     undecided = by_b[None]
     result = {'n_slots': len(items), 'confirmed_dual': by_b[1],
-              'not_confirmed': invalid + by_b[0] + validity_pending + no_input + no_two_way + undecided + by_b['pending'],
+              'not_confirmed': invalid + by_b[0] + validity_pending + no_input + len(no_two_way) + undecided + by_b['pending'],
               'detail': {'invalid_question': invalid, 'single_modality_sufficient': by_b[0], 'validity_pending': validity_pending,
-                         'no_question_or_reference': no_input, 'no_two_way_witness_not_run': no_two_way, 'necessity_undecided': undecided, 'necessity_undecided_why': dict(why),
+                         'no_question_or_reference': no_input, 'no_two_way_witness_not_run': len(no_two_way), 'of_which_source_already_found_single_modality_sufficient': cut_by_source, 'necessity_undecided': undecided, 'necessity_undecided_why': dict(why),
                          'not_yet_evaluated': by_b['pending']},
               'arbitrated_items': len(evaluation.arbitrated), 'slot_extraction_failures': dict(evaluation.failures),
               'tokens': dict(tokens), 'http_requests': store.http,

@@ -35,6 +35,13 @@ def analysis_input(row, stage, removed, config, proof=None):
                               'REFERENCE': '未提供参考答案。独立检查原Q是否有材料支持；reference_supported请填null。'},
                 'text': m['text'], 'image_path': m['image_path'], 'question': q, 'condition': 'TI'}
     retained = 'I' if removed == 'T' else 'T'
+    if stage == 'screen':      # the retained modality alone: is the full answer already determined?
+        from .necessity_ensemble import NO_IMAGE_TEXT
+        return {'template': 'ensemble-sufficiency-v1',
+                'variables': {'Q': q, 'MATERIAL': '<T>' + m['text'] + '</T>' if retained == 'T' else NO_IMAGE_TEXT,
+                              'KNOWLEDGE': config['knowledge']},
+                'question': q, 'condition': retained, 'text': m['text'] if retained == 'T' else None,
+                'image_path': m['image_path'] if retained == 'I' else None}
     text = m['text'] if retained == 'T' else None
     variables = {'Q': q, 'REMOVED': '文本' if removed == 'T' else '图像',
                  'VISIBLE': '<T>'+text+'</T>' if text else '仅附上的原图，没有文本材料。',

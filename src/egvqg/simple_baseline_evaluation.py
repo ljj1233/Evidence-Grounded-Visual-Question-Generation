@@ -20,9 +20,14 @@ from .records import canonical_json,file_lock,read_jsonl,sha256_file,sha256_text
 
 VERSION='simple-baseline-evaluation-v1'
 NAMES=('review-question-faithfulness-v1','open-necessity-v2','verify-necessity-evidence-v2')
+SCREEN='ensemble-sufficiency-v1'
 
 
-def init_evaluation(*,run_id,source_run,project_root='.',output_root='outputs',model='gpt-6-luna',concurrency=16):
+def names_for(settings):
+    return NAMES+((SCREEN,) if settings.get('cascade') else ())
+
+
+def init_evaluation(*,run_id,source_run,project_root='.',output_root='outputs',model='gpt-6-luna',concurrency=16,cascade=False):
     root=Path(project_root).resolve();_validate_run_id(run_id);_validate_run_id(source_run)
     out=root/output_root/run_id;source=root/output_root/source_run
     if out==source or not 1<=concurrency<=32:raise ValueError('invalid evaluation run/concurrency')
@@ -34,11 +39,11 @@ def init_evaluation(*,run_id,source_run,project_root='.',output_root='outputs',m
         if q['normalized_text'] and (q['sha256']!=sha256_text(q['normalized_text']) or
                 response and (response['question_sha256']!=q['sha256'] or response['question_id']!=q['question_id'])):
             raise ValueError('source answer/question binding changed')
-    cfg=load_assessment_config(root,'configs/necessity_assessment_v2.json');prompts=PromptSet(root/'prompts',names=NAMES)
+    cfg=load_assessment_config(root,'configs/necessity_assessment_v2.json');prompts=PromptSet(root/'prompts',names=names_for({'cascade':cascade}))
     sources={str((source/n).relative_to(root)):sha256_file(source/n) for n in ('records.jsonl','manifest.json','materials.jsonl','plan.jsonl')}
     code={n:sha256_file(Path(__file__).with_name(n)) for n in ('simple_baseline_evaluation.py','baseline_analysis.py','providers.py','records.py','faithfulness.py','evidence_verification.py')}
     settings={'model':model,'concurrency':concurrency,'assessment':cfg,'per_item_http_cap':5,
-        'hard_http_cap':5*len(rows),'technical_attempts':1,'direction_order':['I','T'],
+        'hard_http_cap':5*len(rows),'technical_attempts':1,'direction_order':['I','T'],'cascade':cascade,
         'short_circuit':'Accepted sufficient solution for either modality rejects both-required; do not infer the unchecked direction.'}
     fingerprint=sha256_text(canonical_json({'sources':sources,'code':code,'settings':settings,'prompts':prompts.snapshot()}))
     out.mkdir(parents=True,exist_ok=True)
@@ -105,6 +110,15 @@ def _evaluate(root,out,m,prompts,source,provider_factory=None):
             response=source['responses']['TI'] or {}
             row['TI_answer_support']=support if response.get('status')=='answered' else None
         if row['question_answerability']==0:row['both_required']=0
+        elif row['question_answerability']==1 and m['settings'].get('cascade'):
+            seen={}       # cheap screen: can the retained modality alone give a unique full answer? a failed call never cuts
+            for removed,name in (('I','text_only'),('T','image_only')):
+                s=invoke('screen_'+name,'screen',removed);res=s.get('output')
+                seen[name]=bool(isinstance(res,dict) and res.get('determinable') and res.get('answer')) if s['status']=='ok' else None
+            row['screen']=seen
+            if any(v is True for v in seen.values()):row['both_required']=0;row['screen_cut']=True
+            else:
+                for removed in ('I','T'):invoke('analysis_'+removed,'analysis',removed)    # witness proposals only; necessity-ensemble verifies them
         elif row['question_answerability']==1:
             for removed,key in (('I','image_necessary'),('T','text_necessary')):
                 a=invoke('analysis_'+removed,'analysis',removed);proof=a.get('output')
@@ -137,7 +151,7 @@ def report_evaluation(*,run_id,project_root='.',output_root='outputs'):
         status={'n_planned':len(sources),'completed':len(completed),'pending':len(rows)-len(completed),
             'answerability_completed_only':counts('question_answerability'),
             'original_TI_answer_support_completed_only':counts('TI_answer_support'),
-            'necessity_among_answerable_completed_only':necessity,'target_acceptance_completed_only':counts('both_required'),
+            'necessity_among_answerable_completed_only':necessity,'screen_cut_single_modality_sufficient':sum(bool(r.get('screen_cut')) for r in valid),'target_acceptance_completed_only':counts('both_required'),
             'new_http_requests':sum(r.get('event')=='started' for r in requests),'hard_http_cap':m['settings']['hard_http_cap'],
             'concurrency':m['settings']['concurrency'],'usage':usage,'source':'automatic_provisional'}
         write_jsonl(out/'records.jsonl',rows);write_jsonl(out/'calls.jsonl',calls);write_jsonl(out/'requests.jsonl',requests)
@@ -180,7 +194,7 @@ def run_evaluation(*,run_id,project_root='.',output_root='outputs',provider_fact
     for n,h in m['code_sha256'].items():
         if sha256_file(Path(__file__).with_name(n))!=h:raise ValueError('evaluation code changed')
     if sha256_file(out/'source_questions.jsonl')!=m['source_questions_sha256']:raise ValueError('evaluation questions changed')
-    prompts=PromptSet(out/'prompts',names=NAMES)
+    prompts=PromptSet(out/'prompts',names=names_for(m['settings']))
     if prompts.snapshot_sha256()!=m['prompt_sha256']:raise ValueError('evaluation prompts changed')
     sources=read_jsonl(out/'source_questions.jsonl')
     if limit is not None:sources=sources[:limit]
