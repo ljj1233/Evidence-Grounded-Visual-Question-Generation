@@ -1,9 +1,0 @@
-{
-  "extends": "evaluation_v2.json",
-  "protocol_version": "evidence-necessity-v3-probe2",
-  "analysis_template": "modality-necessity-v3",
-  "evidence_contract": "v3",
-  "max_http_requests": 30,
-  "allow_synthetic_isolated": true,
-  "followup_policy": "substantive_only"
-}

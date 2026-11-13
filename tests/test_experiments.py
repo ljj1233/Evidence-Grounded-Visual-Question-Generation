@@ -6,8 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from egvqg.experiments import (DIMENSIONS, SHORTCUTS, TEMPLATES, answering_input,
-    init_experiment, label, new_record, run_experiment)
+from egvqg.experiments import DIMENSIONS, SHORTCUTS, TEMPLATES, init_experiment, label, new_record, run_experiment
 from egvqg.metrics import compute_record_metrics, record_states, summarize_records
 from egvqg.prompts import PromptSet
 from egvqg.providers import Completion, ModelCaller, ProviderError
@@ -243,39 +242,6 @@ def test_atomic_updates_preserve_other_rows_and_fixed_plan(project):
     with pytest.raises(Exception): store.put(changed,previous=before)
     write_jsonl(out/'records.jsonl',[changed])
     with pytest.raises(ValueError): summarize_records(out/'records.jsonl')
-
-
-def test_admission_requires_human_review_and_generates_exactly_120_slots(project):
-    from egvqg.screening import ADMISSION_CHECKS, freeze_admission
-    out=project/'outputs/admission'; out.mkdir(parents=True)
-    base=read_jsonl(project/'materials.jsonl')[0]
-    candidates=[]; reviews=[]
-    for i in range(30):
-        image=project/f'image-{i}.png'
-        image.write_bytes((project/'image.png').read_bytes()+str(i).encode())
-        m={**base,'material_id':f'm{i}','image_path':image.name,'image_sha256':sha256_file(image)}
-        candidates.append(m)
-        reviews.append({'material_id':m['material_id'],'image_sha256':m['image_sha256'],
-            'source':'human','reviewer':'synthetic-test-reviewer',
-            'checks':{k:{'value':1,'reason':'synthetic admission fixture'} for k in ADMISSION_CHECKS}})
-    write_jsonl(out/'candidates.jsonl',candidates)
-    write_json(out/'manifest.json',{'candidate_sha256':sha256_file(out/'candidates.jsonl'),
-                                  'methods':['plain','strong','anchored','no_image_anchor']})
-    write_jsonl(project/'reviews.jsonl',reviews)
-    rejected=copy.deepcopy(reviews); rejected[0]['source']='AI'
-    write_jsonl(project/'bad.jsonl',rejected)
-    with pytest.raises(ValueError):
-        freeze_admission(run_id='admission',reviews_path='bad.jsonl',project_root=project)
-    assert not (project/'outputs/admission-plan').exists()
-    result=freeze_admission(run_id='admission',reviews_path='reviews.jsonl',project_root=project)
-    assert result['n_planned']==120
-    assert len(ExperimentStore(project/'outputs/admission-plan').rows())==120
-    before=(project/'outputs/admission-plan/records.jsonl').read_bytes()
-    freeze_admission(run_id='admission',reviews_path='reviews.jsonl',project_root=project)
-    assert (project/'outputs/admission-plan/records.jsonl').read_bytes()==before
-    (out/'materials.jsonl').write_text('{}\n')
-    with pytest.raises(ValueError):
-        init_experiment(materials_path=str(out/'materials.jsonl'),run_id='bad-plan',partition='pilot',project_root=project)
 
 
 def test_human_reference_correction_reuses_q_answers_and_invalidates_only_affected_steps(project):

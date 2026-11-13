@@ -1,4 +1,4 @@
-"""Unified CLI for generation, evaluation, dataset import and refinement."""
+"""Unified CLI for generation, evaluation and dataset import."""
 
 from __future__ import annotations
 
@@ -106,38 +106,8 @@ def build_parser() -> argparse.ArgumentParser:
     score_parser.add_argument("--output-root", default="outputs")
     score_parser.add_argument("--project-root", default=".")
 
-    diagnostic = subparsers.add_parser("diagnose-quality", help="evaluate frozen quality controls on real materials")
-    diagnostic.add_argument("--materials", required=True)
-    diagnostic.add_argument("--cases", required=True)
-    diagnostic.add_argument("--run-id", required=True)
-    diagnostic.add_argument("--limit", type=int, default=3, help="material limit")
-    diagnostic.add_argument("--max-requests", type=int, default=120)
-    diagnostic.add_argument("--max-tokens", type=int, default=2048)
-    diagnostic.add_argument("--dry-run", action="store_true")
-    diagnostic.add_argument("--output-root", default="outputs")
-    diagnostic.add_argument("--project-root", default=".")
 
-    screening = subparsers.add_parser("screen-sample", help="randomly sample training materials and estimate automatic screening yield")
-    screening.add_argument("--run-id", required=True)
-    screening.add_argument("--limit", type=int, default=30)
-    screening.add_argument("--seed", type=int, default=20261111)
-    screening.add_argument("--max-requests", type=int, default=120)
-    screening.add_argument("--max-tokens", type=int, default=2048)
-    screening.add_argument("--dry-run", action="store_true")
-    screening.add_argument("--project-root", default=".")
-    screening.add_argument("--output-root", default="outputs")
-    screening.add_argument("--reviews", default=None, help="optional full-sample AI visual-review JSONL; original model results remain separate")
 
-    repair = subparsers.add_parser("refine-questions", help="one checklist-guided Q-only rewrite with before/after checks")
-    repair.add_argument("--materials", required=True)
-    repair.add_argument("--cases", required=True)
-    repair.add_argument("--run-id", required=True)
-    repair.add_argument("--limit", type=int, default=3)
-    repair.add_argument("--max-requests", type=int, default=30)
-    repair.add_argument("--max-tokens", type=int, default=2048)
-    repair.add_argument("--dry-run", action="store_true")
-    repair.add_argument("--project-root", default=".")
-    repair.add_argument("--output-root", default="outputs")
 
     normalize = subparsers.add_parser("normalize-materials", help="map a dataset's flat JSONL fields to the shared T/I contract")
     normalize.add_argument("--input", required=True)
@@ -152,22 +122,7 @@ def build_parser() -> argparse.ArgumentParser:
     normalize.add_argument("--question-field", default=None, help="optionally map an existing Q field (never an answer)")
     normalize.add_argument("--questions-output", default=None, help="paired with --question-field: output material_id/question JSONL")
 
-    portable = subparsers.add_parser("refine-pipeline", help="dataset-neutral generation/import, checks, one rewrite and survival metrics")
-    portable.add_argument("--materials", required=True)
-    portable.add_argument("--questions", default=None, help="optional material_id/question JSONL; missing questions are generated")
-    portable.add_argument("--config", default="configs/refinement.json")
-    portable.add_argument("--run-id", required=True)
-    portable.add_argument("--limit", type=int, default=30)
-    portable.add_argument("--max-requests", type=int, default=180)
-    portable.add_argument("--max-tokens", type=int, default=2048)
-    portable.add_argument("--dry-run", action="store_true")
-    portable.add_argument("--project-root", default=".")
-    portable.add_argument("--output-root", default="outputs")
 
-    portable_report = subparsers.add_parser("refine-summary", help="recompute a portable refinement report offline")
-    portable_report.add_argument("--run-id", required=True)
-    portable_report.add_argument("--project-root", default=".")
-    portable_report.add_argument("--output-root", default="outputs")
 
     initialize = subparsers.add_parser('experiment-init', help='freeze plan and initialize one complete blank record per attempt')
     initialize.add_argument('--materials', required=True)
@@ -208,13 +163,6 @@ def build_parser() -> argparse.ArgumentParser:
     probe = subparsers.add_parser('probe-reproducibility', help='three fresh dev requests, separate from cache replay')
     probe.add_argument('--max-requests', type=int, default=3)
 
-    admission = subparsers.add_parser('prepare-admission', help='sample unseen train candidates without model calls')
-    admission.add_argument('--seed', type=int, default=20261112)
-    admission.add_argument('--limit', type=int, default=60)
-    admit = subparsers.add_parser('freeze-admission', help='freeze first 30 human-approved candidates and 120 slots')
-    admit.add_argument('--reviews', required=True)
-    extended=subparsers.add_parser('extend-admission',help='append the next candidates from the original seeded random order')
-    extended.add_argument('--add',type=int,default=60)
     repeated=subparsers.add_parser('probe-repeatability',help='3 fixed dev questions x 5 fresh requests')
     repeated.add_argument('--max-requests',type=int,default=15)
     batch=subparsers.add_parser('stage-two',help='validate frozen inputs, run plain30 then strong30 and report')
@@ -227,17 +175,6 @@ def build_parser() -> argparse.ArgumentParser:
     retry=subparsers.add_parser('retry-evaluation',help='explicitly reset failed evaluation steps without changing Q or N')
     retry.add_argument('--attempt-ids',nargs='+',required=True)
     retry.add_argument('--steps',nargs='+',required=True)
-    ni=subparsers.add_parser('necessity-init',help='initialize an evaluation-only evidence probe with reviewed references')
-    ni.add_argument('--materials',required=True);ni.add_argument('--cases',required=True)
-    ni.add_argument('--expected',default=None);ni.add_argument('--config',default='configs/evaluation_v2.json')
-    nr=subparsers.add_parser('necessity-run',help='run missing evidence analyses; optional bounded isolated follow-up')
-    nr.add_argument('--max-requests',type=int,default=24);nr.add_argument('--follow-up',action='store_true')
-    nr.add_argument('--dry-run',action='store_true')
-    nv=subparsers.add_parser('necessity-review',help='import reviews of exact evidence items')
-    nv.add_argument('--reviews',required=True)
-    ns=subparsers.add_parser('necessity-report',help='recompute proposed and reviewed necessity tables offline')
-    nn=subparsers.add_parser('necessity-normalize',help='zero-call baseline normalization into a separate derived run')
-    nn.add_argument('--source-run',required=True)
     fq=subparsers.add_parser('faithfulness-review',help='derive an offline, source-bound question faithfulness review; no model calls')
     fq.add_argument('--source-run',required=True)
     fq.add_argument('--reviews',required=True)
@@ -247,13 +184,6 @@ def build_parser() -> argparse.ArgumentParser:
     barun.add_argument('--dry-run',action='store_true')
     barun.add_argument('--max-steps',type=int,default=None)
     bareport=subparsers.add_parser('baseline-analysis-report',help='merge explicit targeted API proof reviews and report separate dimensions offline')
-    abinit=subparsers.add_parser('api-baseline-init',help='freeze natural API generation and evaluation on supplied test materials')
-    abinit.add_argument('--materials',required=True)
-    abinit.add_argument('--model',default='gpt-6-luna')
-    abinit.add_argument('--workers',type=int,default=2)
-    abrun=subparsers.add_parser('api-baseline-run',help='resume API baseline for a fixed prefix of its plan')
-    abrun.add_argument('--limit',type=int,default=None)
-    abreport=subparsers.add_parser('api-baseline-report',help='report API baseline progress and provisional separate dimensions offline')
     sbinit=subparsers.add_parser('simple-baseline-init',help='freeze simple API generation+TI answering, bounded images and optional valid prior-call reuse')
     sbinit.add_argument('--materials',required=True)
     sbinit.add_argument('--model',default='gpt-6-luna')
@@ -283,43 +213,11 @@ def build_parser() -> argparse.ArgumentParser:
     ner.add_argument('--phase',choices=('screen','arbitrate','all'),default='all')
     ner.add_argument('--limit',type=int,default=None)
     nerep=subparsers.add_parser('necessity-ensemble-report',help='fixed-denominator report: confirmed dual vs not confirmed, with diagnostics')
-    fi=subparsers.add_parser('identifiability-init',help='freeze a finite-world answer-identifiability dev probe')
-    fi.add_argument('--cases',required=True)
-    fr=subparsers.add_parser('identifiability-run',help='enumerate answer sets with isolated real-model inputs')
-    fr.add_argument('--max-requests',type=int,default=26);fr.add_argument('--dry-run',action='store_true')
-    fs=subparsers.add_parser('identifiability-report',help='check model answer sets against the finite-world oracle')
-    oi=subparsers.add_parser('open-necessity-init',help='freeze open-completion controls without candidate ranges')
-    oi.add_argument('--cases',required=True);oi.add_argument('--key',required=True)
-    oi.add_argument('--config',default=None,help='optional frozen assessment/knowledge contract')
-    orun=subparsers.add_parser('open-necessity-run',help='propose open witnesses using isolated visible materials')
-    orun.add_argument('--max-requests',type=int,default=20);orun.add_argument('--dry-run',action='store_true')
-    oreport=subparsers.add_parser('open-necessity-report',help='report reviewed open-completion evidence')
-    oreport.add_argument('--verification-run',default=None)
-    ve=subparsers.add_parser('verify-open-evidence',help='verify a fixed sidecar set of existing or corrupted proofs')
-    ve.add_argument('--source-run',required=True);ve.add_argument('--items',required=True)
-    ve.add_argument('--max-requests',type=int,default=16);ve.add_argument('--dry-run',action='store_true')
-    ve.add_argument('--report-only',action='store_true')
-    ve.add_argument('--config',default=None)
-    pdinit=subparsers.add_parser('preservation-diagnostic-init',help='seal the fixed evaluation-only preservation diagnostic')
-    pdinit.add_argument('--construction',required=True)
-    pdrun=subparsers.add_parser('preservation-diagnostic-run',help='run only missing sealed diagnostic calls')
-    pdrun.add_argument('--max-requests',type=int,default=70)
-    pdrun.add_argument('--dry-run',action='store_true')
-    pdreport=subparsers.add_parser('preservation-diagnostic-report',help='report sealed diagnostic counts offline')
-    localrun=subparsers.add_parser('local-experiment-run',help='use a local vision model for generation/answering and gpt-6-luna for reference/scoring')
-    localrun.add_argument('--model-path',required=True)
-    localrun.add_argument('--device',default='cuda:4')
-    localrun.add_argument('--max-local-calls',type=int,default=30)
-    localrun.add_argument('--max-requests',type=int,default=80)
-    localrun.add_argument('--max-new-tokens',type=int,default=1024)
-    localrun.add_argument('--max-steps',type=int,default=None)
-    localrun.add_argument('--stages',nargs='+',choices=('generation','reference','answers','scores'),default=None)
-    localrun.add_argument('--dry-run',action='store_true')
-    for command in (initialize, execute, review, refreview, packet, freeze, probe, admission, admit, extended, repeated, batch, retry):
+    for command in (initialize, execute, review, refreview, packet, freeze, probe, repeated, batch, retry):
         command.add_argument('--run-id', required=True)
         command.add_argument('--project-root', default='.')
         command.add_argument('--output-root', default='outputs')
-    for command in (ni,nr,nv,ns,nn,fq,bainit,barun,bareport,abinit,abrun,abreport,sbinit,sbrun,sbreport,seinit,serun,sereport,fi,fr,fs,nei,ner,nerep,oi,orun,oreport,ve,pdinit,pdrun,pdreport,localrun):
+    for command in (fq,bainit,barun,bareport,sbinit,sbrun,sbreport,seinit,serun,sereport,nei,ner,nerep):
         command.add_argument('--run-id',required=True);command.add_argument('--project-root',default='.')
         command.add_argument('--output-root',default='outputs')
 
@@ -355,13 +253,6 @@ def main(argv: list[str] | None = None) -> int:
             elif args.command=='simple-baseline-run':result=run_simple_baseline(**common,limit=args.limit)
             else:result=report_simple_baseline(**common)
             print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command in ('api-baseline-init','api-baseline-run','api-baseline-report'):
-            from .api_baseline import init_api_baseline,run_api_baseline,report_api_baseline
-            common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
-            if args.command=='api-baseline-init':result=init_api_baseline(**common,materials_path=args.materials,model=args.model,workers=args.workers)
-            elif args.command=='api-baseline-run':result=run_api_baseline(**common,limit=args.limit)
-            else:result=report_api_baseline(**common)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='baseline-analysis-report':
             from .faithfulness import report_targeted_analysis
             result=report_targeted_analysis(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root)
@@ -377,55 +268,9 @@ def main(argv: list[str] | None = None) -> int:
             result=derive_faithfulness(source_run=args.source_run,run_id=args.run_id,
                 reviews_path=args.reviews,project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command=='local-experiment-run':
-            from .local_inference import run_local_experiment
-            result=run_local_experiment(**{k:getattr(args,k) for k in (
-                'run_id','model_path','device','max_local_calls','max_requests','max_new_tokens',
-                'stages','project_root','output_root','dry_run','max_steps')})
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command.startswith('preservation-diagnostic-'):
-            from .preservation_diagnostic import init_diagnostic,run_diagnostic,report_diagnostic
-            common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
-            if args.command=='preservation-diagnostic-init':
-                result=init_diagnostic(**common,construction_path=args.construction)
-            elif args.command=='preservation-diagnostic-run':
-                result=run_diagnostic(**common,max_requests=args.max_requests,dry_run=args.dry_run)
-            else:result=report_diagnostic(**common)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command=='verify-open-evidence':
-            from .evidence_verification import verify_open
-            result=verify_open(run_id=args.run_id,source_run=args.source_run,items_path=args.items,
-                max_requests=args.max_requests,dry_run=args.dry_run,report_only=args.report_only,
-                project_root=args.project_root,output_root=args.output_root,config_path=args.config)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command in ('open-necessity-init','open-necessity-run','open-necessity-report'):
-            from .open_necessity import init_open_probe,run_open_probe,report_open_probe
-            common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
-            if args.command=='open-necessity-init':result=init_open_probe(**common,cases_path=args.cases,key_path=args.key,config_path=args.config)
-            elif args.command=='open-necessity-run':result=run_open_probe(**common,max_requests=args.max_requests,dry_run=args.dry_run)
-            else:result=report_open_probe(**common,verification_run=args.verification_run)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command in ('identifiability-init','identifiability-run','identifiability-report'):
-            from .identifiability import init_identifiability,run_identifiability,report_identifiability
-            common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
-            if args.command=='identifiability-init':result=init_identifiability(**common,cases_path=args.cases)
-            elif args.command=='identifiability-run':result=run_identifiability(**common,max_requests=args.max_requests,dry_run=args.dry_run)
-            else:result=report_identifiability(**common)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command in ('necessity-init','necessity-run','necessity-review','necessity-report','necessity-normalize'):
-            from .necessity import init_necessity,run_necessity,review_necessity,report_necessity,normalize_necessity
-            common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
-            if args.command=='necessity-init':result=init_necessity(**common,materials_path=args.materials,
-                cases_path=args.cases,expected_path=args.expected,config_path=args.config)
-            elif args.command=='necessity-run':result=run_necessity(**common,max_requests=args.max_requests,
-                follow_up=args.follow_up,dry_run=args.dry_run)
-            elif args.command=='necessity-review':result=review_necessity(**common,reviews_path=args.reviews)
-            elif args.command=='necessity-normalize':result=normalize_necessity(**common,source_run=args.source_run)
-            else:result=report_necessity(**common)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command in ('experiment-init', 'experiment-run', 'experiment-review', 'freeze-evaluation',
-                            'probe-reproducibility', 'prepare-admission', 'freeze-admission', 'records-metrics',
-                            'extend-admission','probe-repeatability','stage-two','retry-evaluation',
+                            'probe-reproducibility', 'records-metrics',
+                            'probe-repeatability','stage-two','retry-evaluation',
                             'records-patterns','reference-review','review-packet'):
             from . import experiments
             common = {k: getattr(args, k) for k in ('run_id','project_root','output_root') if hasattr(args, k)}
@@ -460,9 +305,6 @@ def main(argv: list[str] | None = None) -> int:
                 result = experiments.freeze_evaluation(**common,protocol_path=args.protocol)
             elif args.command == 'probe-repeatability':
                 result = experiments.probe_repeatability(**common,max_requests=args.max_requests)
-            elif args.command == 'extend-admission':
-                from .screening import extend_admission
-                result=extend_admission(**common,add=args.add)
             elif args.command == 'stage-two':
                 from .batch import run_stage_two
                 result=run_stage_two(**common,evaluation_run=args.evaluation_run,materials_path=args.materials,
@@ -472,12 +314,6 @@ def main(argv: list[str] | None = None) -> int:
                 result=retry_failed_evaluation(**common,attempt_ids=args.attempt_ids,steps=args.steps)
             elif args.command == 'probe-reproducibility':
                 result = experiments.probe_reproducibility(**common, max_requests=args.max_requests)
-            elif args.command == 'prepare-admission':
-                from .screening import prepare_admission
-                result = prepare_admission(**common, seed=args.seed, limit=args.limit)
-            elif args.command == 'freeze-admission':
-                from .screening import freeze_admission
-                result = freeze_admission(**common, reviews_path=args.reviews)
             else:
                 from .metrics import summarize_records
                 result = summarize_records(args.records, output_dir=args.output_dir)
@@ -513,35 +349,6 @@ def main(argv: list[str] | None = None) -> int:
                                          image_root=Path(args.image_root) if args.image_root else None,
                                          question_field=args.question_field,
                                          questions_output=Path(args.questions_output) if args.questions_output else None)
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-        elif args.command == "refine-summary":
-            from .refinement import summarize_refinement
-            print(json.dumps(summarize_refinement(run_id=args.run_id, project_root=args.project_root,
-                                                 output_root=args.output_root), ensure_ascii=False, indent=2))
-        elif args.command == "refine-pipeline":
-            from .refinement import run_refinement_pipeline
-            result = run_refinement_pipeline(materials_path=args.materials, questions_path=args.questions,
-                                            config_path=args.config, run_id=args.run_id, project_root=args.project_root,
-                                            output_root=args.output_root, limit=args.limit, max_requests=args.max_requests,
-                                            max_tokens=args.max_tokens, dry_run=args.dry_run)
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-        elif args.command == "refine-questions":
-            from .quality import refine_questions
-            result = refine_questions(materials_path=args.materials, cases_path=args.cases, run_id=args.run_id,
-                                      project_root=args.project_root, output_root=args.output_root, limit=args.limit,
-                                      max_requests=args.max_requests, max_tokens=args.max_tokens, dry_run=args.dry_run)
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-        elif args.command == "screen-sample":
-            from .screening import screen_sample
-            result = screen_sample(run_id=args.run_id, project_root=args.project_root, output_root=args.output_root,
-                                   limit=args.limit, seed=args.seed, max_requests=args.max_requests,
-                                   max_tokens=args.max_tokens, dry_run=args.dry_run, reviews_path=args.reviews)
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-        elif args.command == "diagnose-quality":
-            from .quality import diagnose_quality
-            result = diagnose_quality(materials_path=args.materials, cases_path=args.cases, run_id=args.run_id,
-                                      project_root=args.project_root, output_root=args.output_root, limit=args.limit,
-                                      max_requests=args.max_requests, max_tokens=args.max_tokens, dry_run=args.dry_run)
             print(json.dumps(result, ensure_ascii=False, indent=2))
         elif args.command == "score":
             result = rescore_run(source_run=args.source_run, run_id=args.run_id, project_root=args.project_root,
