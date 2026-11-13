@@ -135,8 +135,8 @@ def test_transport_failure_is_unresolved_and_does_not_log_credentials(tmp_path, 
 
 
 @pytest.mark.parametrize('base,model,api,path,pinned', [
-    ('https://aigc-api.hkust-gz.edu.cn/v1/chat/completions/', 'gpt-test', 'auto', '/v1/responses', True),
-    ('https://aigc-api.hkust-gz.edu.cn/v1/responses', 'DeepSeek-test', 'auto', '/v1/chat/completions', True),
+    ('https://gateway.example.test/v1/chat/completions/', 'gpt-test', 'auto', '/v1/responses', True),
+    ('https://gateway.example.test/v1/responses', 'DeepSeek-test', 'auto', '/v1/chat/completions', True),
     ('http://127.0.0.1:8101/v1', 'gpt-test', 'chat_completions', '/v1/chat/completions', False),
 ])
 def test_gateway_tcp_binding_sni_host_proxy_isolation_and_api(tmp_path, monkeypatch, base, model, api, path, pinned):
@@ -177,16 +177,17 @@ def test_gateway_tcp_binding_sni_host_proxy_isolation_and_api(tmp_path, monkeypa
     monkeypatch.setattr(socket, 'create_connection', connect)
     monkeypatch.setattr(ssl.SSLContext, 'wrap_socket', wrap)
     judge = JudgeProvider(model=model, api=api, base_url=base, api_key='SECRET',
-                         cache_dir=tmp_path/'cache', ledger_path=tmp_path/'requests.jsonl')
+                         cache_dir=tmp_path/'cache', ledger_path=tmp_path/'requests.jsonl',
+                         connect_ip='203.0.113.7' if pinned else None, local_address='198.51.100.9' if pinned else None)
     result = judge.complete(CompletionRequest(task='score_response', prompt='grade this'))
     wire = b''.join(sent)
     assert b'POST ' + path.encode() + b' HTTP/1.1' in wire
     assert result.text == text and result.finish_reason == 'stop'
     assert result.usage['prompt_tokens'] == 7 and result.usage['total_tokens'] == 10
     if pinned:
-        assert tcp == [(('10.121.10.250', 443), ('10.123.4.32', 0))]
-        assert tls == ['aigc-api.hkust-gz.edu.cn']
-        assert b'Host: aigc-api.hkust-gz.edu.cn' in wire
+        assert tcp == [(('203.0.113.7', 443), ('198.51.100.9', 0))]
+        assert tls == ['gateway.example.test']
+        assert b'Host: gateway.example.test' in wire
     else:
         assert tcp == [(('127.0.0.1', 8101), None)] and tls == []
     payload = json.loads(wire.split(b'\r\n\r\n', 1)[1])

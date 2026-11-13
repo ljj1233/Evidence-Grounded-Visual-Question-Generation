@@ -409,9 +409,7 @@ class JudgeProvider:
         self.api = api
         self._url = urlunsplit((parts.scheme, parts.netloc, base_path + (
             '/responses' if api == 'responses' else '/chat/completions'), '', ''))
-        gateway = parts.hostname == 'aigc-api.hkust-gz.edu.cn'
-        self.connect_ip = connect_ip or ('10.121.10.250' if gateway else None)
-        self.local_address = local_address or ('10.123.4.32' if gateway else None)
+        self.connect_ip, self.local_address = connect_ip, local_address     # set LLM_JUDGE_CONNECT_IP / LLM_JUDGE_LOCAL_ADDRESS to pin a gateway
         self._key = api_key
         self.cache_dir, self.ledger_path = cache_dir, ledger_path
         self.max_requests, self.timeout = max_requests, timeout
