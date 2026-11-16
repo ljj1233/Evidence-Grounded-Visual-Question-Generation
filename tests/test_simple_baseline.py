@@ -9,6 +9,7 @@ import pytest
 from PIL import Image
 
 from egvqg.providers import Completion
+from egvqg.prompts import prompt_path
 from egvqg.records import read_jsonl,sha256_file,write_jsonl
 from egvqg.simple_baseline import bounded_image,init_simple_baseline,run_simple_baseline
 
@@ -17,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def project(tmp_path,n):
     (tmp_path/'prompts').mkdir()
-    for name in ('plain-v2','solve-v1'):shutil.copy(ROOT/f'prompts/{name}.txt',tmp_path/'prompts')
+    for name in ('plain-v2','solve-v1'):shutil.copy(prompt_path(ROOT/'prompts',name),tmp_path/'prompts')
     image=tmp_path/'image.png';shutil.copy(ROOT/'tests/fixtures/m_thermo.png',image)
     rows=[{'material_id':f'm{i}','source_group_id':f'g{i}','split':'test','text':f'TEXT_SENTINEL_{i}',
         'image_path':'image.png','image_sha256':sha256_file(image),'provenance':'offline fixture','text_source':'hint'} for i in range(n)]

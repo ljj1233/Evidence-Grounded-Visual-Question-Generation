@@ -18,6 +18,7 @@ import time
 from pathlib import Path
 
 from .records import read_jsonl, sha256_file, utc_now, write_json
+from .prompts import PromptSet, prompt_path
 
 VERSION = 'whitebox-capture-v1'
 TEMPLATE = 'plain-v2'
@@ -250,7 +251,7 @@ def run_capture(*, run_id, project_root='.', output_root='outputs', reference_ru
     prompts = PromptSet(root / 'prompts', names=(template,))
     backend = QwenVLBackend(model_path, device=device, max_new_tokens=max_new_tokens)
     identity = qwen_identity(backend, 'local-qwen3-vl-whitebox-v1', capture_version=VERSION, batch_size=1, capture_k=k,
-                             prompt_template=template, prompt_sha256=sha256_file(root / 'prompts' / f'{template}.txt'),
+                             prompt_template=template, prompt_sha256=sha256_file(prompt_path(root / 'prompts', template)),
                              hidden_state_layers='embeddings + one entry per block; the last entry is AFTER the final norm in transformers>=5.22 (verified: equals norm(last block output)); earlier 4.57.6 runs stored it BEFORE the norm',
                              state_dtype='bfloat16', reference_run=reference_run)
     identity_path = out / 'model_identity.json'

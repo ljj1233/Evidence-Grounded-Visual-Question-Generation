@@ -33,6 +33,7 @@ from .inline_analysis import contains_number, lexical_inline, number_tokens
 from .llm import CachedCaller, json_object
 from .records import read_jsonl, stable_id, utc_now, write_json, write_jsonl
 from .stats import wilson
+from .prompts import PromptSet, prompt_path
 
 SOURCES = ('leak', 'anchor', 'other')
 VERDICT_DIRECTION = {'text_suff': 'text', 'image_suff': 'image', 'both_suff': 'both'}
@@ -394,7 +395,7 @@ def run_redundancy_source(*, run_id, datasets, judge_model, knowledge, project_r
     call_summary = caller.summary()
     call_summary['total_tokens'] = _token_total(out)
     judge = {'model': judge_model, 'summary': call_summary,
-             'prompts': {name: (root / 'prompts' / f'{name}.txt').read_text() for name in PROMPTS}} if use_judge else None
+             'prompts': {name: prompt_path(root / 'prompts', name).read_text() for name in PROMPTS}} if use_judge else None
 
     report = {'created_at': utc_now(), 'run_id': run_id, 'judge': judge,
               'datasets': {label: summarize_dataset(label, units, counts[label]) for label, units in loaded.items()}}

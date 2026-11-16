@@ -23,7 +23,9 @@ _DIGIT = re.compile(r'\d')
 
 
 def _render(root, text):
-    return (Path(root) / 'prompts' / f'{PROMPT}.txt').read_text(encoding='utf-8').replace('$T', text)
+    from .prompts import prompt_path
+
+    return prompt_path(Path(root) / 'prompts', PROMPT).read_text(encoding='utf-8').replace('$T', text)
 
 
 def _load_eager(path, device):

@@ -14,6 +14,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from .records import read_jsonl, sha256_file, sha256_text, utc_now, write_json, write_jsonl
+from .prompts import PromptSet, prompt_path
 
 VERSION = 'candidates-v1'
 TEMPLATE = 'plain-v2'
@@ -133,7 +134,7 @@ def run_candidates(*, run_id, project_root='.', output_root='outputs', reference
     backend = QwenVLBackend(model_path, device=device, max_new_tokens=max_new_tokens)
     sampling = {'temperature': temperature, 'top_p': top_p, 'top_k': top_k}
     identity = qwen_identity(backend, 'local-qwen3-vl-whitebox-sampled-v1', capture_version=VERSION, batch_size=1, capture_k=k,
-                             prompt_template=template, prompt_sha256=sha256_file(root / 'prompts' / f'{template}.txt'),
+                             prompt_template=template, prompt_sha256=sha256_file(prompt_path(root / 'prompts', template)),
                              state_dtype='bfloat16', sampling=sampling, n_candidates=n_candidates, run_seed=run_seed,
                              selection={'n_skills': n_skills, 'per_skill': per_skill, 'exclude_run': exclude_run, 'materials_file': materials_file,
                                         'group_field': group_field, 'select': select, 'max_materials': max_materials},

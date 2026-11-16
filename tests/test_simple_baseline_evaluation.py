@@ -6,6 +6,7 @@ import shutil
 import pytest
 
 from egvqg.providers import Completion
+from egvqg.prompts import prompt_path
 from egvqg.records import read_jsonl,sha256_file,write_jsonl
 from egvqg.simple_baseline import init_simple_baseline,run_simple_baseline
 from egvqg.simple_baseline_evaluation import init_evaluation,run_evaluation,NAMES
@@ -17,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 @pytest.mark.parametrize('scenario',['sufficient','reject_first','malformed'])
 def test_evaluation_waits_for_full_batch_and_keeps_evidence_failures_unresolved(tmp_path,scenario):
     project(tmp_path,2)
-    for n in NAMES:shutil.copy(ROOT/f'prompts/{n}.txt',tmp_path/'prompts')
+    for n in NAMES:shutil.copy(prompt_path(ROOT/'prompts',n),tmp_path/'prompts')
     (tmp_path/'configs').mkdir();shutil.copy(ROOT/'configs/necessity_assessment_v2.json',tmp_path/'configs')
     init_simple_baseline(run_id='source',materials_path='materials.jsonl',project_root=tmp_path,concurrency=2)
     args=dict(run_id='evaluation',source_run='source',project_root=tmp_path,concurrency=2)
@@ -63,7 +64,7 @@ def test_evaluation_waits_for_full_batch_and_keeps_evidence_failures_unresolved(
 @pytest.mark.parametrize('screen_cuts',[True,False])
 def test_cascade_screens_first_and_proposes_witnesses_only_for_survivors(tmp_path,screen_cuts):
     project(tmp_path,2)
-    for n in NAMES+('ensemble-sufficiency-v1',):shutil.copy(ROOT/f'prompts/{n}.txt',tmp_path/'prompts')
+    for n in NAMES+('ensemble-sufficiency-v1',):shutil.copy(prompt_path(ROOT/'prompts',n),tmp_path/'prompts')
     (tmp_path/'configs').mkdir();shutil.copy(ROOT/'configs/necessity_assessment_v2.json',tmp_path/'configs')
     init_simple_baseline(run_id='source',materials_path='materials.jsonl',project_root=tmp_path,concurrency=2)
     mock=Mock();run_simple_baseline(run_id='source',project_root=tmp_path,provider_factory=lambda p,t:mock)

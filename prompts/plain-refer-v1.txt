@@ -1,5 +1,0 @@
-Based on the context and the image, ask one question.
-Use referring expressions such as "the stated rule", "the given condition", or "the indicated threshold" instead of repeating numbers, thresholds, or rule wording that already appears in the context.
-Context:
-<T>$T</T>
-Output only the question.

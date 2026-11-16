@@ -3,6 +3,7 @@ from collections import Counter
 
 from egvqg.candidates import ReplayProvider, candidate_seed, cjk_share, select_materials, unique_candidates
 from egvqg.providers import CompletionRequest
+from egvqg.prompts import prompt_path
 
 
 def skills(n_skills=10, per=9):
@@ -65,7 +66,7 @@ def test_a_materials_file_is_taken_as_is_and_can_be_subsampled_reproducibly():
 def test_plain_v2_prompt_is_neutral_and_keeps_the_span_markers(tmp_path):
     from pathlib import Path
     from egvqg.prompts import PromptSet
-    text = (Path(__file__).resolve().parents[1] / 'prompts' / 'plain-v2.txt').read_text(encoding='utf-8')
+    text = prompt_path(Path(__file__).resolve().parents[1] / 'prompts', 'plain-v2').read_text(encoding='utf-8')
     assert '<T>$T</T>' in text and text.count('$T') == 1
     lowered = text.lower()
     for framing in ('educational', 'clear', 'natural', 'answerable', 'based on the material', 'provided as', 'both', 'must'):

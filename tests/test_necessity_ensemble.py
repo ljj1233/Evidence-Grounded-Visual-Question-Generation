@@ -8,6 +8,7 @@ import pytest
 from egvqg.necessity_ensemble import (ARBITER, Evaluation, GROUPS, NO_IMAGE_TEXT, TEMPLATES, init_ensemble, key, norm_value,
                                       report_ensemble, run_ensemble, vote)
 from egvqg.providers import Completion
+from egvqg.prompts import prompt_path
 from egvqg.records import read_jsonl, sha256_file, write_jsonl
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -125,7 +126,7 @@ def build_source(tmp_path, answer=None):
     write_jsonl(src / 'source_questions.jsonl', sources)
     (tmp_path / 'prompts').mkdir()
     for name in TEMPLATES:
-        shutil.copy(ROOT / f'prompts/{name}.txt', tmp_path / 'prompts')
+        shutil.copy(prompt_path(ROOT / 'prompts', name), tmp_path / 'prompts')
 
 
 class Mock:
