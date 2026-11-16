@@ -1,7 +1,7 @@
 """E1 redundancy-source: direction mapping, deduplication, and the programmatic screen."""
 import json
 
-from egvqg.redundancy_source import (combine_source, load_units, redundant_sides, screen_side,
+from egvqg.studies.redundancy_source import (combine_source, load_units, redundant_sides, screen_side,
                                      screen_unit)
 
 

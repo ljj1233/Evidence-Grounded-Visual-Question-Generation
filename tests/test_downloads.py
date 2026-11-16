@@ -7,8 +7,8 @@ import zipfile
 
 import pytest
 
-from egvqg.dataset import download_file
-from egvqg.downloads import MMQA_REVISION, _drive_listing, download_multimodalqa
+from egvqg.data.dataset import download_file
+from egvqg.data.downloads import MMQA_REVISION, _drive_listing, download_multimodalqa
 
 
 def test_download_rejects_html_and_recovers_complete_partial_without_http(tmp_path):
@@ -55,7 +55,7 @@ def test_mmqa_download_validates_full_image_mapping_and_cached_crc(tmp_path,monk
                 with gzip.open(root/name,'wt') as stream:stream.write(json.dumps(row)+'\n')
         with zipfile.ZipFile(root/'final_dataset_images.zip','w') as z:z.writestr('final_dataset_images/x.png',b'fixture')
         return {}
-    monkeypatch.setattr('egvqg.downloads._download_bundle',fixture)
+    monkeypatch.setattr('egvqg.data.downloads._download_bundle',fixture)
     result=download_multimodalqa(tmp_path)
     assert result['images_verified']==1
     image=tmp_path/'data/raw/multimodalqa'/MMQA_REVISION/'final_dataset_images/x.png'
@@ -64,8 +64,8 @@ def test_mmqa_download_validates_full_image_mapping_and_cached_crc(tmp_path,monk
 
 
 def test_webqa_reference_verification_includes_test_field_and_checks_index_binding(tmp_path):
-    from egvqg.downloads import WEBQA_REVISION, verify_webqa_references
-    from egvqg.records import sha256_file, write_json
+    from egvqg.data.downloads import WEBQA_REVISION, verify_webqa_references
+    from egvqg.core.records import sha256_file, write_json
     root=tmp_path/'data/raw/webqa'/WEBQA_REVISION;root.mkdir(parents=True)
     first=b'30000000\tQUJD\n';second=b'30000001\tREVG\n'
     (root/'imgs.tsv').write_bytes(first+second)
@@ -81,7 +81,7 @@ def test_webqa_reference_verification_includes_test_field_and_checks_index_bindi
 
 
 def test_tail_ranges_reuse_prefix_and_verify_full_hash(tmp_path,monkeypatch):
-    from egvqg.downloads import finish_download_tail
+    from egvqg.data.downloads import finish_download_tail
     import re
     content=b'abcdefghij';partial=tmp_path/'original.part';partial.write_bytes(content[:3])
     class Response(io.BytesIO):
@@ -93,7 +93,7 @@ def test_tail_ranges_reuse_prefix_and_verify_full_hash(tmp_path,monkeypatch):
         def open(self,request,timeout):
             match=re.fullmatch(r'bytes=(\d+)-(\d+)',request.get_header('Range'))
             return Response(int(match[1]),int(match[2]))
-    monkeypatch.setattr('egvqg.downloads._public_opener',lambda proxy=None:Opener())
+    monkeypatch.setattr('egvqg.data.downloads._public_opener',lambda proxy=None:Opener())
     dest=tmp_path/'staged'
     result=finish_download_tail('https://example.invalid/data',partial,dest,expected_bytes=len(content),
                                 expected_sha256=hashlib.sha256(content).hexdigest(),workers=2,block_bytes=2)

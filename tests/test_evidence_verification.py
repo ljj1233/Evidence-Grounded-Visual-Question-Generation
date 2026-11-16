@@ -2,7 +2,7 @@
 
 import pytest
 
-from egvqg.evidence_verification import CHECKS, verification_gate
+from egvqg.assess.evidence_verification import CHECKS, verification_gate
 
 
 @pytest.mark.parametrize('change,expected',[(None,'accept'),('well_posed','reject'),('premises_supported','unresolved'),('missing','unresolved')])

@@ -1,7 +1,7 @@
 """MMQA refer-v2 comparison: fixed denominators and the official-cascade screen mapping."""
 import json
 
-from egvqg.mmqa_refer import _cascade_condition, _condition
+from egvqg.studies.mmqa_refer import _cascade_condition, _condition
 
 
 def _material(mid='m1'):

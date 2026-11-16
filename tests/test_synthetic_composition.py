@@ -1,7 +1,7 @@
 """Synthetic composition benchmark: programmatic scoring, hop consistency, grammar labels, bootstrap."""
 import json
 
-from egvqg.synthetic_composition import (_bootstrap_gap, _metrics, build_synthetic_composition,
+from egvqg.studies.synthetic_composition import (_bootstrap_gap, _metrics, build_synthetic_composition,
                                          classify_generated_question, score_answer)
 
 

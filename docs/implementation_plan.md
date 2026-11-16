@@ -35,31 +35,42 @@ Model names, endpoints and call budgets are all configured (see README "Model an
 
 ## 3. Code structure
 
-`src/egvqg/`, each module with a single responsibility; keep the modules the current pipeline reaches, plus analysis modules that are implemented and covered only by offline tests but not yet wired in (noted).
+`src/egvqg/` is layered so that no directory holds forty flat files. Dependencies point one way: `core` ← `generate` ← `data`, `assess` ← `studies`; `cli.py` sits on top and imports lazily.
+
+| Layer | Contents |
+|---|---|
+| `core/` | Stateless infrastructure: records, statistics, metrics, prompt loading, API providers, local vision backend, pipeline plan and experiment records |
+| `data/` | Dataset acquisition, normalization and split/fact extraction |
+| `generate/` | Question-generation stages: baseline generation, candidate sampling, activation capture, SAQG, per-material generation |
+| `assess/` | Everything that produces or audits a label: assessment rules, necessity ensemble, label repair/audit, faithfulness, evidence verification, PVS, selection evaluation |
+| `studies/` | The studies that produce the paper's numbers: composition grid, synthetic composition, redundancy source, copy circuit, interval mechanism, self-verification, inline analysis, MMQA refer comparison |
+| `cli.py` | Unified command entry point |
+
+Each module keeps a single responsibility; keep the modules the current pipeline reaches, plus analysis modules that are implemented and covered only by offline tests but not yet wired in (noted).
 
 | Module | Responsibility |
 |---|---|
 | `cli.py` | Unified command entry point |
-| `records.py` | Record format, JSONL read/write, hashing, file locking |
-| `providers.py` | Model interface, mock, image transport, caching, call logging and usage |
-| `prompts.py` | Template loading and snapshots; a missing variable raises an error |
-| `dataset.py`, `downloads.py` | ScienceQA/MultiModalQA import, material normalization; raw data download and checksum |
-| `simple_baseline.py`, `simple_baseline_evaluation.py` | Asynchronous baseline generation and TI answering; cascade evaluation after the whole batch completes |
-| `baseline_analysis.py`, `faithfulness.py`, `evidence_verification.py`, `assessment_rules.py` | Evaluation input construction, faithfulness derivation, evidence verification gate, knowledge-scope configuration |
-| `necessity_ensemble.py` | Necessity evaluator with two groups plus arbitration; decision logic is pure functions |
-| `local_vision.py` | Local Qwen3-VL provider: dynamic batching, interface consistent with API providers |
-| `candidates.py`, `capture.py` | Candidate sampling and hidden-state capture (P0/P1) |
-| `candidate_labels.py`, `label_audit.py` | Label assembly and sampling audit |
-| `selection_eval.py` | best-of-k selection evaluation (used by the PVS comparison) |
-| `synthetic_composition.py` | Week-1 mechanism route: programmatic derived/bridging/stitching/interval materials, split single-hop answers, local-model answering/generation, material-bootstrap composition deficits (CLI `synthetic-build`, `composition-*`) |
-| `inline_analysis.py` | R2: inline numbers/rules in generated questions and their association with text redundancy (CLI `inline-report`) |
-| `validity_check.py` | R3: local `local-validity-v1` review of generated questions (CLI `local-validity`, `validity-report`; local AI review, not the official evaluator) |
-| `material_generation.py`, `mmqa_refer.py` | Generic N-per-material generation for arbitrary materials and the MMQA refer-prompt feasibility comparison (CLI `material-generate`, `mmqa-refer-compare`) |
-| `interval_mechanism.py` | Time-boxed behavioural ablations and logit lens on the interval-count failures (CLI `interval-mechanism`) |
-| `redundancy_source.py` | E1: splits already-redundant questions into `leak` / `anchor` / `other` by redundant side (programmatic screen + AI judge + manual sheet; CLI `redundancy-source`) |
-| `self_verification.py` | E3: local verifier (select iff TI correct and both single sides wrong) with a five-tier repair ladder (`direct` / `two-step` / `delegated` / `delegated-compare` / `per-item`), computable synthetic gold, per-tier recall/precision/coverage, early stop, TI error taxonomy, and optional API-PVS scoring on the same questions; real-data pilot path (`prepare_real_pool`, `run_real_verification`, `report_real_verification`) (CLI `self-verify-run`, `self-verify-report`, `self-verify-real-run`, `self-verify-real-report`, `pvs-select`) |
-| `composition_grid.py` | E2a: paired 2×2 modality grid (rule text/image × values text/image) with programmatic conditional/sum scoring, material bootstrap contrasts and a per-item psychometric curve (CLI `grid-build`, `grid-answer`, `grid-report`) |
-| `pipeline.py`, `metrics.py`, `experiments.py` | Helper functions from legacy modules still used by the current pipeline; the rest deleted |
+| `core/records.py` | Record format, JSONL read/write, hashing, file locking |
+| `core/providers.py` | Model interface, mock, image transport, caching, call logging and usage |
+| `core/prompts.py` | Template loading and snapshots; a missing variable raises an error |
+| `data/dataset.py`, `data/downloads.py` | ScienceQA/MultiModalQA import, material normalization; raw data download and checksum |
+| `generate/simple_baseline.py`, `studies/simple_baseline_evaluation.py` | Asynchronous baseline generation and TI answering; cascade evaluation after the whole batch completes |
+| `assess/baseline_analysis.py`, `assess/faithfulness.py`, `assess/evidence_verification.py`, `assess/assessment_rules.py` | Evaluation input construction, faithfulness derivation, evidence verification gate, knowledge-scope configuration |
+| `assess/necessity_ensemble.py` | Necessity evaluator with two groups plus arbitration; decision logic is pure functions |
+| `core/local_vision.py` | Local Qwen3-VL provider: dynamic batching, interface consistent with API providers |
+| `generate/candidates.py`, `generate/capture.py` | Candidate sampling and hidden-state capture (P0/P1) |
+| `assess/candidate_labels.py`, `assess/label_audit.py` | Label assembly and sampling audit |
+| `assess/selection_eval.py` | best-of-k selection evaluation (used by the PVS comparison) |
+| `studies/synthetic_composition.py` | Week-1 mechanism route: programmatic derived/bridging/stitching/interval materials, split single-hop answers, local-model answering/generation, material-bootstrap composition deficits (CLI `synthetic-build`, `composition-*`) |
+| `studies/inline_analysis.py` | R2: inline numbers/rules in generated questions and their association with text redundancy (CLI `inline-report`) |
+| `assess/validity_check.py` | R3: local `local-validity-v1` review of generated questions (CLI `local-validity`, `validity-report`; local AI review, not the official evaluator) |
+| `generate/material_generation.py`, `studies/mmqa_refer.py` | Generic N-per-material generation for arbitrary materials and the MMQA refer-prompt feasibility comparison (CLI `material-generate`, `mmqa-refer-compare`) |
+| `studies/interval_mechanism.py` | Time-boxed behavioural ablations and logit lens on the interval-count failures (CLI `interval-mechanism`) |
+| `studies/redundancy_source.py` | E1: splits already-redundant questions into `leak` / `anchor` / `other` by redundant side (programmatic screen + AI judge + manual sheet; CLI `redundancy-source`) |
+| `studies/self_verification.py` | E3: local verifier (select iff TI correct and both single sides wrong) with a five-tier repair ladder (`direct` / `two-step` / `delegated` / `delegated-compare` / `per-item`), computable synthetic gold, per-tier recall/precision/coverage, early stop, TI error taxonomy, and optional API-PVS scoring on the same questions; real-data pilot path (`prepare_real_pool`, `run_real_verification`, `report_real_verification`) (CLI `self-verify-run`, `self-verify-report`, `self-verify-real-run`, `self-verify-real-report`, `pvs-select`) |
+| `studies/composition_grid.py` | E2a: paired 2×2 modality grid (rule text/image × values text/image) with programmatic conditional/sum scoring, material bootstrap contrasts and a per-item psychometric curve (CLI `grid-build`, `grid-answer`, `grid-report`) |
+| `core/pipeline.py`, `core/metrics.py`, `core/experiments.py` | Helper functions from legacy modules still used by the current pipeline; the rest deleted |
 
 `prompts/*.txt` are separately maintained prompt templates (10, `$variable` placeholders; the fixed generation prompt is `plain-v2`); `configs/` holds run configurations without credentials (currently only `necessity_assessment_v2.json`); `tests/` holds a small number of high-value offline tests (mock, synthetic fixtures in `tests/fixtures/`); `data/`, `outputs/`, `tmp/` are not in Git. Records use JSONL first; no database, web annotation platform or distributed scheduler is introduced.
 
@@ -252,11 +263,11 @@ Scale: S about hours to one day, M about 2–4 days, L about a week or more; all
 
 | Module | Responsibility |
 |---|---|
-| `stats.py` | paired bootstrap over parent materials, Wilson interval, grouped AUC interval |
-| `candidate_table.py` | convert `captures.jsonl` + `labels_<eval>.jsonl` (+ `labels_new.jsonl`) to `candidates.jsonl`; load hidden states aligned by `cand_id` |
-| `llm.py` | one cached call path (`hash(model, prompt, image_id)`), call counter, `--max-calls` |
-| `label_repair.py` | stage 0: stratified sample, two judges on isolated T-only/I-only payloads, third-judge arbitration, verdict + evidence, precision/recall report |
-| `factsplit.py` | 1a/P2: LLM fact extraction and A/B split, condition materials, existing/render image backends |
+| `core/stats.py` | paired bootstrap over parent materials, Wilson interval, grouped AUC interval |
+| `generate/candidate_table.py` | convert `captures.jsonl` + `labels_<eval>.jsonl` (+ `labels_new.jsonl`) to `candidates.jsonl`; load hidden states aligned by `cand_id` |
+| `core/llm.py` | one cached call path (`hash(model, prompt, image_id)`), call counter, `--max-calls` |
+| `assess/label_repair.py` | stage 0: stratified sample, two judges on isolated T-only/I-only payloads, third-judge arbitration, verdict + evidence, precision/recall report |
+| `data/factsplit.py` | 1a/P2: LLM fact extraction and A/B split, condition materials, existing/render image backends |
 | `scripts/sanity.py` | the single synthetic check (null bootstrap, gate precision law, answer equivalence, Wilson bounds) |
 
 **Status (updated 2026-11-16):** the centering/curve/select/steer/filter modules and their CLI stages were deleted as a closed route (see `PROGRESS.md`, "Paths already tried"); `label-repair` and `factsplit` remain. Early status note: `scripts/sanity.py` passes; every command was dry-run on the existing confirm features (480 candidates) or synthetic data. Dry-run estimates: label repair ≈792 calls for 60 parents and ≈4,224 for 320 parents (≤3 candidates, 2 sides, 2 judges, +10% arbitration), within the remaining route budget. `vqag-steer` CPU hook check passes; its dry-run prints ≈6,720 local generations and ≈3,226 label calls for 60 materials × 14 conditions × 8 candidates. Real API/GPU runs remain for the researcher to launch.
@@ -335,7 +346,7 @@ Scale: S about hours to one day, M about 2–4 days, L about a week or more; all
 
 **Question.** Can the local 8B act as the verifier that PVS currently buys from an API — select iff the material-level answer is correct and both single-side answers are wrong — and does repairing its composition ability raise recall? The paper's prediction was that unrepaired recall would be very low because genuine dual questions fail under TI and get discarded, and that repair would lift recall toward API PVS.
 
-**Design.** `src/egvqg/self_verification.py`; CLI `self-verify-run`, `self-verify-report`, plus `pvs-select` (the API PVS selection stage, previously only callable from Python). Rule: `TI correct and T wrong and I wrong`. Isolation is by construction — the removed side is not passed at all (`T` receives no image, `I` receives an empty text block), not masked. Tiers: `direct` (`composition-answer-v1`) and `two-step` (`composition-two-step-v1`, state rule → state values → combine), the behavioural repair. Gold is computed from the synthetic material: exact normalised match against the three designed questions first, then rules for threshold / which-items / count / sum / item value / alpha; anything uncovered is dropped and counted (`dropped.jsonl`), never guessed. `self-verify-report` re-scores from `raw_output`, applies the rule per unique `(material_id, question)`, and can score an API PVS `selection.jsonl` on the same questions.
+**Design.** `src/egvqg/studies/self_verification.py`; CLI `self-verify-run`, `self-verify-report`, plus `pvs-select` (the API PVS selection stage, previously only callable from Python). Rule: `TI correct and T wrong and I wrong`. Isolation is by construction — the removed side is not passed at all (`T` receives no image, `I` receives an empty text block), not masked. Tiers: `direct` (`composition-answer-v1`) and `two-step` (`composition-two-step-v1`, state rule → state values → combine), the behavioural repair. Gold is computed from the synthetic material: exact normalised match against the three designed questions first, then rules for threshold / which-items / count / sum / item value / alpha; anything uncovered is dropped and counted (`dropped.jsonl`), never guessed. `self-verify-report` re-scores from `raw_output`, applies the rule per unique `(material_id, question)`, and can score an API PVS `selection.jsonl` on the same questions.
 
 **Pools, fixed in advance.** Pool A = the 8B's own generations (`outputs/synth-comp-qwen3vl8b-direct-v4/generated.jsonl`, 720 rows → 231 unique questions: 64 `dual_bridging`, 167 `single_image`). Pool B = the 60 designed aggregation duals (`evaluation.full` of the `derived` materials), i.e. the dual type where the composition gap lives; pool B questions are template-designed, not generated, and this is reported as a limitation rather than hidden.
 
@@ -364,7 +375,7 @@ Scale: S about hours to one day, M about 2–4 days, L about a week or more; all
 
 **MMQA real tier (`self-verify-mmqa-v1`).** 120 sampled rows → 89 unique questions, 7 consensus duals, 6 undetermined; references `gpt-6-luna` (`solve-v1`), equivalence `gpt-5.6-terra` (`answer-equivalence-v1`), 408 API requests. Local TI `0.843`, T `0.795`, I `0.120`; recall `0.143 (1/7)` `[0.026, 0.513]`, precision `0.250 (1/4)`, FPR `0.039`. The rule behaves correctly (T acceptable on `text_suff` questions `50/54`, which independently validates those labels); the failure is n and refusals — 5 of 7 duals are refused under every condition because they are open-ended "significance/connection" questions, and 2 have no reference. One material was blocked by provider image content policy (400; non-2xx bodies and a collapsed `error_detail` are now recorded in the call ledger). Decision: report this as an **underpowered negative transfer**, not a verifier failure; scaling it needs ≥4–6 unique questions per material and a selection rule that treats refusal as undetermined rather than wrong.
 
-**Files.** Module `src/egvqg/self_verification.py`; prompts `composition-{delegated,per-item,delegated-compare}-v1`, `solve-v1`, `answer-equivalence-v1`; CLI `self-verify-run --early-stop`, `self-verify-real-run`, `self-verify-real-report`, `pvs-select`; tests `tests/test_self_verification.py` (12 tests).
+**Files.** Module `src/egvqg/studies/self_verification.py`; prompts `composition-{delegated,per-item,delegated-compare}-v1`, `solve-v1`, `answer-equivalence-v1`; CLI `self-verify-run --early-stop`, `self-verify-real-run`, `self-verify-real-report`, `pvs-select`; tests `tests/test_self_verification.py` (12 tests).
 
 
 ### 7.18 E3b best-of-n supply check (2026-11-15; prediction fixed before the run)
@@ -393,7 +404,7 @@ Readouts fixed in advance: copy rate (`contains_number(text)`), threshold mentio
 
 **Bug fixed on the way.** `_KeyBlock.bias()` built its row slice as `slice(query_start, query_len)`; under cached decoding HF passes one query row per step, so the slice was empty, `bias()` returned `None`, and two earlier runs silently compared identical conditions. The decode-step branch is now explicit, verified against a single-material prompt (one numeral token at position 172), and covered by `tests/test_copy_circuit.py` (`bias(1, 8)` applies at the key positions, `bias(8, 8)` is `None`).
 
-**Files.** Module `src/egvqg/copy_circuit.py`; CLI `copy-attribute`, `copy-ablate`, `copy-mask`, `copy-mask-report`; tests `tests/test_copy_circuit.py` (4 tests, including the decode-step mask and the merged three-condition report). Offline suite 179 passed.
+**Files.** Module `src/egvqg/studies/copy_circuit.py`; CLI `copy-attribute`, `copy-ablate`, `copy-mask`, `copy-mask-report`; tests `tests/test_copy_circuit.py` (4 tests, including the decode-step mask and the merged three-condition report). Offline suite 179 passed.
 
 **Open.** Masked-threshold faithfulness is 0/80 at 20 materials × 4 samples; a 60-material replication is needed before publishing a rate. Path patching on the top heads was not run (the ablation null deprioritises it). The only generation-side lever the negative leaves open is schema control — a prompt or constraint that requires using the rule without restating it — which must be tested on the same face-valid readouts before any real-data work.
 
@@ -454,7 +465,7 @@ The answered rates invert between datasets (MMQA text-anchored 0.846/0.195; Scie
 
 **Open.** No PVS run on the ScienceQA pool; the two-sided rule costs recall on both datasets; a schema- or length-conditioned rule may recover it; every interval is wide at 21–24 duals.
 
-**Files.** `src/egvqg/self_verification.py` (`run_answerability_audit`, `report_answerability_audit`, `_answered`, `_material_bootstrap_answerability`, `_interval`); CLI `answerability-audit` (`aar`), `answerability-report` (`aap`); test `test_answerability_audit_scores_text_screen` in `tests/test_self_verification.py`; offline suite **180 passed**.
+**Files.** `src/egvqg/studies/self_verification.py` (`run_answerability_audit`, `report_answerability_audit`, `_answered`, `_material_bootstrap_answerability`, `_interval`); CLI `answerability-audit` (`aar`), `answerability-report` (`aap`); test `test_answerability_audit_scores_text_screen` in `tests/test_self_verification.py`; offline suite **180 passed**.
 
 **Open.** One dataset and 60 materials with AI-consensus labels; recall interval wide at n=21; the 14 true positives and 9 false positives have no human review yet; ScienceQA replication not run.
 
@@ -488,6 +499,6 @@ The answered rates invert between datasets (MMQA text-anchored 0.846/0.195; Scie
 
 **Theory.** `docs/necessity_formal_argument.md`: §11 (why the device is the definition, the closed loop, the gate as hypothesis test, the exact decomposition, the $s>\ell$ theorem and stop rule, the sampling result, the verifier's feasibility cap, the measurement table) and §10.7 (Propositions 16–17).
 
-**Files.** `src/egvqg/pvs.py` (`_cand_id`), `src/egvqg/self_verification.py` (blind condition, `reject_if_prior_answers`, `reject_if_either_side_or_prior_answers`, `_selector_comparison`, ladder with the `0` side), CLI `--samples/--temperature/--conditions TI,T,I,0`, test `test_answerability_audit_prior_condition_rejects_blind_answers`; offline suite **183 passed**.
+**Files.** `src/egvqg/assess/pvs.py` (`_cand_id`), `src/egvqg/studies/self_verification.py` (blind condition, `reject_if_prior_answers`, `reject_if_either_side_or_prior_answers`, `_selector_comparison`, ladder with the `0` side), CLI `--samples/--temperature/--conditions TI,T,I,0`, test `test_answerability_audit_prior_condition_rejects_blind_answers`; offline suite **183 passed**.
 
 **Open.** Human review of the ~28 level-3 false positives (label error vs missed derivation); the 60-material, AI-consensus labels; the pilot-based estimate of s on a new corpus; `story.md`/`VQG_Proposal.md` not yet rewritten.

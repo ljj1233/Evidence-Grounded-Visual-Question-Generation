@@ -5,10 +5,10 @@ import pytest
 
 torch = pytest.importorskip('torch')
 
-from egvqg import copy_circuit
+from egvqg.studies import copy_circuit
 
 
-ROOT = Path(copy_circuit.__file__).resolve().parents[2]
+ROOT = Path(copy_circuit.__file__).resolve().parents[3]
 
 
 def test_render_and_text_positions():

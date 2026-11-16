@@ -2,7 +2,7 @@
 
 import pytest
 
-from egvqg.detail_capture import detail_positions
+from egvqg.generate.detail_capture import detail_positions
 
 
 def test_detail_positions_start_at_last_prompt_token():

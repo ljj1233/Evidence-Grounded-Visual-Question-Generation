@@ -1,7 +1,7 @@
 """White-box capture: which generated step holds which position, span location, reference comparison, CLI wiring (no GPU)."""
 import pytest
 
-from egvqg.capture import capture_plan, compare_to_reference, locate_spans, token_span
+from egvqg.generate.capture import capture_plan, compare_to_reference, locate_spans, token_span
 
 
 @pytest.mark.parametrize('n,ended,k,early,question_end,n_question', [
@@ -79,7 +79,7 @@ def test_compare_captures_reports_prompt_and_state_differences(tmp_path):
     torch = pytest.importorskip('torch')
     import json
     from safetensors.torch import save_file
-    from egvqg.capture import compare_captures
+    from egvqg.generate.capture import compare_captures
 
     def run(name, prompt_tokens, scale):
         d = tmp_path / name
@@ -103,7 +103,7 @@ def test_compare_captures_reports_prompt_and_state_differences(tmp_path):
 
 def test_forward_extras_pads_the_token_type_ids_for_appended_text_tokens():
     torch = pytest.importorskip('torch')
-    from egvqg.capture import forward_extras
+    from egvqg.generate.capture import forward_extras
     inputs = {'input_ids': torch.zeros(1, 5, dtype=torch.long), 'attention_mask': torch.ones(1, 5, dtype=torch.long),
               'mm_token_type_ids': torch.tensor([[0, 1, 1, 0, 0]]), 'pixel_values': torch.zeros(3, 2)}
     extra = forward_extras(inputs, 3)

@@ -1,6 +1,6 @@
 import json
 
-from egvqg.self_verification import (_plan, _sampling_curve, _selected, condition_material, parse_gold,
+from egvqg.studies.self_verification import (_plan, _sampling_curve, _selected, condition_material, parse_gold,
                                     score_gold)
 
 
@@ -126,7 +126,7 @@ def test_plan_drops_uncovered_questions_and_reports_coverage():
 
 
 def test_selection_metrics_and_external_mapping(tmp_path):
-    from egvqg.self_verification import _external_selections, _selection_metrics
+    from egvqg.studies.self_verification import _external_selections, _selection_metrics
 
     universe = [
         {'material_id': 'm1', 'question': 'q1', 'label': 'dual_bridging', 'dual': True},
@@ -150,7 +150,7 @@ def test_selection_metrics_and_external_mapping(tmp_path):
 
 
 def test_per_item_and_compare_tiers():
-    from egvqg.self_verification import parse_gold, score_gold_compare, score_gold_per_item
+    from egvqg.studies.self_verification import parse_gold, score_gold_compare, score_gold_per_item
 
     material = _derived(values=[11, 2, 17, 7], threshold=6,
                         evaluation={'full': {'answer_kind': 'numeric', 'expected': 35,
@@ -179,7 +179,7 @@ def test_per_item_and_compare_tiers():
 
 
 def test_full_material_error_taxonomy():
-    from egvqg.self_verification import _ti_error_taxonomy
+    from egvqg.studies.self_verification import _ti_error_taxonomy
 
     material = {'material_id': 'm', 'values': [11, 5, 17, 7], 'threshold': 6}
     rows = [
@@ -194,7 +194,7 @@ def test_full_material_error_taxonomy():
 
 
 def test_prepare_real_pool_samples_evenly(tmp_path):
-    from egvqg.self_verification import prepare_real_pool
+    from egvqg.studies.self_verification import prepare_real_pool
 
     candidates = tmp_path / 'candidates.jsonl'
     rows = []
@@ -230,7 +230,7 @@ def test_sampling_curve_grows_with_more_samples():
 
 
 def test_answerability_audit_scores_text_screen(tmp_path):
-    from egvqg import self_verification as sv
+    from egvqg.studies import self_verification as sv
     directory = tmp_path / 'outputs' / 'audit'
     directory.mkdir(parents=True)
     pool = [{'material_id': 'm1', 'question': 'dual q', 'label': 'dual_necessary', 'dual': True, 'position': 0},
@@ -255,7 +255,7 @@ def test_answerability_audit_scores_text_screen(tmp_path):
 
 
 def test_answerability_audit_prior_condition_rejects_blind_answers(tmp_path):
-    from egvqg import self_verification as sv
+    from egvqg.studies import self_verification as sv
     directory = tmp_path / 'outputs' / 'audit_prior'
     directory.mkdir(parents=True)
     pool = [{'material_id': 'm1', 'question': 'real dual', 'label': 'dual_necessary', 'dual': True, 'position': 0},
@@ -286,7 +286,7 @@ def test_answerability_audit_prior_condition_rejects_blind_answers(tmp_path):
 
 
 def test_answerability_audit_two_sided_rule_and_api_comparison(tmp_path):
-    from egvqg import self_verification as sv
+    from egvqg.studies import self_verification as sv
     directory = tmp_path / 'outputs' / 'audit2'
     directory.mkdir(parents=True)
     pool = [{'material_id': 'm1', 'question': 'dual q', 'label': 'dual_necessary', 'dual': True, 'position': 0},
@@ -324,7 +324,7 @@ def test_answerability_audit_two_sided_rule_and_api_comparison(tmp_path):
 
 
 def test_answer_evidence_levels_and_sample_rules(tmp_path):
-    from egvqg import self_verification as sv
+    from egvqg.studies import self_verification as sv
     # stability needs agreement across samples; a single lucky answer is not stable
     stable = sv._answer_evidence(['{"answer": "Melzer"}', '{"answer": "Melzer"}', '{"answer": "Melzer"}'])
     noisy = sv._answer_evidence(['{"answer": "Melzer"}', '{"answer": "co-writer"}', '{"answer": "Melzer"}'])

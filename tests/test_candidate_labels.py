@@ -1,7 +1,7 @@
 """Label derivation from cascade-evaluation records, propensity profile and the pre-registered G1 rule."""
 import pytest
 
-from egvqg.candidate_labels import coverage, derive_label, g1_check, material_profile, wilson_lower
+from egvqg.assess.candidate_labels import coverage, derive_label, g1_check, material_profile, wilson_lower
 
 
 def rec(answerable, img=None, txt=None, cut=None):

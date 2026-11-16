@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from egvqg.dataset import REVISION, download_file, import_scienceqa, bundle_scienceqa_images
-from egvqg.records import read_jsonl, sha256_file
+from egvqg.data.dataset import REVISION, download_file, import_scienceqa, bundle_scienceqa_images
+from egvqg.core.records import read_jsonl, sha256_file
 
 
 def test_scienceqa_import_preserves_raw_and_excludes_answer_fields(tmp_path):
@@ -52,7 +52,7 @@ def test_scienceqa_import_preserves_raw_and_excludes_answer_fields(tmp_path):
 
 def test_download_cache_checks_hash_and_resumes_partial(tmp_path, monkeypatch):
     import io
-    import egvqg.dataset as module
+    import egvqg.data.dataset as module
     requests = []
 
     class Response(io.BytesIO):

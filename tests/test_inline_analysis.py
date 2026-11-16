@@ -1,5 +1,5 @@
 """Inline detection: material numbers/rules copied into the generated question."""
-from egvqg.inline_analysis import contains_number, inline_features, lexical_inline, rule_inline
+from egvqg.studies.inline_analysis import contains_number, inline_features, lexical_inline, rule_inline
 
 
 def test_number_inline_synthetic():

@@ -19,8 +19,8 @@ configure_threads()
 
 import numpy as np  # noqa: E402
 
-from egvqg.self_verification import _answers_match  # noqa: E402
-from egvqg.stats import paired_bootstrap, wilson, wilson_lower  # noqa: E402
+from egvqg.studies.self_verification import _answers_match  # noqa: E402
+from egvqg.core.stats import paired_bootstrap, wilson, wilson_lower  # noqa: E402
 
 
 def check(name, ok, detail):

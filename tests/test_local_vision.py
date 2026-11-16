@@ -4,8 +4,8 @@ import time
 
 import pytest
 
-from egvqg.local_vision import BatchingProvider, LocalOutput
-from egvqg.providers import CompletionRequest, ProviderError
+from egvqg.core.local_vision import BatchingProvider, LocalOutput
+from egvqg.core.providers import CompletionRequest, ProviderError
 
 
 class Fake:
@@ -66,7 +66,7 @@ def test_invalid_limits_are_rejected():
 
 
 def test_identity_matches_ignores_only_the_model_directory():
-    from egvqg.local_vision import identity_matches
+    from egvqg.core.local_vision import identity_matches
     base = {'model': 'm', 'torch': '2.11.0', 'model_fingerprint': {'path': '/a/models/m', 'files': {'config.json': 'abc'},
                                                                     'weight_shard_bytes': {'model.safetensors': 9}}}
     relocated = {'model': 'm', 'torch': '2.11.0', 'model_fingerprint': {'path': '/b/models/m', 'files': {'config.json': 'abc'},

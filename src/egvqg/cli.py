@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping
 
-from .providers import RequestBudgetExceeded
+from .core.providers import RequestBudgetExceeded
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -377,14 +377,14 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command in ('simple-baseline-eval-init','simple-baseline-eval-run','simple-baseline-eval-report'):
-            from .simple_baseline_evaluation import init_evaluation,run_evaluation,report_evaluation
+            from .studies.simple_baseline_evaluation import init_evaluation,run_evaluation,report_evaluation
             common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
             if args.command=='simple-baseline-eval-init':result=init_evaluation(**common,source_run=args.source_run,model=args.model,concurrency=args.concurrency,cascade=args.cascade)
             elif args.command=='simple-baseline-eval-run':result=run_evaluation(**common,limit=args.limit)
             else:result=report_evaluation(**common)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command in ('candidates-capture','candidate-source-init','candidate-source-run'):
-            from . import candidates as C
+            from .generate import candidates as C
             common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
             if args.command=='candidates-capture':
                 result=C.run_candidates(**common,reference_run=args.reference_run,model_path=args.local_model_path,device=args.device,n_skills=args.n_skills,
@@ -396,48 +396,48 @@ def main(argv: list[str] | None = None) -> int:
                 result=C.run_candidate_source(**common,capture_run=args.capture_run,model_path=args.local_model_path,device=args.device)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='synthetic-build':
-            from .synthetic_composition import build_synthetic_composition
+            from .studies.synthetic_composition import build_synthetic_composition
             result=build_synthetic_composition(project_root=args.project_root,output_dir=args.output_dir,per_category=args.per_category,seed=args.seed,derived_full=args.derived_full,categories=tuple(x.strip() for x in args.categories.split(',') if x.strip()),value_min=args.value_min,value_max=args.value_max)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='composition-answer':
-            from .synthetic_composition import run_composition_answers
+            from .studies.synthetic_composition import run_composition_answers
             result=run_composition_answers(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
                 materials_path=args.materials,model_path=args.local_model_path,device=args.device,prompt=args.prompt,
                 max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,limit=args.limit)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='material-generate':
-            from .material_generation import run_material_generation
+            from .generate.material_generation import run_material_generation
             result=run_material_generation(run_id=args.run_id,materials_path=args.materials,model_path=args.local_model_path,
                 device=args.device,n_questions=args.n_questions,temperature=args.temperature,top_p=args.top_p,
                 top_k=args.top_k,max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,limit=args.limit,
                 template=args.template,project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='composition-generate':
-            from .synthetic_composition import run_composition_generation
+            from .studies.synthetic_composition import run_composition_generation
             result=run_composition_generation(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
                 materials_path=args.materials,model_path=args.local_model_path,device=args.device,n_questions=args.n_questions,
                 temperature=args.temperature,top_p=args.top_p,top_k=args.top_k,max_batch=args.max_batch,
                 max_new_tokens=args.max_new_tokens,limit=args.limit,template=args.template,suppress_numbers=args.suppress_numbers)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='grid-build':
-            from .composition_grid import build_grid_materials
+            from .studies.composition_grid import build_grid_materials
             result=build_grid_materials(project_root=args.project_root,output_dir=args.output_dir,
                 n_materials=args.n_materials,seed=args.seed,value_min=args.value_min,value_max=args.value_max,
                 cells=tuple(x.strip() for x in args.cells.split(',') if x.strip()))
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='grid-answer':
-            from .composition_grid import run_grid_answers
+            from .studies.composition_grid import run_grid_answers
             result=run_grid_answers(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
                 materials_path=args.materials,model_path=args.local_model_path,device=args.device,
                 max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,limit=args.limit,prompt=args.prompt)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='grid-report':
-            from .composition_grid import analyze_grid_answers
+            from .studies.composition_grid import analyze_grid_answers
             result=analyze_grid_answers(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
                 materials_path=args.materials,bootstrap=args.bootstrap)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='self-verify-run':
-            from .self_verification import run_self_verification
+            from .studies.self_verification import run_self_verification
             result=run_self_verification(run_id=args.run_id,pool_path=args.pool,materials_path=args.materials,
                 local_model_path=args.local_model_path,device=args.device,
                 tiers=tuple(x.strip() for x in args.tiers.split(',') if x.strip()),
@@ -446,12 +446,12 @@ def main(argv: list[str] | None = None) -> int:
                 early_stop=args.early_stop,project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='self-verify-report':
-            from .self_verification import analyze_self_verification
+            from .studies.self_verification import analyze_self_verification
             result=analyze_self_verification(run_id=args.run_id,project_root=args.project_root,
                 output_root=args.output_root,bootstrap=args.bootstrap,pvs_selection=args.pvs_selection)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='self-verify-real-run':
-            from .self_verification import run_real_verification
+            from .studies.self_verification import run_real_verification
             result=run_real_verification(run_id=args.run_id,candidates_path=args.candidates,
                 materials_path=args.materials,local_model_path=args.local_model_path,
                 reference_model=args.reference_model,device=args.device,
@@ -460,25 +460,25 @@ def main(argv: list[str] | None = None) -> int:
                 project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='self-verify-real-report':
-            from .self_verification import report_real_verification
+            from .studies.self_verification import report_real_verification
             result=report_real_verification(run_id=args.run_id,equivalence_model=args.equivalence_model,
                 project_root=args.project_root,output_root=args.output_root,pvs_selection=args.pvs_selection,
                 limit=args.limit or None)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='pvs-select':
-            from .pvs import select
+            from .assess.pvs import select
             result=select(run_id=args.run_id,candidates_file=args.candidates,materials_file=args.materials,
                 project_root=args.project_root,output_root=args.output_root,workers=args.workers)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='copy-attribute':
-            from .copy_circuit import attribute_head_copy
+            from .studies.copy_circuit import attribute_head_copy
             result=attribute_head_copy(run_id=args.run_id,materials_path=args.materials,
                 model_path=args.local_model_path,category=args.category,n_materials=args.n_materials,
                 max_new_tokens=args.max_new_tokens,device=args.device,
                 project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='copy-ablate':
-            from .copy_circuit import run_copy_ablation
+            from .studies.copy_circuit import run_copy_ablation
             result=run_copy_ablation(run_id=args.run_id,heads_file=args.heads_file,materials_path=args.materials,
                 model_path=args.local_model_path,
                 conditions=tuple(x.strip() for x in args.conditions.split(',') if x.strip()),
@@ -488,7 +488,7 @@ def main(argv: list[str] | None = None) -> int:
                 project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='copy-mask':
-            from .copy_circuit import run_copy_mask
+            from .studies.copy_circuit import run_copy_mask
             result=run_copy_mask(run_id=args.run_id,materials_path=args.materials,
                 model_path=args.local_model_path,
                 conditions=tuple(x.strip() for x in args.conditions.split(',') if x.strip()),
@@ -498,7 +498,7 @@ def main(argv: list[str] | None = None) -> int:
                 project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='copy-mask-report':
-            from .copy_circuit import mask_report
+            from .studies.copy_circuit import mask_report
             result=mask_report(run_id=args.run_id,
                 sources=[x.strip() for x in args.sources.split(',') if x.strip()],
                 materials_path=(args.materials or None),
@@ -507,7 +507,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({'run_id':result['run_id'],
                 'conditions':{k:{kk:v[kk] for kk in ('n','copy_rate','threshold_mention_rate','dual_rate','single_image_rate','faithful_threshold_rate') if kk in v} for k,v in result['conditions'].items()}},ensure_ascii=False,indent=2))
         elif args.command=='answerability-audit':
-            from .self_verification import run_answerability_audit
+            from .studies.self_verification import run_answerability_audit
             result=run_answerability_audit(run_id=args.run_id,candidates_path=args.candidates,
                 materials_path=args.materials,local_model_path=args.local_model_path,device=args.device,
                 conditions=tuple(x.strip() for x in args.conditions.split(',') if x.strip()),
@@ -516,7 +516,7 @@ def main(argv: list[str] | None = None) -> int:
                 project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='answerability-report':
-            from .self_verification import report_answerability_audit
+            from .studies.self_verification import report_answerability_audit
             result=report_answerability_audit(run_id=args.run_id,bootstrap=args.bootstrap,
                 pvs_selection=(args.pvs_selection or None),
                 project_root=args.project_root,output_root=args.output_root)
@@ -524,7 +524,7 @@ def main(argv: list[str] | None = None) -> int:
                 'rules':{k:{kk:v[kk] for kk in ('selected','recall','precision','false_positive_rate')} for k,v in result['rules'].items()},
                 'external':{k:{kk:v[kk] for kk in v} for k,v in (result.get('external') or {}).items()}},ensure_ascii=False,indent=2))
         elif args.command=='composition-report':
-            from .synthetic_composition import analyze_composition_answers,analyze_composition_generation
+            from .studies.synthetic_composition import analyze_composition_answers,analyze_composition_generation
             run_dir=Path(args.project_root).resolve()/args.output_root/args.run_id
             result={}
             if (run_dir/'answers.jsonl').exists():
@@ -535,7 +535,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError('run has neither answers.jsonl nor generated.jsonl')
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='mmqa-refer-compare':
-            from .mmqa_refer import compare_mmqa_refer
+            from .studies.mmqa_refer import compare_mmqa_refer
             result=compare_mmqa_refer(run_id=args.run_id,control=args.control,treatment=args.treatment,
                 materials_path=args.materials,control_validity=args.control_validity,
                 treatment_validity=args.treatment_validity,control_cascade=args.control_cascade,
@@ -543,17 +543,17 @@ def main(argv: list[str] | None = None) -> int:
                 project_root=args.project_root,output_root=args.output_root)
             print(json.dumps({k:v for k,v in result.items() if k!='rows'},ensure_ascii=False,indent=2,default=float))
         elif args.command=='local-validity':
-            from .validity_check import run_local_validity
+            from .assess.validity_check import run_local_validity
             result=run_local_validity(run_id=args.run_id,source_run=args.source_run,model_path=args.local_model_path,
                 device=args.device,max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,limit=args.limit,
                 project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='validity-report':
-            from .validity_check import analyze_validity
+            from .assess.validity_check import analyze_validity
             result=analyze_validity(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='inline-report':
-            from .inline_analysis import analyze_mmqa_inline,analyze_synthetic_inline,combine_inline_reports
+            from .studies.inline_analysis import analyze_mmqa_inline,analyze_synthetic_inline,combine_inline_reports
             synthetic={}
             for part in args.synthetic:
                 label,source=part.split('=',1)
@@ -568,8 +568,8 @@ def main(argv: list[str] | None = None) -> int:
                 project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='redundancy-source':
-            from .redundancy_source import parse_dataset_specs, run_redundancy_source
-            from .assessment_rules import load_assessment_config
+            from .studies.redundancy_source import parse_dataset_specs, run_redundancy_source
+            from .assess.assessment_rules import load_assessment_config
             cfg=load_assessment_config(args.project_root,'configs/necessity_assessment_v2.json')
             result=run_redundancy_source(run_id=args.run_id,datasets=parse_dataset_specs(args.dataset),
                 judge_model=args.judge,knowledge=cfg['knowledge'],use_judge=not args.no_judge,
@@ -577,36 +577,36 @@ def main(argv: list[str] | None = None) -> int:
                 manual=args.manual,dry_run=args.dry_run,project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='composition-compare-prompts':
-            from .synthetic_composition import compare_composition_prompts
+            from .studies.synthetic_composition import compare_composition_prompts
             result=compare_composition_prompts(run_id=args.run_id,direct_run=args.direct_run,two_step_run=args.two_step_run,
                 project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='interval-mechanism':
-            from .interval_mechanism import run_interval_mechanism
+            from .studies.interval_mechanism import run_interval_mechanism
             result=run_interval_mechanism(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
                 failures_path=args.failures,answers_path=args.answers,materials_path=args.materials,
                 model_path=args.local_model_path,device=args.device,controls_per_expected=args.controls_per_expected,
                 max_new_tokens=args.max_new_tokens,limit=args.limit,skip_lens=args.skip_lens)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='composition-compare':
-            from .synthetic_composition import compare_composition_runs
+            from .studies.synthetic_composition import compare_composition_runs
             runs={part.split('=',1)[0]:part.split('=',1)[1] for part in args.runs.split(',') if '=' in part}
             result=compare_composition_runs(run_id=args.run_id,runs=runs,project_root=args.project_root,output_root=args.output_root)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='detail-capture':
-            from .detail_capture import run_detail_capture
+            from .generate.detail_capture import run_detail_capture
             result=run_detail_capture(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
                 capture_run=args.capture_run,reference_run=args.reference_run,materials_file=args.materials_file,
                 model_path=args.local_model_path,device=args.device,limit=args.limit,
                 material_ids_file=args.material_ids_file,prompts_file=args.prompts_file)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='candidate-labels':
-            from .candidate_labels import build_label_table,profile_report
+            from .assess.candidate_labels import build_label_table,profile_report
             common={k:getattr(args,k) for k in ('project_root','output_root')}
             build_label_table(capture_run=args.run_id,source_run=args.source_run,eval_run=args.eval_run,**common)
             print(json.dumps(profile_report(capture_run=args.run_id,eval_run=args.eval_run,**common),ensure_ascii=False,indent=2))
         elif args.command in ('label-audit-prepare','label-audit-finish'):
-            from . import label_audit as LA
+            from .assess import label_audit as LA
             common={k:getattr(args,k) for k in ('project_root','output_root')}
             result=(LA.prepare_two_class_audit(capture_run=args.run_id,eval_run=args.eval_run,reference_run=args.reference_run,**common)
                     if args.command=='label-audit-prepare' and args.two_class else
@@ -614,7 +614,7 @@ def main(argv: list[str] | None = None) -> int:
                     if args.command=='label-audit-prepare' else LA.finish_audit(capture_run=args.run_id,**common))
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='label-repair':
-            from .label_repair import run_label_repair
+            from .assess.label_repair import run_label_repair
             result=run_label_repair(capture_run=args.capture_run,label_file=args.label_file,candidates=args.candidates,
                 project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,
                 reference_run=args.reference_run,materials_file=args.materials_file,materials=args.materials,
@@ -623,28 +623,28 @@ def main(argv: list[str] | None = None) -> int:
                 max_calls=args.max_calls,seed=args.seed,n_parents=args.n_parents,concurrency=args.concurrency)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='factsplit':
-            from .factsplit import run_factsplit
+            from .data.factsplit import run_factsplit
             result=run_factsplit(project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,
                 reference_run=args.reference_run,materials_file=args.materials_file,n_materials=args.n_materials,
                 conditions=args.conditions,image_backend=args.image_backend,model=args.model,
                 dry_run=args.dry_run,max_calls=args.max_calls)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='import-mmqa-materials':
-            from .dataset import import_mmqa_materials
+            from .data.dataset import import_mmqa_materials
             print(json.dumps(import_mmqa_materials(args.project_root,name=args.name,count=args.count,seed=args.seed),ensure_ascii=False,indent=2))
         elif args.command=='whitebox-compare':
-            from .capture import compare_captures
+            from .generate.capture import compare_captures
             print(json.dumps(compare_captures(run_a=args.run_a,run_b=args.run_b,project_root=args.project_root,output_root=args.output_root),ensure_ascii=False,indent=2))
         elif args.command=='api-ledger':
-            from .candidates import api_ledger
+            from .generate.candidates import api_ledger
             print(json.dumps(api_ledger(patterns=args.patterns.split(','),project_root=args.project_root,output_root=args.output_root),ensure_ascii=False,indent=2))
         elif args.command=='whitebox-capture':
-            from .capture import run_capture
+            from .generate.capture import run_capture
             result=run_capture(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,reference_run=args.reference_run,
                 model_path=args.local_model_path,device=args.device,limit=args.limit,k=args.k,max_new_tokens=args.max_new_tokens,check=not args.no_check,template=args.template)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command in ('necessity-ensemble-init','necessity-ensemble-run','necessity-ensemble-report'):
-            from .necessity_ensemble import init_ensemble,run_ensemble,report_ensemble
+            from .assess.necessity_ensemble import init_ensemble,run_ensemble,report_ensemble
             common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
             if args.command=='necessity-ensemble-init':
                 result=init_ensemble(**common,source_run=args.source_run,model_a=args.model_a,model_b=args.model_b,arbiter=args.arbiter,
@@ -653,7 +653,7 @@ def main(argv: list[str] | None = None) -> int:
             else:result=report_ensemble(**common)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command in ('simple-baseline-init','simple-baseline-run','simple-baseline-report'):
-            from .simple_baseline import init_simple_baseline,run_simple_baseline,report_simple_baseline
+            from .generate.simple_baseline import init_simple_baseline,run_simple_baseline,report_simple_baseline
             common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
             if args.command=='simple-baseline-init':
                 result=init_simple_baseline(**common,materials_path=args.materials,model=args.model,concurrency=args.concurrency,
@@ -661,19 +661,19 @@ def main(argv: list[str] | None = None) -> int:
             elif args.command=='simple-baseline-run':
                 factory=None
                 if args.local_model_path:
-                    from .local_vision import local_provider
+                    from .core.local_vision import local_provider
                     local=local_provider(args.local_model_path,device=args.device,max_batch=args.max_batch,max_new_tokens=args.max_new_tokens)
                     factory=lambda item,tokens:local
                 result=run_simple_baseline(**common,limit=args.limit,provider_factory=factory)
             else:result=report_simple_baseline(**common)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command == "download-data":
-            from .dataset import import_scienceqa
+            from .data.dataset import import_scienceqa
             print(json.dumps(import_scienceqa(Path(args.project_root), split=args.split, limit=args.limit,
                                              seed=args.seed, max_download_mb=args.max_download_mb,
                                              offline=args.offline, source_ids=args.ids), ensure_ascii=False, indent=2))
         elif args.command == "fetch-dataset":
-            from .downloads import download_multimodalqa, download_webqa
+            from .data.downloads import download_multimodalqa, download_webqa
             result={}
             if args.dataset in ("multimodalqa","all"):
                 result['multimodalqa']=download_multimodalqa(args.project_root,workers=args.workers)
@@ -681,7 +681,7 @@ def main(argv: list[str] | None = None) -> int:
                 result['webqa']=download_webqa(args.project_root,workers=args.workers,proxy=args.proxy,image_mirror=args.image_mirror)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command == "normalize-materials":
-            from .dataset import normalize_materials
+            from .data.dataset import normalize_materials
             result = normalize_materials(input_path=Path(args.input), output_path=Path(args.output),
                                          dataset_name=args.dataset, id_field=args.id_field, text_field=args.text_field,
                                          image_field=args.image_field, split_field=args.split_field, group_field=args.group_field,

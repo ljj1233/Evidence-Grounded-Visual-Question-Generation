@@ -1,6 +1,6 @@
 import json
 
-from egvqg.composition_grid import (CELLS, _item_level, _rescore, build_grid_materials, score_items)
+from egvqg.studies.composition_grid import (CELLS, _item_level, _rescore, build_grid_materials, score_items)
 
 
 def _materials(tmp_path, n=2):

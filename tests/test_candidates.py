@@ -1,9 +1,9 @@
 """P1 candidate helpers: nested stratified selection, seeds, duplicate collapse, replay provider (no GPU)."""
 from collections import Counter
 
-from egvqg.candidates import ReplayProvider, candidate_seed, cjk_share, select_materials, unique_candidates
-from egvqg.providers import CompletionRequest
-from egvqg.prompts import prompt_path
+from egvqg.generate.candidates import ReplayProvider, candidate_seed, cjk_share, select_materials, unique_candidates
+from egvqg.core.providers import CompletionRequest
+from egvqg.core.prompts import prompt_path
 
 
 def skills(n_skills=10, per=9):
@@ -53,7 +53,7 @@ def test_cli_exposes_candidate_commands():
 
 
 def test_a_materials_file_is_taken_as_is_and_can_be_subsampled_reproducibly():
-    from egvqg.candidates import choose_materials
+    from egvqg.generate.candidates import choose_materials
     mats = {f'm{i}': {'material_id': f'm{i}', 'group': 'g1' if i % 2 else 'g2'} for i in range(10)}
     kw = dict(materials_file='x.jsonl', group_field='group', n_skills=0, per_skill=0, run_seed=1, root=None)
     every = choose_materials(mats, select='all', max_materials=None, **kw)
@@ -65,7 +65,7 @@ def test_a_materials_file_is_taken_as_is_and_can_be_subsampled_reproducibly():
 
 def test_plain_v2_prompt_is_neutral_and_keeps_the_span_markers(tmp_path):
     from pathlib import Path
-    from egvqg.prompts import PromptSet
+    from egvqg.core.prompts import PromptSet
     text = prompt_path(Path(__file__).resolve().parents[1] / 'prompts', 'plain-v2').read_text(encoding='utf-8')
     assert '<T>$T</T>' in text and text.count('$T') == 1
     lowered = text.lower()

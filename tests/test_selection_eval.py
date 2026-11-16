@@ -3,7 +3,7 @@ import pytest
 
 np = pytest.importorskip('numpy')
 
-from egvqg.selection_eval import compare, per_material
+from egvqg.assess.selection_eval import compare, per_material
 
 
 def mat(m, k=8, good=2, seed=0):
@@ -44,7 +44,7 @@ def test_mixed_subset_and_missing_scores():
 
 
 def test_min_shift_scores_takes_the_smaller_removal_shift():
-    from egvqg.selection_eval import min_shift_scores
+    from egvqg.assess.selection_eval import min_shift_scores
     rows = [{'candidate_id': 'a'}, {'candidate_id': 'b'}, {'candidate_id': 'missing'}]
     distances = [
         {'candidate_id': 'a', 'rel_l2': {'text_removed': {'prompt_end': [0, 0.2]}, 'image_removed': {'prompt_end': [0, 0.5]}}},

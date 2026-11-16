@@ -5,11 +5,11 @@ import shutil
 
 import pytest
 
-from egvqg.providers import Completion
-from egvqg.prompts import prompt_path
-from egvqg.records import read_jsonl,sha256_file,write_jsonl
-from egvqg.simple_baseline import init_simple_baseline,run_simple_baseline
-from egvqg.simple_baseline_evaluation import init_evaluation,run_evaluation,NAMES
+from egvqg.core.providers import Completion
+from egvqg.core.prompts import prompt_path
+from egvqg.core.records import read_jsonl,sha256_file,write_jsonl
+from egvqg.generate.simple_baseline import init_simple_baseline,run_simple_baseline
+from egvqg.studies.simple_baseline_evaluation import init_evaluation,run_evaluation,NAMES
 from test_simple_baseline import project,Mock
 
 ROOT = Path(__file__).resolve().parents[1]

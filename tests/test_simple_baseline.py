@@ -8,10 +8,10 @@ import time
 import pytest
 from PIL import Image
 
-from egvqg.providers import Completion
-from egvqg.prompts import prompt_path
-from egvqg.records import read_jsonl,sha256_file,write_jsonl
-from egvqg.simple_baseline import bounded_image,init_simple_baseline,run_simple_baseline
+from egvqg.core.providers import Completion
+from egvqg.core.prompts import prompt_path
+from egvqg.core.records import read_jsonl,sha256_file,write_jsonl
+from egvqg.generate.simple_baseline import bounded_image,init_simple_baseline,run_simple_baseline
 
 ROOT = Path(__file__).resolve().parents[1]
 

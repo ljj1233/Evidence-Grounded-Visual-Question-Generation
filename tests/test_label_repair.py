@@ -1,6 +1,6 @@
 """Label repair: parent selection must not skip parents when it round-robins across skills."""
 
-from egvqg.label_repair import select_parents
+from egvqg.assess.label_repair import select_parents
 
 
 def _rows(skill, parents, valid=1):

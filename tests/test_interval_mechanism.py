@@ -1,4 +1,4 @@
-from egvqg.interval_mechanism import choose_shift_interval, conditions_for, count_in_interval, summarize_lens
+from egvqg.studies.interval_mechanism import choose_shift_interval, conditions_for, count_in_interval, summarize_lens
 
 
 def test_count_in_interval_is_inclusive():
@@ -51,7 +51,7 @@ def test_summarize_lens_reports_crossover_and_final_preference():
 
 
 def test_expansion_delta_and_shifted_relation():
-    from egvqg.interval_mechanism import expansion_delta, shifted_relation
+    from egvqg.studies.interval_mechanism import expansion_delta, shifted_relation
 
     assert expansion_delta([12, 7, 22, 30], 11, 20, 1) == 0
     assert expansion_delta([12, 7, 22, 30], 11, 20, 2) == 2

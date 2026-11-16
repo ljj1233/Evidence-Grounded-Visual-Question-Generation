@@ -1,7 +1,7 @@
 """Audit sampling (stratified, unique, per-material cap, reproducible) and agreement statistics."""
 import pytest
 
-from egvqg.label_audit import audit_summary, sample_audit
+from egvqg.assess.label_audit import audit_summary, sample_audit
 
 
 def rows():
@@ -36,7 +36,7 @@ def test_summary_counts_agreement_and_direction_separately():
 
 
 def test_two_class_sample_covers_both_labels_and_stays_unique():
-    from egvqg.label_audit import sample_two_class
+    from egvqg.assess.label_audit import sample_two_class
     rws = []
     for m in range(14):
         for j, d in enumerate(['image', 'text', 'both']):
@@ -56,7 +56,7 @@ def test_two_class_sample_covers_both_labels_and_stays_unique():
 
 
 def test_two_class_summary_precision_recall_and_bounds():
-    from egvqg.label_audit import two_class_summary
+    from egvqg.assess.label_audit import two_class_summary
     reviews = ([{'n': n, 'audit_class': 'redundant', 'reviewer_image_alone': n < 8, 'reviewer_text_alone': False} for n in range(10)] +
                [{'n': 10 + n, 'audit_class': 'nonredundant', 'reviewer_image_alone': n >= 9, 'reviewer_text_alone': False} for n in range(10)])
     s = two_class_summary(reviews, p_label_redundant=0.8, p_label_nonredundant=0.2)

@@ -1,5 +1,5 @@
 """Local validity parsing and the programmatic well-formedness fallback."""
-from egvqg.validity_check import _parse_valid, _programmatic_valid
+from egvqg.assess.validity_check import _parse_valid, _programmatic_valid
 
 
 def test_parse_valid():
