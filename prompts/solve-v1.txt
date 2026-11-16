@@ -1,8 +1,8 @@
-请回答下面的问题。
-可以使用通常学科知识和本次实际提供的材料；不要假设未提供的特定事实。
-能够确定时作答；无法确定时明确表示无法确定。
-可见材料：
+Please answer the question below.
+You may use ordinary subject knowledge and the material actually provided here; do not assume specific facts that are not provided.
+Answer when you can determine it; state clearly when you cannot.
+Visible material:
 $VISIBLE_MATERIALS
-问题：
+Question:
 <Q>$Q</Q>
-只输出JSON：{"answer":null或"答案","abstain":true或false,"reason_brief":"简短依据或缺少什么"}
+Output only JSON: {"answer":null or "answer","abstain":true or false,"reason_brief":"brief basis or what is missing"}

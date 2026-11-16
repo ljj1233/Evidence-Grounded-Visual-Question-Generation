@@ -1,19 +1,19 @@
-判断固定问题在保留模态与共同知识K下，最终完整答案是否可唯一确定。没有提供$REMOVED，不能猜它的实际内容。不改变问题、选项或保留材料。
+Decide whether, given the retained modality and the common knowledge K, the final full answer to the fixed question is uniquely determined. $REMOVED is not provided; you must not guess its actual content. Do not change the question, the options or the retained material.
 
-固定问题（含原选项）：
+Fixed question (with the original options):
 $Q
-保留材料：
+Retained material:
 $VISIBLE
-共同知识约定：
+Common knowledge convention:
 $KNOWLEDGE
 
-两种证据形式：
-1. 若已唯一可答，输出完整答案和只依赖Q、保留材料、K的充分解法。每个关键前提须可支持，不能把图标大小相同推成物理强度相同；不能以没找到反例证明唯一。
-2. 若不唯一，自行构造缺失模态的两份具体、合理且完整的假想内容，分别解同一个Q并获得不同的最终答案。这些是允许构造的假想情形，不要求原保留模态已经显示它们。须保持Q、全部选项、保留材料和K不变。缺失材料的内容可以变，已保留的对象、命名实体事实和题目预设不能变。两份情形各自足以唯一回答完整Q；空白、不足、矛盾、改变题意或只改变中间事实无效。图像可用准确描述。不要事先枚举取值范围。
+Two forms of evidence:
+1. If it is already uniquely answerable, output the full answer and a sufficient solution that relies only on Q, the retained material and K. Every key premise must be supportable; do not infer equal physical strength from icons of the same size; do not prove uniqueness by failing to find a counterexample.
+2. If it is not unique, construct by yourself two concrete, reasonable and complete hypothetical contents for the missing modality, solve the same Q under each and obtain different final answers. These are hypothetical situations that may lawfully be constructed; the original retained modality is not required to have shown them. Q, all options, the retained material and K must stay unchanged. The content of the missing material may vary, but the retained objects, named-entity facts and question presuppositions must not change. Each of the two situations must be sufficient to answer the full Q uniquely; blank, insufficient or contradictory content, changing the meaning of the question, or changing only intermediate facts is invalid. Images may be described accurately. Do not enumerate value ranges in advance.
 
-物理/数量问题保留相同的量、时间范围与单位；全年量不能用一个短季节的量替代；描述必须足够支持所给答案。选择题答案请用“原字母. 原选项文字”，严格核对字母与文字对应；即使变化的是说明也必须保持选项不变。若未核实唯一解或两个合法情形，明确未决，不伪造证明。
+For physics/quantity questions keep the same quantities, time ranges and units; an annual quantity cannot be replaced by a short-season quantity; descriptions must be sufficient to support the given answer. For multiple-choice answers write "original letter. original option text" and check strictly that the letter and the text correspond; the options must stay unchanged even if what changes is an explanation. If uniqueness or two valid situations are not verified, state it as unresolved; do not fabricate a proof.
 
-只输出简短JSON，无Markdown，选一种：
-{"kind":"unique","answer":"完整答案","reason":"含关键前提来源的充分解法"}
-{"kind":"ambiguous","scenario_a":"第一份完整假想缺失材料","answer_a":"完整答案A","scenario_b":"第二份完整假想缺失材料","answer_b":"完整答案B","reason":"两情形兼容及最终答案不同的理由"}
-{"kind":"unresolved","reason":"具体未核实事项"}
+Output only brief JSON, no Markdown, choose one:
+{"kind":"unique","answer":"full answer","reason":"sufficient solution including the source of each key premise"}
+{"kind":"ambiguous","scenario_a":"first complete hypothetical missing material","answer_a":"full answer A","scenario_b":"second complete hypothetical missing material","answer_b":"full answer B","reason":"why both situations are compatible and the final answers differ"}
+{"kind":"unresolved","reason":"the specific matter not verified"}

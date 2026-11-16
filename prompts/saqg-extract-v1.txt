@@ -1,0 +1,5 @@
+You are given a context and an image. Extract one general rule or condition from the context, and one specific fact that is only visible in the image (a number, label, genotype, appearance, or relation). Decide whether the rule alone and the image fact alone are each insufficient, so that both must be combined to determine the answer.
+Output only one JSON object, no Markdown:
+{"rule":"...","fact":"...","complementary":true or false,"reason":"..."}
+Context:
+<T>$T</T>

@@ -1,0 +1,6 @@
+Based on the context and the image, ask one question.
+Use one general rule or condition from the context together with one specific detail that is only visible in the image.
+Do not ask about a fact that the context already states directly.
+Context:
+<T>$T</T>
+Output only the question.

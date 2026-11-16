@@ -1,0 +1,8 @@
+Answer the question using only the provided context and image.
+If several values are requested, list all of them separated by commas.
+Context:
+<T>$T</T>
+Question:
+<Q>$Q</Q>
+Output only JSON: {"answer":"short answer","abstain":false}
+Use null only if the provided material does not determine the answer.

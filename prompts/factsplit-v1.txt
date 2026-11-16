@@ -1,0 +1,7 @@
+Read the material text below and extract the minimal set of facts needed to answer a question about it. Split the facts into two disjoint halves A and B that are both needed and neither of which alone is enough. Do not copy the image content into the facts; do not add outside knowledge.
+
+Material text:
+$TEXT
+
+Output only one JSON object, no Markdown. Format: {"facts":["fact 1","fact 2"],"A":[0,1],"B":[2,3],"reason":"one sentence"}
+Indices refer to the facts array; every index must appear exactly once, in A or in B, and both must be non-empty.

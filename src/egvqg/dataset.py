@@ -1,4 +1,4 @@
-"""Pinned official ScienceQA downloads and conservative hint+image candidate import."""
+"""Pinned official ScienceQA downloads, conservative hint+image candidate import, and MultiModalQA paragraph+image material import."""
 
 from __future__ import annotations
 
@@ -336,3 +336,48 @@ def normalize_materials(*, input_path: Path, output_path: Path, dataset_name: st
     return {'materials':str(destination),'n_materials':len(rows),
             **({'questions':str(qdestination),'n_supplied_questions':len(questions)} if qdestination else {})}
 
+
+def import_mmqa_materials(project_root, *, name, count, seed, min_chars=150, max_chars=900, min_side=96):
+    """Materials for a non-educational generalisation check: a Wikipedia entity paragraph (MMQA_texts) with the image of the same
+    entity title (MMQA_images). One image per title, seeded sample, images bounded by the shared size policy, no questions used."""
+    import gzip
+    from PIL import Image
+    from .simple_baseline import bounded_image
+    root = Path(project_root).resolve()
+    revision_dir = next(p for p in sorted((root / 'data/raw/multimodalqa').iterdir()) if p.is_dir())
+    texts, seen = {}, set()
+    for line in gzip.open(revision_dir / 'MMQA_texts.jsonl.gz', 'rt', encoding='utf-8'):
+        t = json.loads(line)
+        texts.setdefault(t['title'], t)
+    pairs = []
+    for line in gzip.open(revision_dir / 'MMQA_images.jsonl.gz', 'rt', encoding='utf-8'):
+        i = json.loads(line)
+        t = texts.get(i['title'])
+        if t and i['title'] not in seen and min_chars <= len(t['text']) <= max_chars:
+            seen.add(i['title'])
+            pairs.append((i, t))
+    random.Random(seed).shuffle(pairs)
+    out = root / 'data/processed/multimodalqa' / name
+    (out / 'images').mkdir(parents=True, exist_ok=True)
+    policy = {'max_edge': 1024, 'max_pixels': 1000000, 'max_bytes': 524288}
+    rows = []
+    for i, t in pairs:
+        source = revision_dir / 'final_dataset_images' / i['path']
+        if not source.exists():
+            continue
+        with Image.open(source) as im:
+            if min(im.size) < min_side:
+                continue
+        material = {'material_id': f"mmqa_{i['id'][:12]}", 'source_group_id': f"image_{sha256_file(source)}", 'split': 'pool',
+                    'text': t['text'].strip(), 'image_path': str(source.relative_to(root)), 'image_sha256': sha256_file(source),
+                    'provenance': f"MultiModalQA@{revision_dir.name}:{i['title']}", 'text_source': 'MMQA_texts paragraph with the same title as the image',
+                    'group': 'mmqa', 'title': i['title'], 'processing_version': name, 'review_status': 'pending',
+                    'notes': 'Wikipedia paragraph + entity image; no MMQA question or answer is used.'}
+        rows.append(bounded_image(root, material, out / 'images', policy))
+        if len(rows) >= count:
+            break
+    write_jsonl(out / 'materials.jsonl', rows)
+    write_json(out / 'manifest.json', {'dataset': 'MultiModalQA', 'revision': revision_dir.name, 'name': name, 'count': len(rows), 'seed': seed,
+                                       'filters': {'min_chars': min_chars, 'max_chars': max_chars, 'min_side': min_side},
+                                       'pool_size_after_text_filter': len(pairs)})
+    return {'name': name, 'count': len(rows), 'path': str((out / 'materials.jsonl').relative_to(root)), 'pool': len(pairs)}

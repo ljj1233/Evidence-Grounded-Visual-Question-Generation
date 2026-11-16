@@ -1,187 +1,416 @@
-# 多模态问题生成：从相关性评测到必要性诊断
+# What Does the Answer Depend On?
+# Modality Dependence in Image-Text Question-Answer Pair Generation
 
-**更新：** 2026-11-12。研究对象是多模态问题生成中的信息需求与评测目标错位，ScienceQA是当前实证载体，教育领域不是问题定义的限制。下文§1.1整理已完成的第一步“问题存在性确认”；其余方法比较与贡献仍按研究计划表述，不表示已经验证。评价器探针、行为代理与来源证据复核分别解释；现行研究定义见[研究方案](VQG_Proposal.md)，本轮不改冻结协议或历史结果。
+> **Protocol version note (2026-11-13):** The numbers and conclusions in this document come from the old protocol (generation prompt `plain-v1`, Qwen3-VL-8B, transformers 4.57.6). Results from the new protocol `plain-v2` (a fixed neutral English prompt, transformers 5.22.2) are written to `outputs/<run_id>/probe_report.md`; after final integration, a "Probe" section will be added to this document without changing the existing definitions and numbers.
 
-## 1. 一句话核心故事
+Updated: 2026-11-13. This document is the main paper-narrative file: the research questions, existing observations, the relationship to prior work, the measures, and the methodological direction. Research definitions are in [VQG_Proposal.md](VQG_Proposal.md), the mathematical argument is in [docs/necessity_formal_argument.md](docs/necessity_formal_argument.md), and the literature index is in [docs/references.md](docs/references.md).
 
-多模态问题生成中的“图文相关”不能确立“图文必需”，本研究从捷径诊断视角重审这一评测替代，以反事实输入干预与人工证据审核建立必要性标尺，并用三阶段证据锚定构造性基线检验一条缓解路径。
+## Overview
 
-### 1.1 第一步已确认：相关的生成问题可以不需要两种模态
+- **Task:** Given text $T$ and an accompanying image $I$, generate a question $q$ (an answer $a$ may be generated at the same time).
+- **Problem:** Generated image-text questions are often assumed by default to examine joint reasoning as long as they are relevant to the image and text and answerable under the full input. The authors test this default: relevance and answerability do not imply that both modalities are indispensable.
+- **Observation:** On 1257 material groups from ScienceQA, about 93% of the valid questions generated in a single pass by Qwen3-VL-8B require only one modality; the verified lower bound on questions for which both modalities are necessary is only 19 questions (1.5%).
+- **Prior work:** Existing approaches to judging which modality a question needs rely on instructions, responder performance, or uncertainty, rather than on the information structure of the answer.
+- **Measure:** Modality necessity is determined by the identifiability of the answer, the dependence structure is characterized by partial information decomposition (PID), and a checkable certification is given per question.
+- **Method:** a closed loop built out of the task's own criterion — a local answerability gate selects candidates, a repaired local three-condition verifier certifies them, and the loop is licensed only where $s>\ell$; generation-side circuit intervention is closed as load-bearing (negative, with mechanism).
 
-**当前结论：已在自然生成问题中找到可核查的反例，足以确认问题存在；尚未完成可靠的发生比例估计或跨领域验证。**
+## Task Setting
 
-故事起点是一个通用的评测问题：当目标是生成能够检验多模态信息利用的问题时，输入含有多种模态、问题与材料相关、完整输入下能够答对，都不足以确认答案需要每种模态的信息。需要检查的是固定Q的完整求解路径中，是否存在不可替代的模态贡献。单模态可答的问题仍可有其他用途；此处的缺陷在于将它当作双模态必要任务来评价或使用。
+Given text $T$ and an accompanying image $I$, generate a question $q$ (an answer $a$ may be generated at the same time). Success for $q$ has three requirements:
 
-**已经发现的实际案例。** 在预先冻结的30组材料上，普通提示与强指令各生成30题；这60题构成诊断批次，自动汇总不等于最终真实比例。其中普通生成的`scienceqa_9369`提供了直接的存在性证据：
+- **Valid ($V$):** $q$ is clear, its presuppositions hold, and the answer is unique under the full material;
+- **Text-necessary ($D_T$):** after removing $T$, the answer is no longer determined;
+- **Image-necessary ($D_I$):** after removing $I$, the answer is no longer determined.
 
-> 根据表格，1.5小时后，未覆盖和覆盖的水族箱温度分别下降了多少摄氏度？
+The three holding simultaneously is denoted $B$ (dual-necessary). "Necessary" means that after removing that modality the answer is no longer determined; "redundant" means that after removal the answer is still determined. If $a$ is also generated, it is further required that $a$ be equivalent to an independently established reference answer. The above judgments depend only on the answer to $q$, so the study examines $q$ first.
 
-T描述两个水族箱放在敞开的窗边，其中一个有塑料盖，以及1.5小时的观察背景。I中的表格自身标注了两种水族箱，两行初温均为23.7°C、末温均为17.7°C。
+## Problem
 
-| 检查项 | 本例证据 |
+> **Whether an image-text question can be used to examine joint reasoning depends on what information determines its answer, not on what it mentions.**
+
+Given an image and an accompanying text, there are usually many reasonable questions: they are all relevant to the image and text, and all can be answered from the full input.
+
+For example (a real case, `scienceqa_9369`): the text says two aquariums are placed by an open window, one of them has a plastic cover, and they are observed for 1.5 hours; the image is a table that itself labels the two aquarium conditions "uncovered/covered", with both rows starting at 23.7°C and ending at 17.7°C.
+
+The model can ask:
+
+> According to the table, after 1.5 hours, by how many degrees Celsius did the temperature of the uncovered and covered aquariums each drop?
+
+This question is correct, relevant, and answerable; the answer is that both dropped by 6°C. But the question and the image alone already determine the answer: computing 23.7−17.7 row by row, the window and the plastic cover in the text play no part.
+
+Contrast a type of question (a schematic of the type, not an original question): the text gives the correspondence between the dominance/recessiveness of a trait and genotype, and the image is a Punnett square that gives only the genotypes. When asking "the probability that the offspring exhibits the trait", without the text one does not know which genotypes exhibit the trait; without the image one does not know which genotypes are present.
+
+Both questions are valid and both are relevant to the image and text; the difference is not in difficulty but in the source of information on which the answer depends:
+
+- The first: image → numerical values → subtraction
+- The second: text → correspondence between the trait and genotypes; image → genotype distribution; both together → probability
+
+Thus a finer property than "relevance" emerges:
+
+> **After removing one of the modalities, is the answer still determined?**
+
+Relevance and answerability also hold for a question with a redundant modality; they do not imply "neither can be missing".
+
+### Why It Matters
+
+Image-text question-answer pairs are used to evaluate joint understanding of multimodal models, to construct training data, and to generate educational questions. If a question needs only one modality, it examines image reading or text reading; in evaluation it reflects single-modality ability, and in training it provides single-modality supervision. Distinguishing "a question involves two modalities" from "both modalities are necessary" is a prerequisite for using generated image-text questions for joint reasoning.
+
+### Observation: Valid, but Rarely Dual-Necessary
+
+On 1257 hint+image material groups from ScienceQA, Qwen3-VL-8B generated questions directly (a single generation pass, a single run). Evaluation was carried out by two model groups plus an arbitration model (the answer-identifiability evaluator). The evaluator automatically confirmed 28 questions; after question-by-question review by Claude, 19 were retained; this review is an AI review commissioned by the researchers, not independent human annotation.
+
+| Result (Qwen3-VL-8B, N=1257) | Questions | Proportion |
+|---|---:|---|
+| Valid (clear question, presuppositions hold, grounded reference) | 962 | 76.5% of N |
+| Of these, a single modality already suffices to determine the answer | 896 | 93% of valid questions |
+| Verified dual-necessary (lower bound) | 19 | 1.5% of N, about 2% of valid questions |
+| Remaining valid questions (16 with no counterexample in either direction, 22 pending in the evaluator, 9 accidental invariance and false passes) | 47 | — |
+
+Source: `outputs/qwen3vl8b-necessity-v2/probe_report.md`. luna test reference batch: of 1100 answerable questions, 976 are single-modality-sufficient, and about 23 (1.8%) are verified dual-necessary. Spot-check results for the single-modality screening are given in E2.
+
+> **Most generated questions are valid and answerable, but very few require both modalities.**
+
+Redundancy is bidirectional: among the 894 questions judged single-modality-sufficient, 329 are sufficient with the image alone, 264 with the text alone, and 301 with each alone. The redundant side can be the text or the image.
+
+### Requiring Only "Dual-Necessity" Is Also Not Enough
+
+If, when generating questions, one only pursues making each modality "necessary", two kinds of deviation have appeared in the evaluation records:
+
+- **Beyond the material:** in order to make every modality indispensable, the question presupposes content that the material does not support. Among the 268 invalid questions from the Qwen baseline, the common causes are unfounded presuppositions, missing decisive premises, and an ambiguous scope of what is asked.
+- **Formally necessary, substantively concatenated:** juxtaposing two unrelated sub-questions, or restating the key information of the other modality in the question stem.
+
+Making a single modality "fail" is easy: one need only ask a question that no material supports. Then neither single modality can answer it, which looks like "dual-necessary", but in fact the question itself is invalid. Therefore modality necessity must be built on "the question is valid and the answer is grounded", not on "cannot answer".
+
+The goal is:
+
+> **Each of the two modalities provides information needed for the answer, and the question does not exceed the evidence that the two together can provide.**
+
+-------------------------------------------------------------------------
+
+# Prior Work
+
+Read in terms of "how to judge which modalities a generated question needs". All of the following are works whose methods and key sections have been read; works seen only as abstracts or search summaries are listed at the end. Citation details and links are in [docs/references.md](docs/references.md).
+
+## I. Multimodal Question-Answer Pair Generation (Direct Competitors)
+
+**SMMQG** (Wu et al., Findings EMNLP 2024; arXiv 2407.02233)
+
+- Approach: first specify the modality combination M=(number of texts, number of tables, number of images), a retriever and an LLM select sources, and GPT-4-Turbo generates question-answer pairs. The generation prompt contains "The question should not be answerable if any chosen source passage is removed".
+- Verification: Step 5 of the main text claims that three checks are performed, in which an LLM/LMM single call verifies "(a) the answer pair (b) each source in Z is necessary for answering".
+- Actual situation: the verification prompt published in Appendix D (the ACL version is consistent with arXiv v2) has only two criteria—"the answer can be inferred from the provided material" and "the question matches the specified style"—with no criterion that "each source is necessary"; the paper does not report the pass rate of this verification step; the search found no public code.
+- Human study measurements: fluency, style faithfulness, source relevance (93.0%, MMQA 85.8%), answerability (94.7%, MMQA 85.8%), answer correctness (92.7%, MMQA 80.0%). "Source relevance" asks "whether all sources are relevant to answering the question", not "whether it would be unanswerable if one were missing".
+- The paper itself notes: the model may select sources yet not generate the question based on them ("One source of error arises when the question-generation model selects question sources that the generated question is not based on").
+- Conclusion: in the public materials, necessity is required through the **instruction at generation time**; the description of the verification step is inconsistent with the published prompt; no measure assesses "whether the question really needs each source".
+
+**FM2DS** (Abaskohi et al., Findings EMNLP 2025; code github.com/ServiceNow/FM2DS)
+
+- Approach: GPT-4-turbo generates multi-hop multimodal questions according to a prompt (the prompt contains "unanswerable if any one of the documents is missing"); verification follows.
+- Single-modality check (paper): GPT-4o answers using only the text, only the image, and only the table respectively; if it can answer, the question is discarded, and if it cannot, it is retained.
+- Single-modality check (public code, `src/question/validate.py`): `is_question_multimodal` calls `generate_answer` separately for each modality, and as long as the returned string is non-empty it is judged "not multimodal"; the code has no refusal recognition and no comparison with the reference answer. `get_gpt_response` calls `gpt-4o-mini` and sends plain-text messages, with the image appearing in the prompt only as text in the form of a URL, file path, or Base64 placeholder, so the model cannot see the image content. Whether the public code is consistent with what was used in the paper's experiments cannot be determined from the public materials.
+- Reported effects: among 1000 GPT-4o-generated samples, "question validation" rejected 131 (11.58%); this is a combined figure for the multi-hop check and the multimodal check, with no separate precision. Human annotation involved three annotators and 1200 samples, Fleiss' kappa 0.83, with each of four items—"correctness, multi-hop reasoning, multimodality, answer accuracy"—scored 0/1, and about 5% with a mean score below 0.75 were removed; no separate report is given for the necessity check.
+- The paper itself notes: in the zero-shot setting the model "occasionally circumvents the validation step", the example being "Looking at the image of the Eiffel Tower, what engineering innovation...?"—the question uses the image, but the answer is in the page text, i.e., the image is redundant.
+- Conclusion: the necessity check does exist in the design and in the code, with the criterion "can a single modality produce an answer"; the public materials give no precision for this check.
+
+## II. Question-Generation Self-Play with Responder Behavior as the Signal
+
+**VisPlay** (He et al., CVPR 2026; arXiv 2511.15661)
+
+- The same model acts as questioner and reasoner, generating questions from unlabeled images (Vision-47K, about 47K images), trained with GRPO.
+- Question-generation reward: `r = 1_valid · ReLU(r_unc − r_div)`, `r_unc = 1 − |2c−1|`, where c is the majority-vote confidence of the reasoner over m samples (maximal at c=0.5); `r_div` penalizes repetition by the BLEU cluster size of questions on the same image; `1_valid` only checks whether the output is wrapped in `<question>` tags. The pseudo-label is the reasoner's own majority vote; samples with 0.25≤c≤0.75 are kept.
+- The prompt only requires the question to be "directly related to the image" and "must require analysis or reasoning, not just description", and the paper does not verify whether these requirements are met.
+- There is no check of "whether the question needs the image"; the quality of generated questions is not evaluated directly, only downstream benchmark accuracy; the authors state "Our framework lacks a definitive verification method for the self-generated data."
+
+**V-Zero** (arXiv 2601.10094)
+
+- The questioner writes a four-option multiple-choice question and gives an intuitive answer at the same time; reward: `min(c,1−c)` when the intuitive answer agrees with the solver's majority vote, and `0.5·c` when it disagrees.
+- The authors claim that the design "naturally prevents reward hacking": meaningless questions lead to inconsistent reasoning, a low c, and a low reward.
+- There is no modality-dependence check; question quality was assessed only with Qwen3-VL-32B for format validity rate and difficulty, with no human validation.
+
+**SPELL** (Yang et al., ICLR 2026; arXiv 2509.23863)
+
+- Three roles—question generation, answering, and verification—targeting long documents, with difficulty-adaptive rewards.
+- Appendix F.6 itself notes: without a curriculum and historical memory, the questioner "repeatedly propose similar, trivial questions about the same document to maximize the responder's success rate"; a verifier that updates only on its own majority vote exhibits "verifier self-delusion", requiring consistency checks against rule-based rewards.
+
+**RGX** (Luo et al., arXiv 2103.07449)
+
+- Three agents (text): question generation, answer identification, and answering; generated questions are divided into low-, medium-, and high-loss groups by answering loss, and only the low- and medium-loss ones are used for training.
+- The authors explain: "If we only reward questions that are correctly answered, the generator will converge to a trivial local optima."
+
+## III. Measures and Diagnostics of Modality Dependence
+
+**Park et al.** (arXiv 2408.12763, video QA; the arXiv page lists no venue)
+
+- Modality importance score `MIS = perf(q|M⁺) − perf(q|M⁻)`, i.e., the difference in accuracy between the subset containing a modality and the subset without it; only one MLLM, GPT-4 Turbo, is used.
+- Complementary-question proportions: TVQA 2.1%, LifeQA 2.4%, AVQA 0.6%; humans (4 people, 197 questions) found no complementary questions; the kappa between humans and the MLLM is about 0.3 (Appendix A.3, for confidence-weighted classification); the authors state that the main limitation is the use of only a single MLLM.
+
+**Multi-modal Data Spectrum** (Madaan et al., arXiv 2509.23499)
+
+- "Shuffling" is done by replacing a modality with that of another sample, and dependence is estimated by majority vote of three Cambrian-1 models; 23 VQA benchmarks are covered; when only the question text is used, ScienceQA is 17.5% above random; the authors state that the limitation is reliance on multiple-choice benchmarks. The conclusions are at the dataset and subcategory level, with no per-question labels.
+
+**M3IRT** (Uebayashi et al., ICLR 2026; arXiv 2603.02663)
+
+- Model ability and question difficulty are decomposed into three components—image, text, and cross-modal—fitted from the response records of 24 VLMs on three benchmarks; used to screen out genuinely cross-modal questions.
+- The authors state limitations and directions: multiple-choice only; "developing question-generation methods that control cross-modal difficulty" is a future direction.
+- The components are estimated from the response records of a group of models and are statistics relative to that model population.
+
+**Liang et al.** (NeurIPS 2023; arXiv 2302.12247)
+
+- Uses partial information decomposition (PID) to characterize the redundancy, uniqueness, and synergy of multimodal **datasets**, proposes an estimator scalable to high dimensions, and validates it with synthetic data and human annotations.
+
+## IV. Common Structure and Consequences for This Task
+
+When judging, per question, which modality a question needs, these works all use the **behavior of the responder or the generator** (Liang et al. are at the dataset level and do not judge per question):
+
+| Signal | Work | What it actually measures |
+|---|---|---|
+| Instruction at generation time | SMMQG, FM2DS | Whether the question text meets the requirement |
+| Whether an answer can be produced under a single modality | FM2DS | Whether a model can answer at this moment |
+| Responder uncertainty | VisPlay, V-Zero, SPELL, RGX | The difficulty of the question for the current responder |
+| Accuracy difference with and without a modality | Park, Madaan | Model ability plus prior |
+| Response records of a model population | M3IRT | Difficulty components relative to that population |
+
+Information structure (what determines the answer) and behavioral signals are not in one-to-one correspondence. The following three points are consequences derived from the above approaches; the next section gives a formal account, and experiments are used to test them:
+
+1. **Difficulty rewards cannot separate "difficult" from "necessary".** VisPlay gives the highest reward at c≈0.5. A question whose answer can be determined by a single modality but which is merely hard to compute, and an ambiguous question whose answer the material cannot determine at all, may both obtain c≈0.5. The responder always sees the full input, so the reward cannot see whether a modality is redundant; moreover, VisPlay and V-Zero both have only images as input, so "which modality bears the answer" is undefined for them.
+2. **"A single modality cannot answer" does not equal "necessary".** The FM2DS-style retention rule would retain invalid questions: about 21% (268/1257) of the questions in the Qwen baseline are themselves invalid, and they cannot be answered under any single modality.
+3. **Trivial questions are an attractor for the questioner.** Both SPELL and RGX document that the questioner converges to trivial questions; the 93% single-modality sufficiency observed in this task points in the same direction. This baseline is one-pass generation rather than self-play, and whether the two mechanisms are the same has not yet been tested.
+
+The M3IRT authors explicitly list "question-generation methods that control cross-modal difficulty" as an open direction, which is consistent with the goal of this study.
+
+## Not Yet Read in Full
+
+CaptionQA (blind-answer screening), VeriSciQA, MedVLSynther, MuMuQA, CRIT, QGEval, See First, Answer Later (blind reader as reward). These have so far been seen only as search abstracts or excerpts and are not used as prior conclusions.
+
+-------------------------------------------------------------------------
+
+# Core Research Questions
+
+> **How can generated image-text question-answer pairs be made necessary in both modalities without exceeding what the material can support?**
+
+## Challenge 1: How to Certify Which Modalities a Question Needs?
+
+Behavioral signals (instructions, single-modality answerability, uncertainty, accuracy differences) are indirect estimates of information structure, and their evidential strength is asymmetric (see Proposition 15 in the next section). What is needed is a judgment that can give a "necessary/redundant" certification, is auditable, and does not depend on a single responder. The next section provides this judgment.
+
+## Challenge 2: How to Increase the Dual-Necessary Proportion Without Exceeding the Material Evidence?
+
+The questioner's attractor lies in single modalities; difficulty pressure alone pushes questions toward harder questions on the same modality; and "making a single modality fail" alone rewards invalid questions. What is needed is a signal that both identifies redundancy and does not reward invalidity. The methodological direction is given in the last section.
+
+-------------------------------------------------------------------------
+
+# Measure: Modality Necessity Based on Partial Information Decomposition
+
+This section answers Challenge 1. The full setup and proofs are in the mathematical reference [Section 10](docs/necessity_formal_argument.md); the conclusions are given here. The criterion itself is consistent with Sections 1–7 of the mathematical reference; this section merely restates it in information-theoretic language and adds partial information decomposition (Partial Information Decomposition, PID; Williams & Beer 2010; Bertschinger et al. 2014).
+
+**Per-question level.** Fix a question $q$, take any full-support distribution on the legitimate worlds $\mathcal W(q)$, and denote the residual uncertainty when the text is removed and the actual image $i$ is retained as $U_T(q,i)=H(A\mid I'=i)$.
+
+> **Proposition 13.** $D_T=0\iff U_T(q,i)=0$, and zero versus non-zero is independent of the distribution chosen.
+
+Equivalently, the text is redundant if and only if, given the question and the image, the text no longer brings any information about the answer.
+
+**Question level.** The two-source PID decomposes $I(A;T',I')$ into four atoms—redundancy, text-unique, image-unique, and synergy—and the consistency equations give
+
+$$
+I(A;T'\mid I')=\mathrm{Unq}_T+\mathrm{Syn},\qquad I(A;I'\mid T')=\mathrm{Unq}_I+\mathrm{Syn},
+$$
+
+and $I(A;T'\mid I')=\mathbb E_{i'}\,U_T(q,i')$.
+
+> **Proposition 14.** (a) $\mathrm{Unq}_T+\mathrm{Syn}=0$ if and only if, for any legitimate image, the text brings no information about the answer. (b) If $D_T=1$ in the actual material, then $\mathrm{Unq}_T+\mathrm{Syn}>0$. (c) The converse does not hold.
+
+The evaluator's evidence (sufficient solution, witness pair) acts on the actually retained material, corresponding to the per-question $U_T$; the PID atoms describe the dependence structure of the question over the entire legitimate world. The binary judgment of $D$ uses only conditional mutual information and does not depend on which redundancy measure is chosen.
+
+| Question type (question level) | PID condition | Example |
+|---|---|---|
+| Text-redundant | $\mathrm{Unq}_T+\mathrm{Syn}=0$ | The aquarium question whose table is self-labeled |
+| Image-redundant | $\mathrm{Unq}_I+\mathrm{Syn}=0$ | The text already gives all the information determining the answer, and the image is merely illustrative |
+| Synergistic dual-necessary | $\mathrm{Syn}>0$ | The Punnett-square question: the text gives the rule and the image gives the genotypes, so either modality alone carries almost no information about the answer |
+| Concatenated dual-necessary | $\mathrm{Unq}_T>0,\ \mathrm{Unq}_I>0,\ \mathrm{Syn}=0$ | Two independent sub-questions juxtaposed |
+
+Which type a question specifically belongs to requires selecting a PID measure and estimating it; the study uses only the binary necessity, and type attribution serves only for interpretation.
+
+**Evidential strength of responder signals.** Suppose the responder cannot see the text and outputs $\hat A$. Fano's inequality gives $P_e\ge (U_T-1)/\log_2|\mathfrak A_T|$.
+
+> **Proposition 15.** (a) If $D_T=1$, the probability that any responder who cannot see the text answers correctly is at most $1-(U_T-1)/\log_2|\mathfrak A_T|$: the more spread out the answer distribution, the less likely a correct guess. (b) If $D_T=0$, the probability of a correct answer depends only on the responder's ability. (c) There is no analogous bound for "failure".
+
+Therefore a single match that agrees with an independent reference answer and whose derivation can be checked is strong evidence for $D_T=0$; a single failure has limited evidential strength. Certification of necessity comes from witness pairs, not from failures. This explains the common structure of prior work: using "cannot answer" as "necessary" relies on the side that lacks evidential strength.
+
+**Relation to existing PID work.** Liang et al. compute PID statistics with an estimator at the dataset level; here the decomposition is at the level of a single question, and the per-question zero versus non-zero is certified by a sufficient solution or a witness pair rather than estimated.
+
+**Aggregate quantities.** For a fixed $N$ questions, with $n_1$ confirmed dual-necessary and $n_\bot$ pending, the true count $m$ satisfies $n_1\le m\le n_1+n_\bot$. Let $p$ be the precision of the single-modality screening on the $n_c$ valid questions that it removes, and let the number of valid questions be $n_V$; then
+
+$$
+\#\{\text{at least one modality redundant}\}\ \ge\ p\,n_c,\qquad \#\{B=1\}\ \le\ (n_V-n_c)+(1-p)\,n_c .
+$$
+
+-------------------------------------------------------------------------
+
+# Question-Validation Experiment: Are Generated Image-Text Question-Answer Pairs "Valid but Rarely Dual-Necessary"?
+
+## E1. Scale (existing)
+
+Qwen3-VL-8B, $N=1257$, $n_V=962$: confirmed dual-necessary $n_1=19$ (1.5% of N); a single modality already suffices to determine the answer for 896 questions, 93% of $n_V$; removed by the pre-screening $n_c=894$. Control (luna, test reference): 1100 answerable, 976 single-modality-sufficient, about 23 verified dual-necessary (1.8%).
+
+## E2. Screening Precision (existing)
+
+From the $n_c=894$ questions, 40 were randomly sampled with stratification, and Claude Haiku answered them blind (without seeing the evaluator's conclusion); inconsistent cases were adjudicated by Claude looking at the image: 40/40 indeed had at least one redundant modality, $\hat p=1$. The Wilson 95% lower bound is $p_L\approx 0.912$.
+
+Limitations: the reviewer is Claude (an AI review commissioned by the researchers, not independent human annotation); the sampling is stratified by (judgment type × material template) and the Wilson interval is approximate; the check is for "at least one modality is redundant" and does not verify one by one which specific modality.
+
+## E3. Substituting into the Aggregate Bounds (directly computable)
+
+$$
+\text{redundant share of valid questions}\ \ge\ \frac{p_L\,n_c}{n_V}=\frac{0.912\times 894}{962}\approx 84.8\%,
+$$
+
+$$
+\#\{B=1\}\ \le\ (962-894)+(1-0.912)\times 894\approx 68+78=146,
+\quad\text{i.e.}\ \le 11.6\%\ \text{of}\ N .
+$$
+
+In the 95% Wilson sense, at least about 85% of valid questions have one redundant modality; even in the worst case, dual-necessary does not exceed about 12%; the verified lower bound is 1.5%. The interval is wide because the upper bound counts all the worst-case false removals among the questions removed by screening as dual-necessary, whereas none was found in the audit sample.
+
+Limitation: validity $V$ (962) is given by the evaluator and has not been audited separately; another 27 questions whose validity awaits adjudication are not counted.
+
+## E4. Direction of Redundancy (counts existing, direction labels not checked one by one)
+
+Among the 894 questions removed by screening (evaluator screening judgments): image alone sufficient 329; text alone sufficient 264; each alone sufficient 301. Text-redundant at least $329+301=630$ questions, image-redundant at least $264+301=565$ questions.
+
+## E5. Structure of Dual-Necessary Questions (existing, small sample)
+
+Of the 19 questions, 14 are Punnett-square questions (formally compatible with the synergistic type), and 5 are yes/no exchange questions of the form "the text gives what is wanted, the image gives what each has"; no per-question PID estimation was performed. The sample comes from one dataset and is descriptive only.
+
+## Follow-up
+
+- Measure reliability: stratified sampling of the "remaining" questions to estimate the miss rate; the review precision for confirmed items is currently 19/28.
+- Stability across more generators, datasets, and repeated runs.
+- Contrast the default prompt with a prompt that explicitly requires both the image and the text to be necessary, testing "whether instructions are sufficient to change the dependence structure".
+- Multiple candidate samples on the same material, to distinguish "the material does not support it" from "generation tendency".
+
+## Conclusion
+
+> $\Pr(V=1)$ is high, but $\Pr(B=1\mid V=1)$ is small.
+
+In the generation examined (a single generator, a single dataset, a single run), most questions are valid and answerable, but very few require both modalities; this is of the same order of magnitude on the luna test reference batch.
+
+-------------------------------------------------------------------------
+
+# Technical Route: A Closed Loop Built from the Task's Own Criterion
+
+The route is not "apply a self-improvement recipe"; it follows from what the target property is. This section states the
+argument, the loop it induces, the law that decides whether the loop may run, and the evidence status of each link. The
+mathematics is in [docs/necessity_formal_argument.md](docs/necessity_formal_argument.md) §11 and §10.7.
+
+## Why this technique fits this task
+
+"Both modalities are necessary" is a **counterfactual**, not a surface property: remove one side and ask whether the
+answer is still determined. Every term of the definition is a statement about what a subject can determine under an
+intervention. Three consequences:
+
+1. **An observational scorer is a proxy for an interventional target.** A judge reading the question, a reward model
+   trained on labels, and a difficulty statistic all score the *observed* pair; none removes a side. The only instrument
+   that measures the definition without approximation is one that performs the removal. The answerability gate is not a
+   heuristic correlated with necessity; it is the definition made executable, and criterion and evaluator are the same
+   object.
+2. **No reference answer is needed.** Necessity is a difference of determinability across conditions, so the criterion
+   reads only the pattern $(TI,T,I,0)$ and never compares against a gold answer. This is why the loop can close locally,
+   and it is a structural consequence of (1), not a cost saving.
+3. **Two modalities give a constant-size criterion.** Four conditions, so one instrument serves four jobs: measuring a
+   corpus, diagnosing a generator, filtering candidates, certifying a round.
+
+## The loop
+
+```
+material m ─► generator G ─► candidates Q
+                              │
+                              ▼
+                answerer A under TI / T / I / 0
+                              │
+                              ▼
+       criterion C_A: a single side answered? → reject
+                              │
+                              ▼
+              kept set ─► fine-tune G' ─► next round
+```
+
+Because $C_A$ is built from $A$, the loop needs no external auditor to produce a label — and for the same reason it can
+drift without one noticing. The drift has two names: $\ell=P(\text{side answers}\mid\text{dual})$ (a dual is rejected
+because the answerer guessed) and $1-s=P(\text{side silent}\mid\text{redundant})$ (a redundant question is kept because
+the answerer could not use the side). What makes the loop auditable is that **the same device measures its own
+reliability**: the blind condition estimates the prior part of $\ell$, the single-side conditions estimate $s$ on a
+labelled pilot.
+
+## Where the loop may run: the law and the stop rule
+
+With dual prevalence $\pi$, the gate has recall $1-\ell$ and precision
+$\pi(1-\ell)/[\pi(1-\ell)+(1-\pi)(1-s)]$; it beats the base rate **iff $s>\ell$**. As a loop, $s>\ell$ says the filter
+keeps duals preferentially; if $s\le\ell$ each round preferentially keeps single-modality questions and trains the model
+to produce more of them, with the drift invisible from the model's confidence. So the inequality is both the deployment
+test on a new corpus and the stop rule for the iteration.
+
+Measured: all four side rules satisfy it (MMQA text 0.930 vs 0.333; MMQA image 0.211 vs 0.095; ScienceQA text 0.409 vs
+0.292; ScienceQA image 0.617 vs 0.250), the two-sided independence prediction matches the observed dual rejection
+(0.397 vs 0.429 MMQA; 0.531 vs 0.583 ScienceQA), and the recall ceiling holds exactly. ScienceQA's weakness is one
+number, $s_T=0.409$: the answerer cannot read the lecture enough to notice it already answers the question.
+
+## Where the loop can be amplified
+
+Because $C_A$ is built from $A$, raising $A$ raises certified supply: the verifier's recall is capped by full-material
+accuracy, and the per-item repair raised that accuracy 0.517 → 1.000 and certified recall 0.483 → 0.983 with the
+criterion untouched. The amplifier is on the **answering** side.
+
+The generating side offers no comparable lever on this stack. E4 measured that the copied span is **load-bearing**:
+ablating the attributed heads leaves the question byte-identical (the copy is redundant across heads), and blocking
+attention to the source span removes the copy but makes the question confabulate a threshold or lose its criterion.
+A generation-side intervention is inadmissible not because it is hard but because the copy is what makes the question
+well posed. Supply is further bounded by mode collapse: best-of-8 produced no new dual shape. Hence the gradient is
+asymmetric — answering-procedure changes move $s$ without touching the criterion, generation-side changes require new
+data or a diversity term.
+
+## The four layers actually used
+
+| layer | instrument | what it fixes | evidence |
+|---|---|---|---|
+| measurement | three-valued identifiability label (valid, redundant, direction; undetermined kept) | the yardstick: a question is judged on $(q,m)$, not on $q$ | 1,257 materials, verified dual lower bound 19 (1.5%) |
+| diagnosis | E1 leak/anchor decomposition + per-side answer rates | which side is redundant, and whether the redundancy is a copy or an anchor | leak 100% synthetic vs 4–13% real; MMQA text-anchored, ScienceQA image-anchored |
+| selection | local answerability gate | reject what one side already answers; portable two-sided rule when the direction is unknown | MMQA 0.571/0.800, ScienceQA 0.458/0.367, 0 API calls |
+| certification | repaired local three-condition verifier | confirm a survivor needs both sides, and which repair tier is enough | per-item 0.983 = API PVS 0.983 |
+
+Generation-side remains framed generation: the schema is the working lever (refer prompt reaches dual 1.000 on the
+synthetic set), and the circuit route is closed with mechanism, not with a failed attempt.
+
+## Non-claims
+
+- The gate is not a universal replacement for the judge: on ScienceQA the judge is significantly better on recall, and
+  the union rule is the high-recall fallback.
+- The generation-side repair is untested beyond inference-time intervention; no fine-tuning round was attempted.
+- All labels are AI consensus; the human review packs are still owed.
+- The schema effect is nested in skill and is not a causal lever.
+
+-------------------------------------------------------------------------
+
+# Paper Structure and Claims (Draft)
+
+## Structure
+
+| Section | Content |
 |---|---|
-| 问题有效且与材料相关 | 对象、观察背景与T一致，所问温度变化有I的明确数据支持，答案为两者均下降6°C。 |
-| 移除T后是否仍可完整求解 | 可以。Q+I给出对象、起末温度与所求，逐行计算23.7−17.7=6；无需窗户、塑料盖的物理作用或其他文本事实。 |
-| 实际答题行为 | TI和I条件均答对；T和0条件拒答，继续保留未决，不记为错误。 |
-| 信息层面判断 | T与问题相关，但对该Q不必要。因此该Q不满足双模态必要性。 |
-
-**问题是这样发现的。** 先保留自然生成的原始Q，再分开检查有效性与相关性；固定Q运行相互隔离的TI/T/I/0条件，将单模态答对作为待检查线索；最后回到原始T、I、Q核验完整解法，确认其没有猜测缺失事实、继承另一条件的信息或使用错误参考答案。决定本例结论的是可逐步检查的Q+I充分解法，BDR与正确率是行为补充。原始记录为`attempt_1dfea911aeba1516`，见[运行记录](outputs/scienceqa-admission-60-v1-plan/records.jsonl)、[实际条件输入](outputs/scienceqa-admission-60-v1-plan/answer_inputs.jsonl)和[案例复核](outputs/scienceqa-admission-60-v1-plan/stage_two_cases.md)。本轮重新查看了原图与记录，没有新增模型调用。
-
-12题受控对照此前用于暴露评价盲点和校准边界；自然生成案例进一步排除了“只有手工设计的反例才会出现”的解释。所有来源复核如实记为`user_delegated_ai`，不能称为独立人类盲审金标准。案例解释不替换原题、不修改原始标签、不改变任何计划分母。
-
-**当前可以写出的发现：** 在所检查的多模态生成产物中，已经观察到有效且与图文材料相关、但只需一种模态即可完整回答的问题。这说明相关性合格不足以保证双模态必要性；当评测目标是判断问题是否要求联合信息时，需要额外检验作答的信息需求。
-
-这一反例支持一般逻辑上的“不蕴含”，实证覆盖仍限于当前材料与生成配置，不能推出其他领域的发生比例、所有现有评价方法均失效，或生成器内部实际采用了哪条捷径。单个反例也不能证明必要性评估器已可靠：近期探针仍有输出合同与语义未决问题。**后续主线是建立可信的必要性评价，再刻画问题的程度；显式锚定的改善效果是另一个待验证命题。**
-
-## 2. 摘要级完整叙事
-
-研究计划口径，实验问题不预写为结果。
-
-Multimodal models can achieve strong performance through linguistic priors and unimodal shortcuts rather than integrated evidence use. While this failure mode has motivated diagnostics in visual question answering, its implications for evaluating generated questions remain insufficiently examined: relevance to multiple modalities does not establish that answering requires them. We revisit multimodal question generation through counterfactual modality necessity. For a fixed question, removing either modality should eliminate information needed for a complete answer. We operationalize this perspective through four controlled input conditions, Bimodal Dependency Rate (BDR), and human evidence audits. BDR serves as a solver-dependent counterfactual behavioral proxy; audited information requirements provide the reference standard. Using ScienceQA educational text–image materials as the primary testbed, we examine direct prompting, strong instructions, answer-guided generation, and contrastive approaches. We then evaluate a constructive baseline comprising evidence extraction, cross-modal evidence pairing, and evidence-anchored question generation. Matched-backbone and matched-budget comparisons ask whether explicit anchoring improves bimodal dependence more reliably than goal instructions while preserving validity and naturalness; an image-anchoring ablation examines the component’s contribution. The study aims to characterize an evaluation blind spot, establish a reproducible diagnostic protocol, and assess a principled mitigation path for shortcut-permitting question generation.
-
-## 3. 论文章节逻辑骨架
-
-全文论证链：多模态捷径→生成质量评测的目标错位→反事实必要性→统一诊断→构造原则→受控验证→解释边界。
-
-### 1. 引言：生成产物是否真正要求多模态能力？
-
-**核心论点：** 多模态输入和相关输出不足以证明任务需要跨模态整合；生成的问题也可能保留让答题者绕过证据的捷径。
-
-开篇从[捷径学习](https://arxiv.org/abs/2004.07780)这一机器学习共性问题出发。[VQA v2](https://arxiv.org/abs/1612.00837)揭示语言先验能够掩盖视觉能力不足；[Seeing or Knowing](https://arxiv.org/abs/2607.26326)进一步区分视觉信息的编码与可靠利用。本文把诊断视角从“模型怎样回答”延伸到“模型生成了怎样的任务”：如果生成问题允许单模态、常识或题干线索完成求解，内容相关性就不能证明其具有联合能力诊断价值。
-
-答题侧捷径关注模型是否绕过本应使用的证据；出题侧偏差则关注任务本身是否要求这些证据。若评测把无需联合证据的任务成功计为跨模态整合能力，就会混淆任务可解性与模型能力；若进一步将这类问题用于训练数据合成，还可能保留奖励捷径的监督信号。因此，本文同时诊断生成问题的信息需求与判断其多模态价值的评测标准。
-
-引言依次展开：捷径问题→答题侧已有诊断→出题侧的评测盲点→相关性与必要性之别→诊断协议与构造基线→ScienceQA验证载体。教育图文放在问题定义之后，说明其文本规则与视觉事实提供了可检查的联合求解关系。
-
-该诊断框架也为多模态基准构建、模型对齐评估等需要检查整合能力的任务提供可迁移的评价思路；本研究的实证验证范围保持为ScienceQA教育图文与所测生成范式。
-
-**关键证据与研究问题：** 同材料示意案例；捷径在ScienceQA场景下的所测代表性生成范式中具有怎样的程度与模式？显式构造是否比纯目标指令更可靠地提高依赖？
-
-**叙事作用：** 建立机器学习层面的研究对象——评测目标是否真正要求所声称的多模态能力。
-
-### 2. 相关工作：从评测失配到出题侧必要性
-
-**核心论点：** 以三层文献建立论证：生成评测可能偏离真实目标，多模态表现可能受捷径支撑，QG因此需要检查作答所需信息。
-
-| 层次 | 文献组织 | 通向本文的问题 |
-|---|---|---|
-| 通用生成评测偏差 | 以[生成文本评价实践研究](https://arxiv.org/abs/2202.06935)讨论表面质量、代理指标与实际目标之间的失配 | 流畅、相关的生成产物是否实现了目标能力要求？ |
-| 多模态捷径与能力诊断 | VQA v2的语言先验，Seeing or Knowing的感知—利用差距 | 从诊断答题时的证据依赖，推进到诊断生成问题的证据需求 |
-| VQG / 多模态QG进展 | 泛化提问→信息最大化→图文对齐→协同建模 | 自然度、信息量与联合表示如何进一步连接到作答必要性？ |
-
-QG评测常用BLEU、ROUGE等参考文本相似度指标，并结合流畅性、相关性或信息性等质量维度；例如[ConVQG的评测](https://arxiv.org/html/2402.12846v1)包含自动文本指标与人工偏好比较。这些读数并不直接检验“答案需要哪些材料、各材料为何不可替代”，题目信息依赖结构因此成为生成评测目标与任务目标之间需要补足的维度。
-
-第三层保留原有递进：[早期VQG](https://aclanthology.org/P16-1170/)研究自然提问；[IM-VQG](https://arxiv.org/abs/1903.11207)提高目标性与信息量；[ConVQG](https://arxiv.org/abs/2402.12846)通过双重对比促进图文联合利用；[SynMQG](https://shuangyinli.cn/publications.html)以解耦和互信息优化研究协同生成。自博弈合成补充难度、多样性和答案一致性的视角。
-
-本节将已有目标与作答必要性分层：这些目标增强生成内容或表示与材料的联系，但在逻辑上不蕴含移除任一模态后无法完整求解。现有输出是否实际满足必要性，交由诊断实验回答，不把前人对联合利用的贡献抹去。
-
-**叙事作用：** 将研究定位为生成评测与多模态能力诊断的交叉问题；创新点落在生成—评价流程的系统整合，而非必要性概念首创。
-
-### 3. 任务定义与评价协议：反事实必要性与行为代理
-
-**核心论点：** 通过受控改变输入信息可用性，区分材料与问题有关联，以及材料对完整求解不可替代。
-
-输入仍为文本T与图像I，生成器只输出Q；参考答案在生成后独立核验并绑定当前Q。必要性在信息层面定义：在完整图文支持求解的前提下，当且仅当移除任一模态后，剩余信息不足以支持完整答案时，满足双模态必要性。原有推理整合性要求继续保留，排除两个独立子问题拼接。
-
-四条件视为对输入信息空间的反事实干预：固定Q、材料内容、答题模型及作答规则，改变模型可见信息。
-
-| 条件 | 可见信息 | 干预含义 |
-|---|---|---|
-| TI | Q+T+I | 完整信息参照 |
-| T | Q+T | 移除图像及其衍生信息 |
-| I | Q+I | 移除文本及其衍生信息 |
-| 0 | 仅Q | 移除全部外部材料 |
-
-逐题BDR沿用原定义：
-
-$$B_i=\mathbf{1}[V_i=1,C_i^{TI}=1,C_i^T=0,C_i^I=0],\qquad
-\widehat{\mathrm{BDR}}=\frac{1}{N}\sum_i B_i.$$
-
-BDR定位为特定答题模型上的反事实行为代理（counterfactual behavioral proxy）：以反事实思想定义必要性，通过受控输入干预观测行为变化，反映模态可用性与作答正确性在指定评估条件下的关联，不宣称识别模型内部的因果机制。经核验的人工证据审核提供信息层面的参考金标准，分别定位缺失证据、常识替代路径及共同求解关系。
-
-视觉依赖诊断已有先例：[VQA v2](https://arxiv.org/abs/1612.00837)以互补图像检查答案对视觉内容的依赖，[VideoQA视觉依赖审计](https://arxiv.org/abs/2606.30220)比较有无视觉输入时的表现。本文将这类诊断思想用于生成问题的属性评价，要求文本与图像双向必要，并配套人工信息审核进行校准；BDR本身仍由指定答题器的行为估计，不将其表述为脱离模型的题目真值。
-
-固定N、生成失败保留、未决单列、拒答未决及仅Q不进入BDR公式等政策不变。常识校准继续使用既定小规模对照与盲审，要求给出替代求解路径或不可恢复的信息缺口，不能凭措辞判定必要性。
-
-**叙事作用：** 明确反事实诊断的对象：受控输入变化下固定答题器的行为模式，以及它与信息层面必要性之间的对应关系。
-
-### 4. 现状诊断实验：相关性评测遗漏了哪些捷径？
-
-**核心论点：** 用同一标尺检查不同生成范式是否共同保留可绕过联合证据的作答路径。
-
-沿用直接零样本、强指令、答案引导和对比学习类方法，协同建模可作第五类；材料清单、评价协议、答案引导信息来源和方法身份记录不变。不同基座的代表性方法用于范式诊断，与后文同基座受控比较分工明确。
-
-通过实验回答：
-
-- 有效且与图文相关的问题，有多少同时满足信息必要性与推理整合性？
-- 文本、图像、常识和题干捷径分别出现在哪些产出中？
-- 强指令能否消除这些路径，还是仍存在目标与产出之间的差距？
-- BDR与人工证据审核在哪些情形下一致或分歧？
-
-**关键证据：** 原有有效率、BDR、未决率、四条件表现和人工审核；错误分类及案例用于解释读数，不新增综合指标。
-
-**叙事作用：** 为“相关性替代必要性”的诊断命题提供实证依据，明确其在所测范式和ScienceQA材料上的范围。
-
-### 5. 方法：以联合证据依赖为原则的构造性基线
-
-**核心论点：** 将必要性从提示中的目标声明落实为问题构造过程。
-
-三阶段保持不变：
-
-| 阶段 | 设计原则 | 可检查产物 |
-|---|---|---|
-| 证据提取 | 明确哪些文本条件与视觉事实能够支持求解 | 带来源的证据项 |
-| 跨模态证据配对 | 选择互补且共同决定一个结论的信息 | 证据组合及联合求解关系 |
-| 证据锚定问题生成 | 让所求答案实际依赖组合证据，避免泄露与拼接 | 最终Q及内部构造轨迹 |
-
-统一称为构造性基线（constructive baseline）。它以可解释、可复现的流程检验显式证据锚定原则；不增加训练、搜索或新的验证模块，也不将反事实评价步骤包装成新增生成阶段。
-
-**关键研究问题：** 将证据依赖显式化，是否比仅陈述“结合图文”更有效？
-
-**叙事作用：** 在诊断之后提供原则明确的缓解路径，使论文同时具备问题揭示与方法参照。
-
-### 6. 对照实验：目标指令与显式构造有何差异？
-
-**核心论点：** 在既定控制条件下，检验证据锚定原则，而非追逐排行榜优势。
-
-| 原有对照 | 实验回答的研究问题 |
-|---|---|
-| 强指令vs.直接出题 | 明确目标能在多大程度上改善双模态依赖？ |
-| 完整锚定vs.强指令 | 显式证据构造能否带来进一步且更稳定的依赖增益？ |
-| 完整锚定vs.去图像锚定 | 保留原图输入时，显式视觉证据选择承担什么作用？ |
-
-相同基座、材料、总生成token预算、候选数上限与重试政策不变；报告实际消耗。沿用材料/来源簇配对分析、差值区间、现有材料类型上的效果分布，以及有效性与自然度的独立评价。
-
-质量保持继续依据既定可接受下降范围和差值区间判断。“稳定”限定当前材料与配置，不外推为跨模型、跨数据集结论。所有尝试与失败保留，评价端不因方法不同而改变政策。
-
-**叙事作用：** 将方法命题落实为可回答的对照问题，以依赖、质量和成本共同评估缓解路径。
-
-### 7. 讨论与局限：反事实行为诊断的解释边界
-
-**核心论点：** 反事实输入干预提供行为依赖证据，其解释必须与干预对象一致。
-
-集中讨论以下边界：
-
-- 干预改变输入可用性，结局是固定答题器的回答正确性；不能据此识别生成器或答题器的内部因果机制。
-- 移除模态也改变输入分布，正确性变化受能力、提示、拒答与猜测影响，BDR因而是反事实行为代理而非绝对金标准。
-- 人工审核是经核验的参考标注，仍需处理常识边界与分歧；未经确认的AI标签不承担金标准角色。
-- 问题允许捷径，不等于已经证明生成器在训练或生成时实际使用了同一路径。
-- ScienceQA提供具体的教育图文验证；通用问题意识与跨数据集实证泛化分别表述。
-
-**叙事作用：** 为反事实视角划定清晰解释范围，保留对生成评测的通用启示。
-
-### 8. 结论：让评测检查必要依赖
-
-**核心论点：** 围绕诊断命题与方法命题总结实际发现：评测遗漏了什么，协议揭示了什么，显式锚定在何种范围内构成有效缓解。
-
-结论依正式结果收束为“揭示偏差、建立诊断协议、验证缓解路径”，不预设每项结果的方向，也不声称消除了多模态捷径。
-
-**叙事作用：** 将议程从“生成内容是否与多模态相关”推进到“生成任务是否真正要求多模态证据”，以ScienceQA证据支持研究启示，保持外推范围清楚。
-
-## 4. 三点核心贡献表述
-
-以下按研究计划口径组织，实证结论由正式结果填充。
-
-1. **实证发现：刻画所测生成范式在教育图文场景中的评测目标错位。** 在ScienceQA教育图文与所测代表性生成范式中，系统刻画模态相关性与作答必要性之间偏差的程度与模式，分析单模态、常识与题干捷径如何影响生成问题的跨模态诊断价值。
-2. **方法论工具：建立反事实输入干预的必要性诊断协议。** 保留四条件模态消融、逐题BDR与人工证据审核，将答题模型上的行为依赖与信息层面的参考必要性区分，提供可复现且解释边界明确的评价标尺。
-3. **构造性基线：检验显式证据锚定的缓解价值。** 以证据提取、跨模态配对和证据锚定问题生成实现原则明确的基线，通过既定同基座、同材料、同预算对照及图像锚定消融，评估相对于纯目标指令的依赖增益及有效性、自然度和成本权衡。
+| 1 Introduction | Task and goal → distinction between relevance and necessity → observation → gap → contributions |
+| 2 Related Work | Multimodal question-answer pair generation, question-generation self-play, measures of modality dependence (organized by "how to judge which modalities are needed") |
+| 3 Task and Measure | Task setting, answer identifiability, reading of PID, evidence types |
+| 4 Diagnosis of the Status Quo | E1–E5 |
+| 5 Method | Why the technique is the definition made executable; the loop; the law $s>\ell$ as licensing and stop rule; the gate, the repaired verifier, the closed circuit route |
+| 6 Experiments | E1 source decomposition; E2 grid and interval; E3 repair ladder; selector tables against API PVS on two corpora; E4 attribution/ablation/blocking; cost |
+| 7 Discussion and Limitations | Single dataset, AI review, evaluator false passes and missed judgments |
+
+## Claims and Evidence Status
+
+| ID | Claim | Evidence | Status |
+|---|---|---|---|
+| C1 | In the generation examined, about nine in ten valid questions have one redundant modality, and about 2% are dual-necessary | E1–E3; two generators; 40/40 spot check | Supported (scope: one dataset, a single run, AI review) |
+| C2 | The evidential strength of responder signals is asymmetric: a match that agrees with an independent reference and whose derivation can be checked is strong evidence, while failure is limited evidence | Proposition 15 (Fano) | Supported (theory); experimental test on this task not done |
+| C3 | Prior behavioral signals (instructions, single-modality answerability, uncertainty, accuracy differences) cannot certify modality necessity | Sections I–III of Prior Work; the derivation in Section IV | Partially supported (approaches read; consequences on this task await experiments) |
+| C4 | The questioner's attractor lies in single modalities | Records in SPELL and RGX; 93% single-modality sufficiency | Partially supported (this baseline is not self-play) |
+| C5 | A local answerer can select dual-necessary questions without references, and its usefulness is decided by $s>\ell$ | MMQA 0.571/0.800, ScienceQA 0.458/0.367; API PVS control; blind control; law checked on both corpora | Supported (labels AI consensus; 60 materials; two corpora) |
+| C6 | The verifier's recall is capped by full-material accuracy and is repairable at the answering interface | per-item repair 0.517 → 1.000, recall 0.483 → 0.983, = API PVS | Supported (pool B is template-designed) |
+| C7 | Attention-level intervention on the copied span cannot manufacture dual questions | E4: head ablation byte-identical; span blocking confabulates the threshold, fidelity 0.000 | Supported (one generator, one material family) |
+| C8 | One self-play round with this filter increases the dual-necessary supply of the generator | None | **Not tested** (needs a training round, `peft`, ~tens of GPU·h) |

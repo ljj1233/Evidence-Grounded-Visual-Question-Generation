@@ -65,6 +65,23 @@ def test_invalid_limits_are_rejected():
         BatchingProvider(Fake(), model='m', identity={}, max_batch=0)
 
 
+def test_identity_matches_ignores_only_the_model_directory():
+    from egvqg.local_vision import identity_matches
+    base = {'model': 'm', 'torch': '2.11.0', 'model_fingerprint': {'path': '/a/models/m', 'files': {'config.json': 'abc'},
+                                                                    'weight_shard_bytes': {'model.safetensors': 9}}}
+    relocated = {'model': 'm', 'torch': '2.11.0', 'model_fingerprint': {'path': '/b/models/m', 'files': {'config.json': 'abc'},
+                                                                        'weight_shard_bytes': {'model.safetensors': 9}}}
+    assert identity_matches(base, relocated)
+    for mutate in (lambda v: v['model_fingerprint']['files'].update(config_json='def'),
+                   lambda v: v['model_fingerprint']['weight_shard_bytes'].update(model_safetensors=10),
+                   lambda v: v.update(torch='2.10.0')):
+        changed = {'model': base['model'], 'torch': base['torch'],
+                   'model_fingerprint': {'path': '/b/models/m', 'files': dict(base['model_fingerprint']['files']),
+                                         'weight_shard_bytes': dict(base['model_fingerprint']['weight_shard_bytes'])}}
+        mutate(changed)
+        assert not identity_matches(base, changed)
+
+
 def test_cli_exposes_the_local_model_options():
     from egvqg.cli import build_parser
     args = build_parser().parse_args(['simple-baseline-run', '--run-id', 'r', '--local-model-path', '/m', '--max-batch', '16'])

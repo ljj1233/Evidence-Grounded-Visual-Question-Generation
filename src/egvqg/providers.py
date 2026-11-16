@@ -371,8 +371,9 @@ class MockProvider:
 
 
 class JudgeHTTPError(RuntimeError):
-    def __init__(self, status: int):
+    def __init__(self, status: int, body: str = ''):
         self.status = status
+        self.body = body
         super().__init__(f'judge_http_{status}')
 
 
@@ -426,7 +427,8 @@ class JudgeProvider:
     @classmethod
     def from_env(cls, *, root: Path, run_dir: Path, max_requests: int = 12,
                  max_tokens: int = 768, visual: bool = False,
-                 env_prefix: str = 'LLM_JUDGE', model: str | None = None) -> 'JudgeProvider':
+                 env_prefix: str = 'LLM_JUDGE', model: str | None = None,
+                 timeout: float | None = None) -> 'JudgeProvider':
         from dotenv import dotenv_values
         values = {**dotenv_values(root / '.env'), **os.environ}
         required = tuple(f'{env_prefix}_{suffix}' for suffix in ('MODEL_NAME', 'BASE_URL', 'API_KEY'))
@@ -435,7 +437,7 @@ class JudgeProvider:
         if missing:
             raise ValueError('missing environment variables: '+', '.join(missing))
         try:
-            timeout = float(values.get(f'{env_prefix}_TIMEOUT', 60))
+            timeout = float(timeout if timeout is not None else values.get(f'{env_prefix}_TIMEOUT', 60))
             attempts = min(3, max(1, int(values.get(f'{env_prefix}_MAX_RETRIES', 0)) + 1))
         except (ValueError, TypeError):
             raise ValueError('invalid judge timeout/retry environment settings') from None
@@ -468,7 +470,7 @@ class JudgeProvider:
                                         'Authorization': 'Bearer ' + self._key})
             response = connection.getresponse()
             if not 200 <= response.status < 300:
-                raise JudgeHTTPError(response.status)
+                raise JudgeHTTPError(response.status, response.read(2048).decode('utf-8', 'replace'))
             body = response.read(4 * 1024 * 1024 + 1)
             if len(body) > 4 * 1024 * 1024:
                 raise ValueError('judge response exceeds size limit')
@@ -529,6 +531,7 @@ class JudgeProvider:
             payload = {'model': self.model, 'temperature': 0, 'max_tokens': self.max_tokens,
                        'messages': [{'role': 'user', 'content': content}]}
         failures = []
+        detail = None
         start = time.monotonic()
         for attempt in range(self.max_attempts):
             # A durable intent is written BEFORE sending. An interrupted request still
@@ -574,6 +577,7 @@ class JudgeProvider:
                                         str(data.get('model') or self.model), usage, finish)
             except JudgeHTTPError as exc:
                 error = f'judge_http_{exc.status}'
+                detail = ' '.join(exc.body.split())[:800] or None
                 retryable = exc.status == 429 or exc.status >= 500
             except (OSError, http.client.HTTPException) as exc:
                 kind = type(exc).__name__
@@ -588,7 +592,8 @@ class JudgeProvider:
                              'cache_key': cache_key, 'usage': usage, 'created_at': utc_now()})
                 return completion
             append_jsonl(self.ledger_path, {'event': 'failed', 'request_no': request_no,
-                         'cache_key': cache_key, 'error': error, 'created_at': utc_now()})
+                         'cache_key': cache_key, 'error': error,
+                         **({'error_detail': detail} if detail else {}), 'created_at': utc_now()})
             failures.append(error)
             if not retryable or attempt + 1 == self.max_attempts:
                 raise ProviderError(error) from None

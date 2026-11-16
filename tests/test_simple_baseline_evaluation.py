@@ -1,5 +1,6 @@
 """Post-batch gate, separate answer support, isolated proofs and conservative short circuit."""
 import json
+from pathlib import Path
 import shutil
 
 import pytest
@@ -9,7 +10,8 @@ from egvqg.records import read_jsonl,sha256_file,write_jsonl
 from egvqg.simple_baseline import init_simple_baseline,run_simple_baseline
 from egvqg.simple_baseline_evaluation import init_evaluation,run_evaluation,NAMES
 from test_simple_baseline import project,Mock
-from test_faithfulness import ROOT
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.mark.parametrize('scenario',['sufficient','reject_first','malformed'])

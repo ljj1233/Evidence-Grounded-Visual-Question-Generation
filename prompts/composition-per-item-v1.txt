@@ -1,0 +1,18 @@
+The context text and/or the image describe a set of items with values and a rule that decides which items count.
+
+Decide the rule for EACH item separately. For each item, compare its value with the rule explicitly, then say whether
+it counts. Take "at least N" to mean value >= N: an item whose value is exactly N counts.
+
+<CONTEXT>
+$T
+</CONTEXT>
+
+<QUESTION>
+$Q
+</QUESTION>
+
+Output only one JSON object on a single line, with one entry per item:
+{"rule": "<short rule>", "items": [{"item": "A", "value": 11, "counts": true, "why": "11 >= 6"}, ...],
+ "answer": "<short answer>", "abstain": false}
+
+If the context does not give you enough information to answer, output {"abstain": true} and nothing else.

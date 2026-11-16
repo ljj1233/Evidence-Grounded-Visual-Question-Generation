@@ -1,0 +1,22 @@
+The context text and/or the image describe a set of items and a rule that decides which items count.
+
+Answer in two steps.
+
+Step 1. State the rule in one short sentence, then list every value that satisfies the rule, in the order the
+items appear, as a JSON list of numbers under "values". List only the values that satisfy the rule; do not list the
+other values and do not include the rule's number in the list.
+
+Step 2. Use that list to answer the question.
+
+<CONTEXT>
+$T
+</CONTEXT>
+
+<QUESTION>
+$Q
+</QUESTION>
+
+Output only one JSON object on a single line:
+{"rule": "<short rule>", "values": [<numbers>], "answer": "<short answer>", "abstain": false}
+
+If the context does not give you enough information to answer, output {"abstain": true} and nothing else.

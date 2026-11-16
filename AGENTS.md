@@ -1,74 +1,93 @@
-# 项目协作规则
+# Project Collaboration Rules
 
-## 项目入口
+## Project Entry Points
 
-先读 `README.md`、`PROGRESS.md`、`docs/implementation_plan.md`，再按当前任务阅读 `VQG_Proposal.md` 对应章节。研究定义以 `VQG_Proposal.md` 为准；用户在会话中的最新指令优先。
+First read `README.md`, `PROGRESS.md`, and `docs/implementation_plan.md`, then read the sections of `VQG_Proposal.md` relevant to the current task. Research definitions follow `VQG_Proposal.md`; the user's latest instruction in the session takes precedence.
 
-## 目录与新建文件
+## Directories and New Files
 
-| 位置 | 唯一职责 |
+| Location | Sole Responsibility |
 |---|---|
-| `src/egvqg/` | 可复用研究代码与统一 CLI；生成、评估等逻辑不在独立脚本中复制 |
-| `configs/` | 不含凭据的模型、数据、运行配置；优先默认配置加覆盖参数，不为每次运行复制配置文件 |
-| `prompts/` | 需要独立维护的提示模板；简单固定字符串不必强拆文件 |
-| `data/raw/<dataset>/` | 下载的原始数据，只读保留，处理结果另存 |
-| `data/processed/<dataset>/` | 标准化材料及分区/筛选清单；记录来源与处理版本，图像优先引用而非复制 |
-| `outputs/<run_id>/` | 一次实验的原始输出、有效配置/提示快照、评分、人工审查、报告和运行日志 |
-| `outputs/cache/` | 可复用模型请求缓存，按输入与模型配置校验有效性 |
-| `tests/` | 精简的关键逻辑与集成检查；小型合成夹具放 `tests/fixtures/` |
-| `docs/` | 长期有用的实施说明；日常进展不另建文档 |
-| `tmp/` | 一次性调试中间件和临时导出，任务结束清理本次创建且不再需要的内容 |
-| `.venv/` | 默认唯一项目环境；依赖由 `pyproject.toml` 和一个锁文件管理 |
+| `src/egvqg/` | Reusable research code and the unified CLI; generation, evaluation, and other logic are not duplicated in standalone scripts |
+| `configs/` | Model, data, and run configurations that contain no credentials; prefer a default configuration plus override arguments, and do not copy configuration files for every run |
+| `prompts/` | Prompt templates that require independent maintenance; simple fixed strings do not need to be split into separate files |
+| `data/raw/<dataset>/` | Downloaded raw data, kept read-only; processing results are stored separately |
+| `data/processed/<dataset>/` | Standardized materials and split/filter manifests; record provenance and processing versions; reference images rather than copying them |
+| `outputs/<run_id>/` | A single experiment's raw outputs, effective configuration/prompt snapshots, scores, manual review, reports, and run logs |
+| `outputs/cache/` | Reusable model request cache, validated for validity against the inputs and model configuration |
+| `tests/` | Lean checks of critical logic and integration; small synthetic fixtures go in `tests/fixtures/` |
+| `docs/` | Implementation notes of long-term value; daily progress does not get separate documentation |
+| `tmp/` | One-off debugging intermediates and temporary exports; when the task ends, clean up what was created in this round and is no longer needed |
+| `.venv/` | The single default project environment; dependencies are managed by `pyproject.toml` and one lock file |
 
-- 按需创建目录和模块，不提前建立空目录、`.gitkeep`、空实现或占位文档。
-- 新建文件前先检查是否可更新现有文件；只有职责确实独立、已有文件不适合承载时才新建，不需要为普通新文件逐个询问。
-- 根目录仅放项目入口文档与必要工具配置，不放临时脚本、实验输出或逐轮总结。
-- 不创建 `final_v2`、`new`、`backup` 等平行版本；源代码与协议修改交给 Git 记录，正式运行使用 `run_id` 和协议版本区分。
-- 同一配置的中断恢复复用原 `run_id`，检查配置一致后追加缺失记录；改变实验配置则创建新运行，不能覆盖旧结果。
-- 实验报告进入对应 `outputs/<run_id>/`，不在 `docs/`、根目录和 `reports/` 重复存三份。
-- 大数据、模型权重、缓存、输出和环境不入 Git。共享模型缓存可直接引用，不为本项目再复制一份。
-- 优先统一 CLI；确有独立维护需要时才建 `scripts/`，脚本只负责调用包内逻辑。
+- Create directories and modules as needed; do not pre-create empty directories, `.gitkeep`, empty implementations, or placeholder documents.
+- Before creating a new file, first check whether an existing file can be updated; create a new file only when the responsibility is genuinely independent and existing files are unsuitable for carrying it. No need to ask one by one for ordinary new files.
+- The root directory holds only project entry documents and necessary tool configuration, not temporary scripts, experiment outputs, or per-round summaries.
+- Do not create parallel versions such as `final_v2`, `new`, or `backup`; source code and protocol changes are left to Git to record, and formal runs are distinguished by `run_id` and protocol version.
+- When resuming an interrupted run with the same configuration, reuse the original `run_id` and append the missing records after checking that the configuration is consistent; changing the experiment configuration requires creating a new run, which must not overwrite old results.
+- Experiment reports go into the corresponding `outputs/<run_id>/`, not stored three times in `docs/`, the root directory, and `reports/`.
+- Large data, model weights, caches, outputs, and environments do not enter Git. Shared model caches may be referenced directly; do not copy another one for this project.
+- Prefer the unified CLI; create `scripts/` only when independent maintenance is genuinely needed, and scripts are only responsible for calling in-package logic.
 
-## 文档与进度维护
+## Documentation and Progress Maintenance
 
-- `VQG_Proposal.md` 维护研究定义；`docs/implementation_plan.md` 维护实施顺序；`README.md` 维护入口和当前可运行命令；`story.md` 维护论文叙事。仅当对应内容变化时修改，不每轮全量重写。
-- `PROGRESS.md` 是唯一日常进度入口：原位更新“当前状态”和里程碑；在末尾“工作记录”追加本轮有实质进展的简短条目，不删除或重写已有记录。
-- 每条进度包含日期、实际完成项、验证命令/结果、产物位置、未解决问题和下一步；没有的项目可省略，不复制整段终端日志或聊天记录。
-- 不额外创建 `SUMMARY.md`、`TODO.md`、`NEXT_STEPS.md`、按日期的报告或另一套 planning/progress 文档。临时计划保留在会话；需要交接的信息写入现有进度或实施方案。
-- 只有改变研究协议时才修改协议版本；单纯实现细节不触发复制整套文档。若今后进度确实过长，先压缩重复描述，保留关键决策、失败和证据索引，不自动分裂成多个档案。
+- `VQG_Proposal.md` maintains research definitions; `docs/implementation_plan.md` maintains implementation order; `README.md` maintains entry points and currently runnable commands; `story.md` maintains the paper narrative. Modify them only when the corresponding content changes, and do not fully rewrite them every round.
+- `PROGRESS.md` is the sole daily progress entry point: update "current status" and milestones in place; append brief entries for this round's substantive progress under "Work Log" at the end, without deleting or rewriting existing records.
+- Each progress entry contains the date, items actually completed, verification command/result, artifact locations, unresolved issues, and next steps; omit items that do not apply, and do not copy entire terminal logs or chat transcripts.
+- Do not additionally create `SUMMARY.md`, `TODO.md`, `NEXT_STEPS.md`, date-based reports, or another set of planning/progress documents. Temporary plans stay in the session; information that needs handoff is written into the existing progress or implementation plan.
+- Modify the protocol version only when the research protocol changes; mere implementation details do not trigger copying the entire document set. If progress does become too long in the future, first compress repetitive descriptions, keep key decisions, failures, and evidence indices, and do not automatically split it into multiple archives.
 
-## 测试与验证范围
+## Testing and Verification Scope
 
-- 采用少量高价值测试，优先参数化合并边界案例，不按每个函数机械配测试文件，不追求覆盖率数字。
-- 必测：BDR 与有效率分母、无效/未决传播、四条件材料隔离、答案与问题对应、缓存失效、恢复后不重复计数。为真实缺陷补能防止复发的最小回归测试。
-- 文档、日志措辞、低风险格式和简单配置变更，使用链接/语法/针对性 smoke 检查即可；不为了这些改动新增单元测试。
-- 先跑受影响的检查；阶段交付时跑精简的全套离线检查。通过后仅在新修改、失败或尚未解释的风险出现时再扩大验证，不反复重跑相同检查。
-- 默认测试离线使用 mock，不触发付费 API、模型下载或大数据读取；真实模型 smoke 独立运行并记录实际成本。mock 通过不等于模型或指标有效。
+- Adopt a small number of high-value tests, prefer merging boundary cases with parameterization, do not mechanically pair a test file with every function, and do not pursue coverage numbers.
+- Must test: BDR and effective-rate denominators, invalid/undetermined propagation, isolation of the four-condition materials, correspondence between answers and questions, cache invalidation, and no double counting after resume. Add the smallest regression test that prevents recurrence for a real defect.
+- For documentation, log wording, low-risk formatting, and simple configuration changes, link/syntax/targeted smoke checks are sufficient; do not add unit tests for these changes.
+- Run the affected checks first; at stage delivery, run the lean full offline check suite. After they pass, expand verification only when new modifications, failures, or still-unexplained risks appear, and do not repeatedly rerun identical checks.
+- By default, tests run offline using mocks, without triggering paid APIs, model downloads, or large-data reads; real-model smoke runs separately and records the actual cost. Passing mocks does not mean the model or the metrics are valid.
 
-## 效率与实现节奏
+## Efficiency and Implementation Pace
 
-- 小步完成当前阶段，先跑通最小链路再扩量。真实接入先用1–3组材料，随后30组，协议复核后才进入正式规模。
-- 批处理入口支持样本上限、预算预估与断点恢复；设置并发上限、超时和有限重试，避免无限重试或一次占满资源。
-- 复用已验证的模型响应与中间结果；只重新运行受本次配置/提示/数据变更影响的阶段，不能复用已失效的评分。
-- 独立读写和请求可有限并行；保持样本 ID、条件与输出一一对应。按材料分组记录，不让异步结果串题。
-- 记录耗时、调用数、token 和可获得的费用，发现瓶颈后再优化。优先减少重复调用、重复模型加载和重复图像处理，不提前建设复杂优化框架。
-- 优先现有依赖与简单数据结构；不为一次性需求引入插件体系、抽象基类层级、数据库或调度服务。
-- 保留研究原始结果及失败证据；效率优化不能通过减少必要核验、过滤坏题或更改分母实现。
+- Complete the current stage in small steps; get the minimal pipeline working before scaling up. For real integration, first use 1–3 groups of materials, then 30 groups, and only enter the formal scale after protocol review.
+- Batch entry points support sample caps, budget estimates, and checkpoint resume; set concurrency caps, timeouts, and limited retries, avoiding infinite retries or occupying all resources at once.
+- Reuse verified model responses and intermediate results; rerun only the stages affected by this configuration/prompt/data change, and do not reuse scores that have been invalidated.
+- Independent reads, writes, and requests may be parallelized in a limited way; keep a one-to-one correspondence among sample ID, condition, and output. Record by material group so that asynchronous results do not cross items.
+- Record elapsed time, call counts, tokens, and obtainable costs, and optimize only after identifying bottlenecks. Prefer reducing duplicate calls, repeated model loading, and repeated image processing over building a complex optimization framework in advance.
+- Prefer existing dependencies and simple data structures; do not introduce a plugin system, an abstract base class hierarchy, a database, or a scheduling service for one-off needs.
+- Preserve raw research results and failure evidence; efficiency optimization must not be achieved by reducing necessary verification, filtering out bad questions, or changing denominators.
 
-## 实现原则
+## Implementation Principles
 
-- 当前从零实现教育图文 QG；按交接方案逐步实现，不预设已有数据、代码或模型结果。
-- OpenCode / DeepSeek 是编码工具，不自动成为实验模型。生成、答案标注、答题和评分角色分别配置并记录身份。
-- 所有方法使用相同材料；生成器只对外输出 Q。标准答案与当前 Q 绑定，不默认沿用数据集原答案。
-- 保留全部生成尝试、失败和未决项，不通过删除坏题或静默重试改善指标。
-- 四条件答题互相隔离；移除的材料及其 caption、OCR、证据摘要不能通过其他字段泄露给答题器。
-- BDR 逐题计算；未决不伪装为0；全图文作答正确率不等于有效问题率。
-- 先跑离线 mock 和少量真实样本，再按用户安排的规模推进。当前里程碑内的实现、测试和修复自主完成。
-- 不输出 `.env` 或 API key 内容。凭据通过环境变量或工具自身认证管理，运行日志不保存认证头。
-- 优先简单 Python 包、配置文件和 JSONL 数据；暂不建设训练框架、Web 服务或复杂多代理系统。
-- 测试聚焦分母、未决语义、材料隔离、断点恢复及重复记录等会影响结论的问题；不要为扩大测试数量制造无关测试。
-- 每个阶段更新 `PROGRESS.md`，说明实际完成项、验证命令、失败和下一步；没有执行的实验不能写为已完成。
+- Currently implementing educational image-text QG from scratch; implement step by step according to the handoff plan, without presupposing existing data, code, or model results.
+- The coding assistant itself does not automatically become the experiment model. The generation, answer annotation, answering, and scoring roles are configured separately, and their identities are recorded.
+- All methods use the same materials; the generator only outputs Q to the outside. The reference answer is bound to the current Q and does not reuse the dataset's original answer by default.
+- Preserve all generation attempts, failures, and undetermined items; do not improve metrics by deleting bad questions or retrying silently.
+- The four-condition answering is mutually isolated; removed materials and their captions, OCR, and evidence summaries must not leak to the answerer through other fields.
+- BDR is computed per question; undetermined is not disguised as 0; the accuracy of answering with the full image-text is not equal to the effective question rate.
+- Run offline mocks and a small number of real samples first, then proceed at the scale arranged by the user. Implementation, testing, and fixes within the current milestone are completed autonomously.
+- Do not output `.env` or API key contents. Credentials are managed through environment variables or the tool's own authentication, and run logs do not store authentication headers.
+- Prefer a simple Python package, configuration files, and JSONL data; do not build a training framework, a web service, or a complex multi-agent system for now.
+- Tests focus on issues that affect conclusions, such as denominators, undetermined semantics, material isolation, checkpoint resume, and duplicate records; do not manufacture irrelevant tests just to increase the number of tests.
+- Update `PROGRESS.md` at each stage, stating items actually completed, verification commands, failures, and next steps; experiments that were not executed must not be written as completed.
 
-## Skill 使用
+## Performance Optimization
 
-用户选定的编程 skill 可安装到 OpenCode 项目级或全局 skill 目录。先阅读其说明，再用于具体编码任务；通用 skill 不得覆盖本项目的数据划分、评估定义或结果真实性要求。
+- Measure before optimizing: record wall-clock time, call counts, token usage, and memory at the real data size, then optimize the bottleneck the measurement identifies rather than the one that looks suspicious.
+- Reduce duplicate model calls, repeated model loading, and repeated image decoding before introducing caching layers, batching frameworks, or concurrency machinery.
+- Reuse verified intermediate artifacts (processed image paths, OCR text, cached model responses); recompute only the stages downstream of a changed input, prompt, or configuration.
+- Every optimization stays bounded: batch entry points keep sample caps, concurrency limits, timeouts, and checkpoint resume, and speed must never be bought with skipped verification, filtered-out hard questions, or altered denominators.
+- Prefer vectorized operations and existing dependencies over new heavy frameworks; do not add a training framework, scheduler, or database to accelerate a one-off step.
+- When an optimization is kept, record the measured before/after numbers beside the change in `PROGRESS.md`.
+
+## Online Research
+
+- Research when the task involves an unfamiliar API, a library behavior whose version is uncertain, a performance technique, a known failure mode, or a framework best practice. Routine local edits, clear bug fixes, and logic already readable in the repository do not require searching.
+- Source priority: official documentation, then authoritative issue trackers or upstream release notes, then maintained technical write-ups. Treat forum snippets, aggregated answer sites, and undated blog posts as leads only.
+- Use the configured `context7` MCP for library and API documentation instead of generic web search; reserve general search for problems that documentation cannot answer.
+- Verify version fit before adopting anything: check the versions pinned in `pyproject.toml` and the lock file, and confirm the documented behavior matches them. Do not paste a solution written for a different major version.
+- After researching, state which sources were consulted and classify each as applicable here or not applicable, with the reason. Research output is a recommendation, not an automatic change.
+- Research never overrides this project's definitions: `VQG_Proposal.md`, the data splits, four-condition isolation, BDR semantics, and the result-truthfulness requirements outrank anything found online.
+- Keep the balance: do not search on every step. Searching by default inflates cost and invites mismatched solutions; the default remains local, repository-grounded reasoning, with research triggered by genuine uncertainty.
+
+## Skill Usage
+
+Skills used by the coding assistant may be installed in a project-level or global skill directory. Read their descriptions first, then use them for specific coding tasks; generic skills must not override this project's data splits, evaluation definitions, or result-truthfulness requirements.

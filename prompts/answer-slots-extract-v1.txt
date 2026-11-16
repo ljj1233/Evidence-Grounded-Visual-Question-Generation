@@ -1,8 +1,8 @@
-问题：
+Question:
 $Q
-答案槽位定义：
+Answer slot definition:
 $SCHEMA
 
-下面是若干候选答案（带编号）。对每个候选答案，按槽位给出规范化取值：英文、小写、单数，只写核心名词、选项或数字（不含修饰语、动词、人名；百分比统一写成数字，如1/2写50）；只写该答案明确表达的内容，不用你的知识补全、改写或判断对错；答案没有表达该槽位则写null。
+Below are several candidate answers (numbered). For each candidate answer, give the normalised value for each slot: English, lowercase, singular, only the core noun, option or number (no modifiers, verbs or personal names; write percentages as numbers, e.g. 1/2 as 50); write only what that answer explicitly states, do not use your own knowledge to fill in, rewrite or judge correctness; if the answer does not express that slot, write null.
 $CANDIDATES
-只输出一个JSON对象，不要Markdown。格式：{"items":[{"i":0,"values":{"槽位名":"取值或null"}}]}
+Output only one JSON object, no Markdown. Format: {"items":[{"i":0,"values":{"slot_name":"value or null"}}]}

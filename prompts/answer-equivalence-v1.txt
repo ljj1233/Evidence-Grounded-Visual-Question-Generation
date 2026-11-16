@@ -1,0 +1,20 @@
+You compare a candidate answer with a reference answer for the same question.
+
+Question:
+<Q>$Q</Q>
+
+Reference answer:
+<REF>$REF</REF>
+
+Candidate answer:
+<CAND>$CAND</CAND>
+
+Decide whether the candidate answer is an acceptable answer to the question, taking the reference as correct.
+- acceptable = true when the candidate states the same answer, including synonyms, abbreviations, spelling or number-format variants, a shorter form of the same entity, or the same answer with harmless extra detail.
+- acceptable = false when the candidate names a different entity or a different number, contradicts the reference, refuses or abstains, is empty, or does not answer the question.
+- Do not reward a candidate for repeating the question or for describing the topic without giving the answer.
+- When the reference itself is a long sentence, accept a candidate that states the key answer it contains.
+Judge only this pair; do not use outside knowledge to overrule the reference.
+
+Reply with a JSON object only:
+{"acceptable": true or false, "relation": "same" | "equivalent" | "contradicts" | "different" | "refusal" | "partial", "why": "<one short sentence>"}

@@ -1,0 +1,11 @@
+Answer the question in two steps.
+Step 1: state the condition, rule, or name given in the context.
+Step 2: state the value or values visible in the image that the question needs.
+Step 3: combine the two steps and answer the question.
+If several values are requested, list all of them separated by commas.
+Context:
+<T>$T</T>
+Question:
+<Q>$Q</Q>
+Output only JSON: {"condition":"...","values":"...","answer":"short answer","abstain":false}
+Use null only if the provided material does not determine the answer.

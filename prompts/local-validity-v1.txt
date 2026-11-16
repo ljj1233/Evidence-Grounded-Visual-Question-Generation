@@ -1,0 +1,6 @@
+Decide whether the question is clear, well-formed, and answerable from the provided text and image.
+Text:
+<T>$T</T>
+Question:
+<Q>$Q</Q>
+Output only JSON: {"valid":0 or 1, "reason":"brief basis"}

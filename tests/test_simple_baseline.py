@@ -1,5 +1,6 @@
 """Simple baseline: async cap, image limits, exact reuse, malformed outputs and resume."""
 import json
+from pathlib import Path
 import shutil
 import threading
 import time
@@ -10,13 +11,14 @@ from PIL import Image
 from egvqg.providers import Completion
 from egvqg.records import read_jsonl,sha256_file,write_jsonl
 from egvqg.simple_baseline import bounded_image,init_simple_baseline,run_simple_baseline
-from test_faithfulness import ROOT
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def project(tmp_path,n):
     (tmp_path/'prompts').mkdir()
-    for name in ('plain-v1','solve-v1'):shutil.copy(ROOT/f'prompts/{name}.txt',tmp_path/'prompts')
-    image=tmp_path/'image.png';shutil.copy(ROOT/'tests/fixtures/stage_a/images/m_thermo.png',image)
+    for name in ('plain-v2','solve-v1'):shutil.copy(ROOT/f'prompts/{name}.txt',tmp_path/'prompts')
+    image=tmp_path/'image.png';shutil.copy(ROOT/'tests/fixtures/m_thermo.png',image)
     rows=[{'material_id':f'm{i}','source_group_id':f'g{i}','split':'test','text':f'TEXT_SENTINEL_{i}',
         'image_path':'image.png','image_sha256':sha256_file(image),'provenance':'offline fixture','text_source':'hint'} for i in range(n)]
     write_jsonl(tmp_path/'materials.jsonl',rows);return rows

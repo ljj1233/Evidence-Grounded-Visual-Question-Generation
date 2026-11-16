@@ -12,15 +12,33 @@ dependencies = [
 egvqg = "egvqg.cli:main"
 
 [project.optional-dependencies]
+# One pinned stack for every local-model step (generation, capture, probes, Qwen3-VL and Qwen3.5).
+# torch comes from the cu128 index (Blackwell sm_120 needs CUDA 12.8+). flash-linear-attention provides the
+# gated-delta-rule kernels used by Qwen3.5; causal-conv1d has no prebuilt wheel for this torch and falls back to torch.
 local-inference = [
-    "accelerate>=1.10,<2",
-    "torch>=2.8,<2.10",
-    "torchvision>=0.23,<0.25",
-    "transformers>=4.57,<5",
+    "accelerate==1.15.0",
+    "einops==0.8.2",
+    "flash-linear-attention==0.6.0",
+    "numpy==2.4.6",
+    "safetensors==0.8.0",
+    "scikit-learn==1.9.1",
+    "scipy==1.17.1",
+    "torch==2.11.0",
+    "torchvision==0.26.0",
+    "transformers==5.22.2",
 ]
 
 [dependency-groups]
 dev = ["pytest>=8.3"]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
 
 [build-system]
 requires = ["hatchling>=1.26"]

@@ -1,4 +1,4 @@
-"""Unified CLI for generation, evaluation and dataset import."""
+"""Unified CLI: datasets, local-model capture, baseline generation and evaluation, probing analyses."""
 
 from __future__ import annotations
 
@@ -8,77 +8,17 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping
 
-from .pipeline import RunConfigMismatch, RunResult, execute_run, rescore_run, summarize_run
 from .providers import RequestBudgetExceeded
 
 
-def _fraction(numerator: int, denominator: int) -> str:
-    return f"{numerator}/{denominator}" if denominator else "0/0"
-
-
-def _percent(value: float | None) -> str:
-    return "N/A" if value is None else f"{value * 100:.1f}%"
-
-
-def _print_result(result: RunResult, *, resumed: bool) -> None:
-    metrics: Mapping[str, Any] = result.metrics
-    validity = metrics["validity"]
-    bdr = metrics["bdr"]
-    no_material = metrics["no_material"]
-    print(metrics["warning"])
-    print(f"run_dir: {result.run_dir}")
-    print(
-        f"N={metrics['n_planned']}  "
-        f"valid={_fraction(validity['n_valid'], metrics['n_planned'])} "
-        f"({_percent(validity['valid_rate'])})  "
-        f"invalid/no-valid={validity['n_invalid']}  "
-        f"unresolved={validity['n_unresolved']}  "
-        f"pending={validity['n_pending']}"
-    )
-    print(
-        f"BDR={_fraction(bdr['n_pass'], metrics['n_planned'])} "
-        f"({_percent(bdr['bdr'])}), unresolved={bdr['n_unresolved']}, "
-        f"upper={_percent(bdr['bdr_upper_with_unresolved'])}"
-    )
-    print(
-        f"no-material={_fraction(no_material['n_correct'], no_material['n_eligible'])} "
-        f"({_percent(no_material['accuracy'])}), "
-        f"denominator share={_percent(no_material['denominator_share_of_planned'])}, "
-        f"unresolved={no_material['n_unresolved']}"
-    )
-    print(
-        f"failure breakdown: confirmed-invalid={validity['n_invalid_confirmed']}, "
-        f"generation-failure={validity['n_generation_failure']}, "
-        f"technical-failure={validity['n_technical_failure']}"
-    )
-    if resumed:
-        print("resume: existing records were reused; no duplicate questions/responses/scores were appended")
-    print(f"new provider calls: {result.new_calls}; new records: {result.new_records}")
-    print(f"summary: {result.run_dir / 'summary.md'}")
-
-
-def _add_common_run_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--config", default="configs/stage_a.json", help="config JSON path")
-    parser.add_argument("--run-id", default=None, help="stable run identifier; same ID resumes the same config")
-    parser.add_argument("--limit", type=int, default=None, help="maximum number of materials (small-sample run)")
-    parser.add_argument("--output-root", default=None, help="output root; defaults to config.run.output_root")
-    parser.add_argument("--project-root", default=".", help="project root used to resolve config paths")
+def load_steer_spec(path,project_root):
+    from .intervene import intervention_from_spec
+    return intervention_from_spec(Path(project_root).resolve()/path)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="egvqg", description="Evidence-grounded VQG research pipeline")
     subparsers = parser.add_subparsers(dest="command", required=True)
-
-    run_parser = subparsers.add_parser("run", help="run or resume the configured pipeline")
-    _add_common_run_arguments(run_parser)
-
-    smoke_parser = subparsers.add_parser("smoke", help="run the built-in Stage A synthetic offline smoke test")
-    _add_common_run_arguments(smoke_parser)
-
-    summarize_parser = subparsers.add_parser("summarize", help="recompute metrics from an existing run")
-    summarize_parser.add_argument("--run-id", required=True, help="existing run identifier")
-    summarize_parser.add_argument("--output-root", default="outputs", help="output root containing the run")
-    summarize_parser.add_argument("--project-root", default=".", help="project root")
 
     data_parser = subparsers.add_parser("download-data", help="download/import pinned official ScienceQA candidates")
     data_parser.add_argument("--split", choices=("train", "val", "test"), default="train")
@@ -96,19 +36,6 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--image-mirror", action="store_true", help="use pinned SHA256-verified WebQA image-volume mirror")
     fetch.add_argument("--project-root", default=".")
 
-    score_parser = subparsers.add_parser("score", help="model-score saved answers in a new resumable run")
-    score_parser.add_argument("--source-run", required=True)
-    score_parser.add_argument("--run-id", required=True)
-    score_parser.add_argument("--limit", type=int, default=None, help="limit source materials, retaining all their methods/attempts")
-    score_parser.add_argument("--max-requests", type=int, default=12, help="hard HTTP-attempt budget across resumptions")
-    score_parser.add_argument("--max-tokens", type=int, default=768)
-    score_parser.add_argument("--dry-run", action="store_true")
-    score_parser.add_argument("--output-root", default="outputs")
-    score_parser.add_argument("--project-root", default=".")
-
-
-
-
     normalize = subparsers.add_parser("normalize-materials", help="map a dataset's flat JSONL fields to the shared T/I contract")
     normalize.add_argument("--input", required=True)
     normalize.add_argument("--output", required=True)
@@ -124,66 +51,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 
-    initialize = subparsers.add_parser('experiment-init', help='freeze plan and initialize one complete blank record per attempt')
-    initialize.add_argument('--materials', required=True)
-    initialize.add_argument('--cases', default=None, help='existing case_id/material_id/question JSONL; imports Q only')
-    initialize.add_argument('--methods', nargs='+', choices=('plain','strong','anchored','no_image_anchor'), default=['plain'])
-    initialize.add_argument('--partition', choices=('dev','diagnostic','pilot'), default='dev')
-    initialize.add_argument('--stage', type=int, default=0)
-    initialize.add_argument('--config', default='configs/experiments.json')
-    initialize.add_argument('--prompt-override', action='append', default=[], metavar='ROLE=VERSION',
-                            help='freeze an alternative template version in a new run; repeat per role')
-
-    execute = subparsers.add_parser('experiment-run', help='run missing steps of a versioned planned experiment')
-    execute.add_argument('--max-requests', type=int, default=180)
-    execute.add_argument('--max-steps', type=int, default=None, help='pause after this many new durable steps')
-    execute.add_argument('--dry-run', action='store_true')
-    execute.add_argument('--methods', nargs='+', choices=('plain','strong','anchored','no_image_anchor','imported'),
-                         default=None, help='activate only selected planned methods; pilot defaults to plain/strong')
-    execute.add_argument('--stages', nargs='+', choices=('generation','reference','answers','scores','audit'),
-                         default=None, help='run only these stages; other steps stay pending for a later resume')
-    execute.add_argument('--attempt-ids', nargs='+', default=None,
-                         help='run only these planned attempts; the others keep pending steps and stay in N')
-
-    metrics = subparsers.add_parser('records-metrics', help='offline fixed-N metrics and bounds from records.jsonl')
-    metrics.add_argument('--records', required=True)
-    metrics.add_argument('--output-dir', default=None)
-    patterns = subparsers.add_parser('records-patterns', help='print TI/T/I/0 outcome patterns per method; writes nothing')
-    patterns.add_argument('--records', required=True)
-    patterns.add_argument('--attempts', action='store_true', help='also list each attempt')
-    refreview = subparsers.add_parser('reference-review', help='apply explicit reference decisions in a review_gated run')
-    refreview.add_argument('--reviews', required=True)
-    packet = subparsers.add_parser('review-packet', help='write a source-only (T/I/Q) anonymous review packet; no model calls')
-
-    review = subparsers.add_parser('experiment-review', help='import explicit human labels; never promote automatic labels')
-    review.add_argument('--reviews', required=True)
-    review.add_argument('--adjudicate', action='store_true')
-    freeze = subparsers.add_parser('freeze-evaluation', help='freeze after all 12 controls have human adjudication')
-    freeze.add_argument('--protocol', default=None)
-    probe = subparsers.add_parser('probe-reproducibility', help='three fresh dev requests, separate from cache replay')
-    probe.add_argument('--max-requests', type=int, default=3)
-
-    repeated=subparsers.add_parser('probe-repeatability',help='3 fixed dev questions x 5 fresh requests')
-    repeated.add_argument('--max-requests',type=int,default=15)
-    batch=subparsers.add_parser('stage-two',help='validate frozen inputs, run plain30 then strong30 and report')
-    batch.add_argument('--evaluation-run',required=True)
-    batch.add_argument('--materials',required=True)
-    batch.add_argument('--repeatability-run',default='repeatability-3x5')
-    batch.add_argument('--method',choices=('plain','strong','both'),default='both')
-    batch.add_argument('--max-requests',type=int,default=1000)
-    batch.add_argument('--dry-run',action='store_true')
-    retry=subparsers.add_parser('retry-evaluation',help='explicitly reset failed evaluation steps without changing Q or N')
-    retry.add_argument('--attempt-ids',nargs='+',required=True)
-    retry.add_argument('--steps',nargs='+',required=True)
-    fq=subparsers.add_parser('faithfulness-review',help='derive an offline, source-bound question faithfulness review; no model calls')
-    fq.add_argument('--source-run',required=True)
-    fq.add_argument('--reviews',required=True)
-    bainit=subparsers.add_parser('baseline-analysis-init',help='freeze a bounded API audit of existing baseline failures and unresolved necessity')
-    bainit.add_argument('--source-run',required=True)
-    barun=subparsers.add_parser('baseline-analysis-run',help='execute missing fixed API audit calls; no generation')
-    barun.add_argument('--dry-run',action='store_true')
-    barun.add_argument('--max-steps',type=int,default=None)
-    bareport=subparsers.add_parser('baseline-analysis-report',help='merge explicit targeted API proof reviews and report separate dimensions offline')
     sbinit=subparsers.add_parser('simple-baseline-init',help='freeze simple API generation+TI answering, bounded images and optional valid prior-call reuse')
     sbinit.add_argument('--materials',required=True)
     sbinit.add_argument('--model',default='gpt-6-luna')
@@ -207,6 +74,207 @@ def build_parser() -> argparse.ArgumentParser:
     serun=subparsers.add_parser('simple-baseline-eval-run',help='async post-batch faithfulness, original answer and necessity evaluation')
     serun.add_argument('--limit',type=int,default=None)
     sereport=subparsers.add_parser('simple-baseline-eval-report',help='report post-batch evaluation separately from generation progress')
+    wbc=subparsers.add_parser('whitebox-capture',help='P0 probing: greedy plain-v2 generation at batch size 1 with hidden states at prompt end, first K question tokens and question end')
+    wbc.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1',help='baseline run supplying materials, plan order and reference questions')
+    wbc.add_argument('--local-model-path',required=True)
+    wbc.add_argument('--device',default='cuda:0')
+    wbc.add_argument('--limit',type=int,default=None)
+    wbc.add_argument('--k',type=int,default=4,help='number of early question tokens to keep')
+    wbc.add_argument('--template',default='plain-v2',help='generation prompt template (the fixed neutral prompt)')
+    wbc.add_argument('--max-new-tokens',type=int,default=1024)
+    wbc.add_argument('--no-check',action='store_true',help='skip the teacher-forced consistency check of the captured states')
+    cc=subparsers.add_parser('candidates-capture',help='P1: stratified materials x seeded sampled candidates with captured hidden states')
+    cc.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    cc.add_argument('--local-model-path',required=True)
+    cc.add_argument('--device',default='cuda:0')
+    cc.add_argument('--n-skills',type=int,default=0)
+    cc.add_argument('--per-skill',type=int,default=0)
+    cc.add_argument('--n-candidates',type=int,default=8)
+    cc.add_argument('--temperature',type=float,default=0.7)
+    cc.add_argument('--top-p',type=float,default=0.8)
+    cc.add_argument('--top-k',type=int,default=20)
+    cc.add_argument('--k',type=int,default=4)
+    cc.add_argument('--max-new-tokens',type=int,default=1024)
+    cc.add_argument('--template',default='plain-v2',help='generation prompt template (the fixed neutral prompt)')
+    cc.add_argument('--exclude-run',default=None,help='skip materials already captured by this run (expansion)')
+    cc.add_argument('--materials-file',default=None,help='JSONL following the material contract (relative to the project root); replaces the ScienceQA reference run')
+    cc.add_argument('--group-field',default='group',help='field of the materials file used as the template/group')
+    cc.add_argument('--select',choices=('all','sample'),default='all')
+    cc.add_argument('--max-materials',type=int,default=None)
+    cc.add_argument('--steer-spec',default=None,help='steering specification written by steer-prepare (JSON, relative to the project root)')
+    dtc=subparsers.add_parser('detail-capture',help='teacher-forced per-head, per-step and image/text-pooled states from an existing capture run')
+    dtc.add_argument('--capture-run',required=True)
+    dtc.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    dtc.add_argument('--materials-file',default=None)
+    dtc.add_argument('--local-model-path',required=True)
+    dtc.add_argument('--device',default='cuda:0')
+    dtc.add_argument('--limit',type=int,default=None)
+    dtc.add_argument('--material-ids-file',default=None,help='optional one-ID-per-line filter for a priority pass')
+    dtc.add_argument('--prompts-file',default=None,help='optional JSONL material_id/prompt overrides (e.g. SAQG replay)')
+    csi=subparsers.add_parser('candidate-source-init',help='freeze unique captured candidates as a baseline source run for evaluation')
+    csi.add_argument('--capture-run',required=True)
+    csi.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    csi.add_argument('--materials-file',default=None)
+    csr=subparsers.add_parser('candidate-source-run',help='replay candidate questions and let the local model answer them')
+    csr.add_argument('--capture-run',required=True)
+    csr.add_argument('--local-model-path',required=True)
+    csr.add_argument('--device',default='cuda:0')
+    cl=subparsers.add_parser('candidate-labels',help='join candidates with a cascade evaluation run; write labels and the propensity profile (G1)')
+    cl.add_argument('--source-run',required=True)
+    cl.add_argument('--eval-run',required=True)
+    lap=subparsers.add_parser('label-audit-prepare',help='draw the stratified audit sample of redundant candidates and render review sheets')
+    lap.add_argument('--eval-run',required=True)
+    lap.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    lap.add_argument('--two-class',action='store_true',help='sample redundant and non-redundant labels for a precision/recall audit')
+    laf=subparsers.add_parser('label-audit-finish',help='summarise audit_reviews.jsonl (AI review) with Wilson bounds')
+    md=subparsers.add_parser('modality-distances',help='P5: per-layer hidden-state shift of captured candidates under modality removal/replacement (run_id = capture run)')
+    md.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    md.add_argument('--local-model-path',required=True)
+    md.add_argument('--device',default='cuda:0')
+    md.add_argument('--limit',type=int,default=None)
+    md.add_argument('--materials-file',default=None)
+    pr=subparsers.add_parser('probe-run',help='P3: layer choice on discovery, G2 on confirmation (sets given as CAPTURE_RUN:LABEL_FILE, comma separated)')
+    pr.add_argument('--discovery',required=True)
+    pr.add_argument('--confirmation',required=True)
+    pr.add_argument('--bootstrap',type=int,default=1000)
+    p5=subparsers.add_parser('p5-readout',help='P5: modality-shift readout vs redundancy/direction labels')
+    p5.add_argument('--discovery',required=True)
+    p5.add_argument('--confirmation',default=None)
+    p5.add_argument('--bootstrap',type=int,default=1000)
+    ge=subparsers.add_parser('geometry-run',help='P5: per-layer anisotropy / effective rank of image vs text token states (prompt only)')
+    ge.add_argument('--capture-run',required=True)
+    ge.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    ge.add_argument('--local-model-path',required=True)
+    ge.add_argument('--device',default='cuda:0')
+    gs=subparsers.add_parser('geometry-summary',help='P5: gap statistics and correlation with the material-level redundant fraction')
+    gs.add_argument('--capture-run',required=True)
+    gs.add_argument('--label-file',required=True)
+    p5r=subparsers.add_parser('p5-robust',help='P5 robustness R1 (within skill) and R2 (baseline-adjusted) at the layers chosen in p5_readout.json of --layers-run')
+    p5r.add_argument('--sets',required=True,help='CAPTURE_RUN:LABEL_FILE, comma separated')
+    p5r.add_argument('--layers-run',required=True)
+    p5r.add_argument('--bootstrap',type=int,default=1000)
+    sele=subparsers.add_parser('selection-eval',help='P6: random baseline and intrinsic min_shift selection on labelled candidates')
+    sele.add_argument('--capture-run',required=True)
+    sele.add_argument('--label-file',required=True)
+    sele.add_argument('--layer',type=int,required=True)
+    sele.add_argument('--position',default='prompt_end',choices=('prompt_end','question_end'))
+    sele.add_argument('--bootstrap',type=int,default=1000)
+    dt=subparsers.add_parser('diag-template',help='VQAG 1b/H2: variance shares, norm ratios and within-material cosine by centering level')
+    dt.add_argument('--capture-run',required=True)
+    dt.add_argument('--label-file',required=True)
+    dt.add_argument('--layer',type=int,default=22)
+    dt.add_argument('--layers',default=None,help='comma separated layers; overrides --layer')
+    dt.add_argument('--positions',default='prompt_end')
+    dt.add_argument('--pos',default=None,choices=('prompt_end','early','question_end'),help='single position; overrides --positions')
+    dt.add_argument('--materials',default=None,help='text file with parent/material ids')
+    dt.add_argument('--dry-run',action='store_true')
+    dc=subparsers.add_parser('diag-curve',help='VQAG 1c/H2-H3: probes after none/global/skill/material centering; saves w_dir.npy')
+    dc.add_argument('--capture-run',required=True)
+    dc.add_argument('--label-file',required=True)
+    dc.add_argument('--layer',type=int,default=22)
+    dc.add_argument('--layers',default=None,help='comma separated layers; overrides --layer')
+    dc.add_argument('--positions',default='early,question_end')
+    dc.add_argument('--pos',default=None,choices=('prompt_end','early','question_end'),help='single position; overrides --positions')
+    dc.add_argument('--levels',default='none,global,skill,material')
+    dc.add_argument('--materials',default=None)
+    dc.add_argument('--bootstrap',type=int,default=2000)
+    dc.add_argument('--seeds',default='0,1,2')
+    dc.add_argument('--dry-run',action='store_true')
+    lr=subparsers.add_parser('label-repair',help='VQAG stage 0: two independent judges + arbitration on a stratified sample')
+    lr.add_argument('--capture-run',default=None)
+    lr.add_argument('--label-file',default=None)
+    lr.add_argument('--candidates',default=None,help='unified candidates.jsonl (e.g. steering output) instead of capture+labels')
+    lr.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    lr.add_argument('--materials-file',default=None)
+    lr.add_argument('--materials',default=None)
+    lr.add_argument('--judges',default='gpt-6-luna,gpt-5.6-terra')
+    lr.add_argument('--arbiter',default='DeepSeek-V4.1-Flash')
+    lr.add_argument('--sample-rate',type=float,default=1.0)
+    lr.add_argument('--per-parent',type=int,default=3)
+    lr.add_argument('--n-parents',type=int,default=None,help='limit to the first N parent materials after filters')
+    lr.add_argument('--dry-run',action='store_true')
+    lr.add_argument('--max-calls',type=int,default=0)
+    lr.add_argument('--seed',type=int,default=20261113)
+    lr.add_argument('--concurrency',type=int,default=1,help='parallel candidate labels (API calls); caches and the call cap are thread safe')
+    vs=subparsers.add_parser('vqag-select',help='VQAG 2a/H2: outlier/balance/min_shift/random within-material selection')
+    vs.add_argument('--capture-run',required=True)
+    vs.add_argument('--label-file',required=True)
+    vs.add_argument('--layer',type=int,default=22)
+    vs.add_argument('--pos',default='early',choices=('prompt_end','early','question_end'))
+    vs.add_argument('--materials',default=None)
+    vs.add_argument('--k',type=int,default=1)
+    vs.add_argument('--bootstrap',type=int,default=2000)
+    vs.add_argument('--label-new',default=None)
+    vs.add_argument('--w-dir',default=None)
+    vs.add_argument('--dry-run',action='store_true')
+    vst=subparsers.add_parser('vqag-steer',help='VQAG 2b/H3: projection clamping / side pushing with controls (GPU, exploratory)')
+    vst.add_argument('--capture-run',required=True)
+    vst.add_argument('--label-file',required=True)
+    vst.add_argument('--layer',type=int,default=22)
+    vst.add_argument('--pos',default='early',choices=('prompt_end','early','question_end'))
+    vst.add_argument('--steer-pos',default='prompt_end',choices=('prompt_end','all_generated','both'))
+    vst.add_argument('--alphas',default='0.25,0.5,1')
+    vst.add_argument('--betas',default='-2,-1,1,2')
+    vst.add_argument('--n-candidates',type=int,default=8)
+    vst.add_argument('--materials',default=None)
+    vst.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    vst.add_argument('--materials-file',default=None)
+    vst.add_argument('--local-model-path',default=None)
+    vst.add_argument('--device',default='cuda:0')
+    vst.add_argument('--max-new-tokens',type=int,default=1024)
+    vst.add_argument('--temperature',type=float,default=0.7)
+    vst.add_argument('--top-p',type=float,default=0.8)
+    vst.add_argument('--top-k',type=int,default=20)
+    vst.add_argument('--w-dir',default=None)
+    vst.add_argument('--dry-run',action='store_true')
+    vst.add_argument('--max-calls',type=int,default=0)
+    fs=subparsers.add_parser('factsplit',help='VQAG 1a/P2: extract facts, split A/B, build four-condition materials')
+    fs.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    fs.add_argument('--materials-file',default=None)
+    fs.add_argument('--n-materials',type=int,default=5)
+    fs.add_argument('--conditions',default='A,B;B,A;F,F;F,none;none,F')
+    fs.add_argument('--image-backend',default='render',choices=('existing','render'))
+    fs.add_argument('--model',default='gpt-6-luna')
+    fs.add_argument('--dry-run',action='store_true')
+    fs.add_argument('--max-calls',type=int,default=0)
+    fb=subparsers.add_parser('filter-baseline',help='VQAG 2c: keep candidates changed by both counterfactuals (no new calls)')
+    fb.add_argument('--capture-run',required=True)
+    fb.add_argument('--label-file',required=True)
+    fb.add_argument('--eval-run',required=True)
+    fb.add_argument('--n-materials',type=int,default=20)
+    fb.add_argument('--label-new',default=None)
+    fb.add_argument('--bootstrap',type=int,default=2000)
+    fb.add_argument('--dry-run',action='store_true')
+    mm=subparsers.add_parser('import-mmqa-materials',help='build image+paragraph materials from the downloaded MultiModalQA (generalisation check)')
+    mm.add_argument('--name',required=True)
+    mm.add_argument('--count',type=int,required=True)
+    mm.add_argument('--seed',type=int,default=20261113)
+    mm.add_argument('--project-root',default='.')
+    sp=subparsers.add_parser('steer-prepare',help='steering vectors (real, random in-distribution, Gaussian), one spec per condition, held-out material ids')
+    sp.add_argument('--training',required=True,help='CAPTURE_RUN:LABEL_FILE, comma separated')
+    sp.add_argument('--layers',required=True,help='comma separated decoder layers')
+    sp.add_argument('--alphas',default='1,2')
+    sp.add_argument('--heldout',type=int,default=8,help='number of skills held out of training and used for evaluation')
+    sp.add_argument('--seed',type=int,default=20261113)
+    sp.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
+    sp.add_argument('--materials-file',default=None)
+    sa=subparsers.add_parser('steer-analyze',help='steering: label-free screening of conditions, or paired effects against the control with the G3 verdict')
+    sa.add_argument('--stage',choices=('screen','effect'),required=True)
+    sa.add_argument('--prefix',required=True,help='capture runs are named PREFIX-CONDITION, labels labels_PREFIX-CONDITION-eval.jsonl')
+    sa.add_argument('--conditions',required=True)
+    sa.add_argument('--random-conditions',default=None,help='for the effect stage: comma separated random controls to beat, per real condition use --real')
+    sa.add_argument('--real',default=None)
+    sa.add_argument('--project-root',default='.')
+    sa.add_argument('--output-root',default='outputs')
+    wcm=subparsers.add_parser('whitebox-compare',help='compare two white-box capture runs of the same materials (e.g. software versions)')
+    wcm.add_argument('--run-a',required=True)
+    wcm.add_argument('--run-b',required=True)
+    wcm.add_argument('--project-root',default='.')
+    wcm.add_argument('--output-root',default='outputs')
+    led=subparsers.add_parser('api-ledger',help='calls and tokens spent so far by the probing route (evaluation runs matching the given name patterns)')
+    led.add_argument('--patterns',default='cand-,variants,mmqa,steer,q35')
+    led.add_argument('--project-root',default='.')
+    led.add_argument('--output-root',default='outputs')
     nei=subparsers.add_parser('necessity-ensemble-init',help='freeze a two-group + arbiter necessity evaluation from a finished simple-baseline evaluation run')
     nei.add_argument('--source-run',required=True)
     nei.add_argument('--model-a',default='gpt-6-luna')
@@ -220,11 +288,199 @@ def build_parser() -> argparse.ArgumentParser:
     ner.add_argument('--phase',choices=('screen','arbitrate','all'),default='all')
     ner.add_argument('--limit',type=int,default=None)
     nerep=subparsers.add_parser('necessity-ensemble-report',help='fixed-denominator report: confirmed dual vs not confirmed, with diagnostics')
-    for command in (initialize, execute, review, refreview, packet, freeze, probe, repeated, batch, retry):
-        command.add_argument('--run-id', required=True)
-        command.add_argument('--project-root', default='.')
-        command.add_argument('--output-root', default='outputs')
-    for command in (fq,bainit,barun,bareport,sbinit,sbrun,sbreport,seinit,serun,sereport,nei,ner,nerep):
+    syn=subparsers.add_parser('synthetic-build',help='build programmatic derived/bridging/stitching materials with split single-hop questions')
+    syn.add_argument('--output-dir',default='data/processed/synthetic-composition-v1')
+    syn.add_argument('--per-category',type=int,default=60)
+    syn.add_argument('--seed',type=int,default=20261115)
+    syn.add_argument('--derived-full',choices=('sum','count'),default='sum')
+    syn.add_argument('--categories',default='derived,bridging,stitching',help='comma-separated subset of derived,bridging,stitching,interval')
+    syn.add_argument('--value-min',type=int,default=2)
+    syn.add_argument('--value-max',type=int,default=21)
+    syn.add_argument('--project-root',default='.')
+    ca=subparsers.add_parser('composition-answer',help='answer full and single-hop synthetic questions with a local model and score programmatically')
+    ca.add_argument('--materials',default='data/processed/synthetic-composition-v1/materials.jsonl')
+    ca.add_argument('--local-model-path',required=True)
+    ca.add_argument('--device',default='cuda:0')
+    ca.add_argument('--prompt',choices=('direct','two-step'),default='direct')
+    ca.add_argument('--max-batch',type=int,default=8)
+    ca.add_argument('--max-new-tokens',type=int,default=256)
+    ca.add_argument('--limit',type=int,default=None)
+    cg=subparsers.add_parser('composition-generate',help='generate questions on synthetic materials and classify dual-ness with grammar labels')
+    cg.add_argument('--materials',default='data/processed/synthetic-composition-v1/materials.jsonl')
+    cg.add_argument('--local-model-path',required=True)
+    cg.add_argument('--device',default='cuda:0')
+    cg.add_argument('--n-questions',type=int,default=4)
+    cg.add_argument('--temperature',type=float,default=0.7)
+    cg.add_argument('--top-p',type=float,default=0.8)
+    cg.add_argument('--top-k',type=int,default=20)
+    cg.add_argument('--max-batch',type=int,default=8)
+    cg.add_argument('--max-new-tokens',type=int,default=96)
+    cg.add_argument('--limit',type=int,default=None)
+    cg.add_argument('--template',default='plain-v2')
+    cg.add_argument('--suppress-numbers',action='store_true')
+    mg=subparsers.add_parser('material-generate',help='generate N questions per material from any materials JSONL (generic composition generator)')
+    mg.add_argument('--materials',required=True)
+    mg.add_argument('--local-model-path',required=True)
+    mg.add_argument('--device',default='cuda:0')
+    mg.add_argument('--n-questions',type=int,default=6)
+    mg.add_argument('--temperature',type=float,default=0.7)
+    mg.add_argument('--top-p',type=float,default=0.8)
+    mg.add_argument('--top-k',type=int,default=20)
+    mg.add_argument('--max-batch',type=int,default=8)
+    mg.add_argument('--max-new-tokens',type=int,default=96)
+    mg.add_argument('--limit',type=int,default=None)
+    mg.add_argument('--template',default='plain-v2')
+    gb=subparsers.add_parser('grid-build',help='E2: build the 2x2 modality grid (rule/value in text or image) with paired materials')
+    gb.add_argument('--output-dir',default='data/processed/composition-grid-v1')
+    gb.add_argument('--n-materials',type=int,default=30)
+    gb.add_argument('--seed',type=int,default=20261115)
+    gb.add_argument('--value-min',type=int,default=2)
+    gb.add_argument('--value-max',type=int,default=21)
+    gb.add_argument('--cells',default='TT,TI,IT,II')
+    gb.add_argument('--project-root',default='.')
+    ga=subparsers.add_parser('grid-answer',help='E2: answer full and single-hop questions in every modality cell (local model, scored)')
+    ga.add_argument('--materials',default='data/processed/composition-grid-v1/materials.jsonl')
+    ga.add_argument('--local-model-path',required=True)
+    ga.add_argument('--device',default='cuda:0')
+    ga.add_argument('--max-batch',type=int,default=8)
+    ga.add_argument('--max-new-tokens',type=int,default=192)
+    ga.add_argument('--limit',type=int,default=None)
+    ga.add_argument('--prompt',default='grid-answer-v1')
+    gr=subparsers.add_parser('grid-report',help='E2: per-cell accuracy, hop decomposition and paired cross-vs-same-modality contrast')
+    gr.add_argument('--materials',default='data/processed/composition-grid-v1/materials.jsonl')
+    gr.add_argument('--bootstrap',type=int,default=10000)
+    svr=subparsers.add_parser('self-verify-run',help='E3: answer candidate questions under TI/T/I with a local model and score against computable gold')
+    svr.add_argument('--pool',required=True,help='candidate JSONL with material_id, question, generated_label')
+    svr.add_argument('--materials',required=True)
+    svr.add_argument('--local-model-path',required=True)
+    svr.add_argument('--device',default='cuda:0')
+    svr.add_argument('--tiers',default='direct,two-step')
+    svr.add_argument('--conditions',default='TI,T,I')
+    svr.add_argument('--max-batch',type=int,default=8)
+    svr.add_argument('--max-new-tokens',type=int,default=256)
+    svr.add_argument('--limit',type=int,default=0)
+    svr.add_argument('--early-stop',action='store_true',help='stop after a wrong full-material answer (T/I are then unnecessary)')
+    svp=subparsers.add_parser('self-verify-report',help='E3: selection precision/recall per repair tier and the paired tier contrast')
+    svp.add_argument('--bootstrap',type=int,default=10000)
+    svp.add_argument('--pvs-selection',default=None,help='optional API PVS selection.jsonl scored on the same questions')
+    svrr=subparsers.add_parser('self-verify-real-run',help='E3 real data: strong-model reference answers then local TI/T/I answering')
+    svrr.add_argument('--candidates',required=True)
+    svrr.add_argument('--materials',required=True)
+    svrr.add_argument('--local-model-path',required=True)
+    svrr.add_argument('--reference-model',default='gpt-6-luna')
+    svrr.add_argument('--device',default='cuda:0')
+    svrr.add_argument('--sample-per-material',type=int,default=2)
+    svrr.add_argument('--max-batch',type=int,default=8)
+    svrr.add_argument('--max-new-tokens',type=int,default=256)
+    svrr.add_argument('--limit',type=int,default=0)
+    svrp=subparsers.add_parser('self-verify-real-report',help='E3 real data: equivalence judging and selection precision/recall')
+    svrp.add_argument('--equivalence-model',default='gpt-5.6-terra')
+    svrp.add_argument('--pvs-selection',default=None)
+    svrp.add_argument('--limit',type=int,default=0)
+    psel=subparsers.add_parser('pvs-select',help='API PVS selection stage: text-sufficiency, image-sufficiency and stitching screens per candidate')
+    psel.add_argument('--candidates',required=True)
+    psel.add_argument('--materials',required=True)
+    psel.add_argument('--workers',type=int,default=8)
+    cai=subparsers.add_parser('copy-attribute',help='E4: find the attention heads that copy a context numeral into the generated question')
+    cai.add_argument('--materials',default='data/processed/synthetic-composition-v1/materials.jsonl')
+    cai.add_argument('--local-model-path',required=True)
+    cai.add_argument('--category',default='derived')
+    cai.add_argument('--n-materials',type=int,default=20)
+    cai.add_argument('--max-new-tokens',type=int,default=24)
+    cai.add_argument('--device',default='cuda:0')
+    cab=subparsers.add_parser('copy-ablate',help='E4: silence the attributed copy heads at decode time and measure copy/dual rates')
+    cab.add_argument('--heads-file',required=True)
+    cab.add_argument('--materials',default='data/processed/synthetic-composition-v1/materials.jsonl')
+    cab.add_argument('--local-model-path',required=True)
+    cab.add_argument('--conditions',default='control,top8,top16,random8')
+    cab.add_argument('--category',default='derived')
+    cab.add_argument('--n-materials',type=int,default=20)
+    cab.add_argument('--samples',type=int,default=4)
+    cab.add_argument('--temperature',type=float,default=0.7)
+    cab.add_argument('--top-p',type=float,default=0.8)
+    cab.add_argument('--top-k',type=int,default=20)
+    cab.add_argument('--max-new-tokens',type=int,default=40)
+    cab.add_argument('--device',default='cuda:0')
+    ckm=subparsers.add_parser('copy-mask',help='E4: block generated positions from attending to the context numeral tokens')
+    ckm.add_argument('--materials',default='data/processed/synthetic-composition-v1/materials.jsonl')
+    ckm.add_argument('--local-model-path',required=True)
+    ckm.add_argument('--conditions',default='control,block_text_digits,block_text_span')
+    ckm.add_argument('--category',default='derived')
+    ckm.add_argument('--n-materials',type=int,default=20)
+    ckm.add_argument('--samples',type=int,default=4)
+    ckm.add_argument('--temperature',type=float,default=0.7)
+    ckm.add_argument('--top-p',type=float,default=0.8)
+    ckm.add_argument('--top-k',type=int,default=20)
+    ckm.add_argument('--max-new-tokens',type=int,default=40)
+    ckm.add_argument('--strength',type=float,default=-1e4)
+    ckm.add_argument('--device',default='cuda:0')
+    aar=subparsers.add_parser('answerability-audit',help='local answerability screen (text-only, image-only, or both) scored against consensus labels (no API)')
+    aar.add_argument('--candidates',required=True)
+    aar.add_argument('--materials',required=True)
+    aar.add_argument('--local-model-path',required=True)
+    aar.add_argument('--conditions',default='TI,T,I,0',help='0 is the blind condition answered with no material')
+    aar.add_argument('--device',default='cuda:0')
+    aar.add_argument('--max-batch',type=int,default=8)
+    aar.add_argument('--max-new-tokens',type=int,default=256)
+    aar.add_argument('--limit',type=int,default=0)
+    aar.add_argument('--samples',type=int,default=1,help='local answers per condition (>=2 enables stability and agreement evidence)')
+    aar.add_argument('--temperature',type=float,default=0.0,help='sampling temperature; >0 is required for stability to mean anything')
+    aap=subparsers.add_parser('answerability-report',help='score the local answerability audit against the consensus labels')
+    aap.add_argument('--bootstrap',type=int,default=10000)
+    aap.add_argument('--pvs-selection',default='')
+    cmr=subparsers.add_parser('copy-mask-report',help='E4: merge several copy-mask runs into one report')
+    cmr.add_argument('--sources',required=True,help='comma-separated run ids, e.g. copy-mask-v1,copy-mask-span-v1')
+    cmr.add_argument('--materials',default='')
+    cmr.add_argument('--title',default='')
+    cr=subparsers.add_parser('composition-report',help='composition gaps with material bootstrap and the both-hops-correct-full-wrong list')
+    cr.add_argument('--bootstrap',type=int,default=10000)
+    ccomp=subparsers.add_parser('composition-compare',help='compare composition gaps and dual-generation rates across model-size runs')
+    ccomp.add_argument('--runs',required=True,help='label=run_id pairs, comma separated')
+    inl=subparsers.add_parser('inline-report',help='inline numbers/rules in generated questions and their relation to text redundancy')
+    inl.add_argument('--synthetic',nargs='*',default=[],help='label=generation_run_id pairs')
+    inl.add_argument('--mmqa',nargs='*',default=[],help='label=candidates_jsonl_path pairs')
+    inl.add_argument('--mmqa-materials',default='data/processed/multimodalqa/mmqa-pool-v1/pvs60-materials.jsonl')
+    inl.add_argument('--min-digits',type=int,default=2,help='minimum digits for an MMQA numeric inline match')
+    rsrc=subparsers.add_parser('redundancy-source',help='E1: classify why a redundant question does not need one side (leak vs anchor)')
+    rsrc.add_argument('--dataset',action='append',required=True,help='label=kind:labels_path:materials_path, kind in scienceqa|mmqa|synthetic; repeatable')
+    rsrc.add_argument('--judge',default='gpt-6-luna',help='vision judge model for the leak/anchor adjudication')
+    rsrc.add_argument('--no-judge',action='store_true',help='programmatic screen only (no API calls)')
+    rsrc.add_argument('--concurrency',type=int,default=8)
+    rsrc.add_argument('--max-calls',type=int,default=0,help='hard cap on new API calls; 0 means uncapped')
+    rsrc.add_argument('--min-digits',type=int,default=1,help='minimum digits for a copied text number')
+    rsrc.add_argument('--manual',type=int,default=50,help='rows in the pending human-review sheet')
+    rsrc.add_argument('--dry-run',action='store_true',help='count the distinct calls without sending any')
+    mrc=subparsers.add_parser('mmqa-refer-compare',help='compare two MMQA generation conditions with the same label file format')
+    mrc.add_argument('--control',required=True,help='control candidates.jsonl')
+    mrc.add_argument('--treatment',required=True,help='treatment candidates.jsonl')
+    mrc.add_argument('--materials',default='data/processed/multimodalqa/mmqa-pool-v1/pvs60-materials.jsonl')
+    mrc.add_argument('--control-validity',default=None,help='optional validity_report.json for the control')
+    mrc.add_argument('--treatment-validity',default=None,help='optional validity_report.json for the treatment')
+    mrc.add_argument('--control-cascade',default=None,help='optional mapped official-cascade result JSON')
+    mrc.add_argument('--treatment-cascade',default=None,help='optional mapped official-cascade result JSON')
+    mrc.add_argument('--bootstrap',type=int,default=10000)
+    lv=subparsers.add_parser('local-validity',help='run the local-validity-v1 check on a generation run')
+    lv.add_argument('--source-run',required=True)
+    lv.add_argument('--local-model-path',required=True)
+    lv.add_argument('--device',default='cuda:0')
+    lv.add_argument('--max-batch',type=int,default=8)
+    lv.add_argument('--max-new-tokens',type=int,default=96)
+    lv.add_argument('--limit',type=int,default=None)
+    vr=subparsers.add_parser('validity-report',help='summarise local-validity rows')
+    cpmp=subparsers.add_parser('composition-compare-prompts',help='compare direct and two-step composition gaps')
+    cpmp.add_argument('--direct-run',required=True)
+    cpmp.add_argument('--two-step-run',required=True)
+    im=subparsers.add_parser('interval-mechanism',help='time-boxed behavioural + logit-lens probe of the interval-count failures')
+    im.add_argument('--local-model-path',required=True)
+    im.add_argument('--device',default='cuda:0')
+    im.add_argument('--failures',default='outputs/mechanism-w1-confirm-v1/mechanism_samples_confirm_8b.jsonl')
+    im.add_argument('--answers',default='outputs/synth-confirm-count-8b-direct-v1/answers.jsonl')
+    im.add_argument('--materials',default='data/processed/synthetic-composition-confirm-count-v1/materials.jsonl')
+    im.add_argument('--controls-per-expected',type=int,default=4)
+    im.add_argument('--max-new-tokens',type=int,default=32)
+    im.add_argument('--limit',type=int,default=None)
+    im.add_argument('--skip-lens',action='store_true')
+    for command in (sbinit,sbrun,sbreport,seinit,serun,sereport,nei,ner,nerep,wbc,cc,dtc,csi,csr,cl,lap,laf,md,pr,p5,ge,gs,p5r,sp,sele,dt,dc,lr,vs,vst,fs,fb,ca,cg,mg,ga,gr,svr,svp,svrr,svrp,psel,cai,cab,ckm,cmr,aar,aap,cr,ccomp,cpmp,im,inl,rsrc,mrc,lv,vr):
         command.add_argument('--run-id',required=True);command.add_argument('--project-root',default='.')
         command.add_argument('--output-root',default='outputs')
 
@@ -241,6 +497,360 @@ def main(argv: list[str] | None = None) -> int:
             if args.command=='simple-baseline-eval-init':result=init_evaluation(**common,source_run=args.source_run,model=args.model,concurrency=args.concurrency,cascade=args.cascade)
             elif args.command=='simple-baseline-eval-run':result=run_evaluation(**common,limit=args.limit)
             else:result=report_evaluation(**common)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command in ('candidates-capture','candidate-source-init','candidate-source-run'):
+            from . import candidates as C
+            common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
+            if args.command=='candidates-capture':
+                result=C.run_candidates(**common,reference_run=args.reference_run,model_path=args.local_model_path,device=args.device,n_skills=args.n_skills,
+                    per_skill=args.per_skill,n_candidates=args.n_candidates,temperature=args.temperature,top_p=args.top_p,top_k=args.top_k,k=args.k,max_new_tokens=args.max_new_tokens,exclude_run=args.exclude_run,template=args.template,
+                    materials_file=args.materials_file,group_field=args.group_field,select=args.select,max_materials=args.max_materials,
+                    intervention=load_steer_spec(args.steer_spec,args.project_root) if args.steer_spec else None)
+            elif args.command=='candidate-source-init':
+                result=C.init_candidate_source(**common,capture_run=args.capture_run,reference_run=args.reference_run,materials_file=args.materials_file)
+            else:
+                result=C.run_candidate_source(**common,capture_run=args.capture_run,model_path=args.local_model_path,device=args.device)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='synthetic-build':
+            from .synthetic_composition import build_synthetic_composition
+            result=build_synthetic_composition(project_root=args.project_root,output_dir=args.output_dir,per_category=args.per_category,seed=args.seed,derived_full=args.derived_full,categories=tuple(x.strip() for x in args.categories.split(',') if x.strip()),value_min=args.value_min,value_max=args.value_max)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='composition-answer':
+            from .synthetic_composition import run_composition_answers
+            result=run_composition_answers(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
+                materials_path=args.materials,model_path=args.local_model_path,device=args.device,prompt=args.prompt,
+                max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,limit=args.limit)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='material-generate':
+            from .material_generation import run_material_generation
+            result=run_material_generation(run_id=args.run_id,materials_path=args.materials,model_path=args.local_model_path,
+                device=args.device,n_questions=args.n_questions,temperature=args.temperature,top_p=args.top_p,
+                top_k=args.top_k,max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,limit=args.limit,
+                template=args.template,project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='composition-generate':
+            from .synthetic_composition import run_composition_generation
+            result=run_composition_generation(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
+                materials_path=args.materials,model_path=args.local_model_path,device=args.device,n_questions=args.n_questions,
+                temperature=args.temperature,top_p=args.top_p,top_k=args.top_k,max_batch=args.max_batch,
+                max_new_tokens=args.max_new_tokens,limit=args.limit,template=args.template,suppress_numbers=args.suppress_numbers)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='grid-build':
+            from .composition_grid import build_grid_materials
+            result=build_grid_materials(project_root=args.project_root,output_dir=args.output_dir,
+                n_materials=args.n_materials,seed=args.seed,value_min=args.value_min,value_max=args.value_max,
+                cells=tuple(x.strip() for x in args.cells.split(',') if x.strip()))
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='grid-answer':
+            from .composition_grid import run_grid_answers
+            result=run_grid_answers(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
+                materials_path=args.materials,model_path=args.local_model_path,device=args.device,
+                max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,limit=args.limit,prompt=args.prompt)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='grid-report':
+            from .composition_grid import analyze_grid_answers
+            result=analyze_grid_answers(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
+                materials_path=args.materials,bootstrap=args.bootstrap)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='self-verify-run':
+            from .self_verification import run_self_verification
+            result=run_self_verification(run_id=args.run_id,pool_path=args.pool,materials_path=args.materials,
+                local_model_path=args.local_model_path,device=args.device,
+                tiers=tuple(x.strip() for x in args.tiers.split(',') if x.strip()),
+                conditions=tuple(x.strip() for x in args.conditions.split(',') if x.strip()),
+                max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,limit=args.limit or None,
+                early_stop=args.early_stop,project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='self-verify-report':
+            from .self_verification import analyze_self_verification
+            result=analyze_self_verification(run_id=args.run_id,project_root=args.project_root,
+                output_root=args.output_root,bootstrap=args.bootstrap,pvs_selection=args.pvs_selection)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='self-verify-real-run':
+            from .self_verification import run_real_verification
+            result=run_real_verification(run_id=args.run_id,candidates_path=args.candidates,
+                materials_path=args.materials,local_model_path=args.local_model_path,
+                reference_model=args.reference_model,device=args.device,
+                sample_per_material=args.sample_per_material,max_batch=args.max_batch,
+                max_new_tokens=args.max_new_tokens,limit=args.limit or None,
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='self-verify-real-report':
+            from .self_verification import report_real_verification
+            result=report_real_verification(run_id=args.run_id,equivalence_model=args.equivalence_model,
+                project_root=args.project_root,output_root=args.output_root,pvs_selection=args.pvs_selection,
+                limit=args.limit or None)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='pvs-select':
+            from .pvs import select
+            result=select(run_id=args.run_id,candidates_file=args.candidates,materials_file=args.materials,
+                project_root=args.project_root,output_root=args.output_root,workers=args.workers)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='copy-attribute':
+            from .copy_circuit import attribute_head_copy
+            result=attribute_head_copy(run_id=args.run_id,materials_path=args.materials,
+                model_path=args.local_model_path,category=args.category,n_materials=args.n_materials,
+                max_new_tokens=args.max_new_tokens,device=args.device,
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='copy-ablate':
+            from .copy_circuit import run_copy_ablation
+            result=run_copy_ablation(run_id=args.run_id,heads_file=args.heads_file,materials_path=args.materials,
+                model_path=args.local_model_path,
+                conditions=tuple(x.strip() for x in args.conditions.split(',') if x.strip()),
+                category=args.category,n_materials=args.n_materials,samples=args.samples,
+                temperature=args.temperature,top_p=args.top_p,top_k=args.top_k,
+                max_new_tokens=args.max_new_tokens,device=args.device,
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='copy-mask':
+            from .copy_circuit import run_copy_mask
+            result=run_copy_mask(run_id=args.run_id,materials_path=args.materials,
+                model_path=args.local_model_path,
+                conditions=tuple(x.strip() for x in args.conditions.split(',') if x.strip()),
+                category=args.category,n_materials=args.n_materials,samples=args.samples,
+                temperature=args.temperature,top_p=args.top_p,top_k=args.top_k,
+                max_new_tokens=args.max_new_tokens,strength=args.strength,device=args.device,
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='copy-mask-report':
+            from .copy_circuit import mask_report
+            result=mask_report(run_id=args.run_id,
+                sources=[x.strip() for x in args.sources.split(',') if x.strip()],
+                materials_path=(args.materials or None),
+                project_root=args.project_root,output_root=args.output_root,
+                title=(args.title or None))
+            print(json.dumps({'run_id':result['run_id'],
+                'conditions':{k:{kk:v[kk] for kk in ('n','copy_rate','threshold_mention_rate','dual_rate','single_image_rate','faithful_threshold_rate') if kk in v} for k,v in result['conditions'].items()}},ensure_ascii=False,indent=2))
+        elif args.command=='answerability-audit':
+            from .self_verification import run_answerability_audit
+            result=run_answerability_audit(run_id=args.run_id,candidates_path=args.candidates,
+                materials_path=args.materials,local_model_path=args.local_model_path,device=args.device,
+                conditions=tuple(x.strip() for x in args.conditions.split(',') if x.strip()),
+                max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,
+                limit=(args.limit or None),samples=max(1,args.samples),temperature=args.temperature,
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='answerability-report':
+            from .self_verification import report_answerability_audit
+            result=report_answerability_audit(run_id=args.run_id,bootstrap=args.bootstrap,
+                pvs_selection=(args.pvs_selection or None),
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps({'run_id':result['run_id'],'questions':result['questions'],
+                'rules':{k:{kk:v[kk] for kk in ('selected','recall','precision','false_positive_rate')} for k,v in result['rules'].items()},
+                'external':{k:{kk:v[kk] for kk in v} for k,v in (result.get('external') or {}).items()}},ensure_ascii=False,indent=2))
+        elif args.command=='composition-report':
+            from .synthetic_composition import analyze_composition_answers,analyze_composition_generation
+            run_dir=Path(args.project_root).resolve()/args.output_root/args.run_id
+            result={}
+            if (run_dir/'answers.jsonl').exists():
+                result=analyze_composition_answers(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,B=args.bootstrap)
+            if (run_dir/'generated.jsonl').exists():
+                result['generation']=analyze_composition_generation(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root)
+            if not result:
+                raise ValueError('run has neither answers.jsonl nor generated.jsonl')
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='mmqa-refer-compare':
+            from .mmqa_refer import compare_mmqa_refer
+            result=compare_mmqa_refer(run_id=args.run_id,control=args.control,treatment=args.treatment,
+                materials_path=args.materials,control_validity=args.control_validity,
+                treatment_validity=args.treatment_validity,control_cascade=args.control_cascade,
+                treatment_cascade=args.treatment_cascade,bootstrap=args.bootstrap,
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps({k:v for k,v in result.items() if k!='rows'},ensure_ascii=False,indent=2,default=float))
+        elif args.command=='local-validity':
+            from .validity_check import run_local_validity
+            result=run_local_validity(run_id=args.run_id,source_run=args.source_run,model_path=args.local_model_path,
+                device=args.device,max_batch=args.max_batch,max_new_tokens=args.max_new_tokens,limit=args.limit,
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='validity-report':
+            from .validity_check import analyze_validity
+            result=analyze_validity(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='inline-report':
+            from .inline_analysis import analyze_mmqa_inline,analyze_synthetic_inline,combine_inline_reports
+            synthetic={}
+            for part in args.synthetic:
+                label,source=part.split('=',1)
+                synthetic[label]=analyze_synthetic_inline(run_id=source,project_root=args.project_root,output_root=args.output_root)
+            mmqa={}
+            for part in args.mmqa:
+                label,path=part.split('=',1)
+                mmqa[label]=analyze_mmqa_inline(run_id=f'{args.run_id}/mmqa-{label}',candidates_path=path,
+                    materials_path=args.mmqa_materials,project_root=args.project_root,output_root=args.output_root,
+                    min_digits=args.min_digits)
+            result=combine_inline_reports(run_id=args.run_id,synthetic_reports=synthetic,mmqa_reports=mmqa,
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='redundancy-source':
+            from .redundancy_source import parse_dataset_specs, run_redundancy_source
+            from .assessment_rules import load_assessment_config
+            cfg=load_assessment_config(args.project_root,'configs/necessity_assessment_v2.json')
+            result=run_redundancy_source(run_id=args.run_id,datasets=parse_dataset_specs(args.dataset),
+                judge_model=args.judge,knowledge=cfg['knowledge'],use_judge=not args.no_judge,
+                concurrency=args.concurrency,max_calls=args.max_calls,min_digits=args.min_digits,
+                manual=args.manual,dry_run=args.dry_run,project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='composition-compare-prompts':
+            from .synthetic_composition import compare_composition_prompts
+            result=compare_composition_prompts(run_id=args.run_id,direct_run=args.direct_run,two_step_run=args.two_step_run,
+                project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='interval-mechanism':
+            from .interval_mechanism import run_interval_mechanism
+            result=run_interval_mechanism(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
+                failures_path=args.failures,answers_path=args.answers,materials_path=args.materials,
+                model_path=args.local_model_path,device=args.device,controls_per_expected=args.controls_per_expected,
+                max_new_tokens=args.max_new_tokens,limit=args.limit,skip_lens=args.skip_lens)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='composition-compare':
+            from .synthetic_composition import compare_composition_runs
+            runs={part.split('=',1)[0]:part.split('=',1)[1] for part in args.runs.split(',') if '=' in part}
+            result=compare_composition_runs(run_id=args.run_id,runs=runs,project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='detail-capture':
+            from .detail_capture import run_detail_capture
+            result=run_detail_capture(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,
+                capture_run=args.capture_run,reference_run=args.reference_run,materials_file=args.materials_file,
+                model_path=args.local_model_path,device=args.device,limit=args.limit,
+                material_ids_file=args.material_ids_file,prompts_file=args.prompts_file)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='candidate-labels':
+            from .probe_labels import build_label_table,profile_report
+            common={k:getattr(args,k) for k in ('project_root','output_root')}
+            build_label_table(capture_run=args.run_id,source_run=args.source_run,eval_run=args.eval_run,**common)
+            print(json.dumps(profile_report(capture_run=args.run_id,eval_run=args.eval_run,**common),ensure_ascii=False,indent=2))
+        elif args.command in ('label-audit-prepare','label-audit-finish'):
+            from . import label_audit as LA
+            common={k:getattr(args,k) for k in ('project_root','output_root')}
+            result=(LA.prepare_two_class_audit(capture_run=args.run_id,eval_run=args.eval_run,reference_run=args.reference_run,**common)
+                    if args.command=='label-audit-prepare' and args.two_class else
+                    LA.prepare_audit(capture_run=args.run_id,eval_run=args.eval_run,reference_run=args.reference_run,**common)
+                    if args.command=='label-audit-prepare' else LA.finish_audit(capture_run=args.run_id,**common))
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='modality-distances':
+            from .modality_distance import run_distances
+            result=run_distances(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,reference_run=args.reference_run,
+                model_path=args.local_model_path,device=args.device,limit=args.limit,materials_file=args.materials_file)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command in ('probe-run','p5-readout'):
+            common={k:getattr(args,k) for k in ('project_root','output_root')}
+            sets=lambda text:([x.split(':')[0] for x in text.split(',')],[x.split(':')[1] for x in text.split(',')])
+            pairs=lambda text:[tuple(x.split(':')) for x in text.split(',')]
+            if args.command=='probe-run':
+                from .probe_run import run_probes
+                result=run_probes(run_id=args.run_id,discovery=sets(args.discovery),confirmation=sets(args.confirmation),B=args.bootstrap,**common)
+            else:
+                from .distance_analysis import run_p5
+                result=run_p5(run_id=args.run_id,discovery=pairs(args.discovery),confirmation=pairs(args.confirmation) if args.confirmation else None,B=args.bootstrap,**common)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command in ('geometry-run','geometry-summary'):
+            from . import geometry as G
+            common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
+            result=(G.run_geometry(**common,capture_run=args.capture_run,reference_run=args.reference_run,model_path=args.local_model_path,device=args.device)
+                    if args.command=='geometry-run' else G.geometry_summary(**common,label_file=args.label_file,capture_run=args.capture_run))
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='p5-robust':
+            from .distance_robust import run_robust
+            base=Path(args.project_root).resolve()/args.output_root
+            entries=json.loads((base/args.layers_run/'p5_readout.json').read_text())['entries']
+            result=run_robust(run_id=args.run_id,sets=[tuple(x.split(':')) for x in args.sets.split(',')],layers={k:v['chosen_layer'] for k,v in entries.items()},
+                project_root=args.project_root,output_root=args.output_root,B=args.bootstrap)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command=='selection-eval':
+            from .selection_eval import run_selection
+            result=run_selection(run_id=args.run_id,capture_run=args.capture_run,label_file=args.label_file,
+                layer=args.layer,position=args.position,B=args.bootstrap,project_root=args.project_root,output_root=args.output_root)
+            print(json.dumps(result,ensure_ascii=False,indent=2))
+        elif args.command in ('diag-template','diag-curve'):
+            layers=[int(x) for x in args.layers.split(',')] if args.layers else [args.layer]
+            positions=(args.pos,) if args.pos else tuple(x.strip() for x in args.positions.split(','))
+            if args.command=='diag-template':
+                from .diag_template import run_diag_template
+                result=run_diag_template(capture_run=args.capture_run,label_file=args.label_file,layers=layers,
+                    positions=positions,materials=args.materials,
+                    project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,dry_run=args.dry_run)
+            else:
+                from .diag_curve import run_diag_curve
+                result=run_diag_curve(capture_run=args.capture_run,label_file=args.label_file,layers=layers,
+                    positions=positions,
+                    levels=tuple(x.strip() for x in args.levels.split(',')),materials=args.materials,
+                    project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,
+                    bootstrap=args.bootstrap,seeds=tuple(int(x) for x in args.seeds.split(',')),dry_run=args.dry_run)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='label-repair':
+            from .label_repair import run_label_repair
+            result=run_label_repair(capture_run=args.capture_run,label_file=args.label_file,candidates=args.candidates,
+                project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,
+                reference_run=args.reference_run,materials_file=args.materials_file,materials=args.materials,
+                judges=tuple(x.strip() for x in args.judges.split(',') if x.strip()),arbiter=args.arbiter,
+                sample_rate=args.sample_rate,per_parent=args.per_parent,dry_run=args.dry_run,
+                max_calls=args.max_calls,seed=args.seed,n_parents=args.n_parents,concurrency=args.concurrency)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='vqag-select':
+            from .select import run_select
+            result=run_select(capture_run=args.capture_run,label_file=args.label_file,project_root=args.project_root,
+                output_root=args.output_root,run_id=args.run_id,layer=args.layer,position=args.pos,materials=args.materials,
+                k=args.k,bootstrap=args.bootstrap,label_new=args.label_new,w_dir=args.w_dir,dry_run=args.dry_run)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='vqag-steer':
+            from .steer import run_steer
+            result=run_steer(capture_run=args.capture_run,label_file=args.label_file,project_root=args.project_root,
+                output_root=args.output_root,run_id=args.run_id,layer=args.layer,position=args.pos,steer_pos=args.steer_pos,
+                alphas=tuple(float(x) for x in args.alphas.split(',')),betas=tuple(float(x) for x in args.betas.split(',')),
+                n_candidates=args.n_candidates,materials=args.materials,model_path=args.local_model_path,device=args.device,
+                max_new_tokens=args.max_new_tokens,temperature=args.temperature,top_p=args.top_p,top_k=args.top_k,
+                w_dir=args.w_dir,reference_run=args.reference_run,materials_file=args.materials_file,
+                dry_run=args.dry_run,max_calls=args.max_calls)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='factsplit':
+            from .factsplit import run_factsplit
+            result=run_factsplit(project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,
+                reference_run=args.reference_run,materials_file=args.materials_file,n_materials=args.n_materials,
+                conditions=args.conditions,image_backend=args.image_backend,model=args.model,
+                dry_run=args.dry_run,max_calls=args.max_calls)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='filter-baseline':
+            from .filter_baseline import run_filter_baseline
+            result=run_filter_baseline(capture_run=args.capture_run,label_file=args.label_file,eval_run=args.eval_run,
+                project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,
+                n_materials=args.n_materials,label_new=args.label_new,bootstrap=args.bootstrap,dry_run=args.dry_run)
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='import-mmqa-materials':
+            from .dataset import import_mmqa_materials
+            print(json.dumps(import_mmqa_materials(args.project_root,name=args.name,count=args.count,seed=args.seed),ensure_ascii=False,indent=2))
+        elif args.command=='steer-prepare':
+            from .intervene import prepare_steering
+            result=prepare_steering(run_id=args.run_id,training=[tuple(x.split(':')) for x in args.training.split(',')],layers=[int(x) for x in args.layers.split(',')],
+                alphas=[float(x) for x in args.alphas.split(',')],heldout=args.heldout,seed=args.seed,project_root=args.project_root,output_root=args.output_root,
+                reference_run=args.reference_run,materials_file=args.materials_file)
+            print(json.dumps({k:v for k,v in result.items() if k!='diagnostics'},ensure_ascii=False,indent=2))
+        elif args.command=='steer-analyze':
+            from . import intervene as IV
+            from .records import read_jsonl
+            base=Path(args.project_root).resolve()/args.output_root
+            conds=args.conditions.split(',')
+            if args.stage=='screen':
+                data={c:read_jsonl(base/f'{args.prefix}-{c}'/'captures.jsonl') for c in conds}
+                result=IV.screen_conditions(data)
+            else:
+                data={c:read_jsonl(base/f'{args.prefix}-{c}'/f'labels_{args.prefix}-{c}-eval.jsonl') for c in conds}
+                effects=IV.paired_effect(data)
+                result={'effects':effects}
+                if args.real:
+                    result['g3']={r:IV.g3_verdict(effects,r,[x for x in (args.random_conditions or '').split(',') if x]) for r in args.real.split(',')}
+            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
+        elif args.command=='whitebox-compare':
+            from .whitebox import compare_captures
+            print(json.dumps(compare_captures(run_a=args.run_a,run_b=args.run_b,project_root=args.project_root,output_root=args.output_root),ensure_ascii=False,indent=2))
+        elif args.command=='api-ledger':
+            from .candidates import api_ledger
+            print(json.dumps(api_ledger(patterns=args.patterns.split(','),project_root=args.project_root,output_root=args.output_root),ensure_ascii=False,indent=2))
+        elif args.command=='whitebox-capture':
+            from .whitebox import run_capture
+            result=run_capture(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,reference_run=args.reference_run,
+                model_path=args.local_model_path,device=args.device,limit=args.limit,k=args.k,max_new_tokens=args.max_new_tokens,check=not args.no_check,template=args.template)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command in ('necessity-ensemble-init','necessity-ensemble-run','necessity-ensemble-report'):
             from .necessity_ensemble import init_ensemble,run_ensemble,report_ensemble
@@ -266,81 +876,6 @@ def main(argv: list[str] | None = None) -> int:
                 result=run_simple_baseline(**common,limit=args.limit,provider_factory=factory)
             else:result=report_simple_baseline(**common)
             print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command=='baseline-analysis-report':
-            from .faithfulness import report_targeted_analysis
-            result=report_targeted_analysis(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command in ('baseline-analysis-init','baseline-analysis-run'):
-            from .baseline_analysis import init_analysis,run_analysis
-            common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
-            result=(init_analysis(**common,source_run=args.source_run) if args.command=='baseline-analysis-init'
-                    else run_analysis(**common,dry_run=args.dry_run,max_steps=args.max_steps))
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command=='faithfulness-review':
-            from .faithfulness import derive_faithfulness
-            result=derive_faithfulness(source_run=args.source_run,run_id=args.run_id,
-                reviews_path=args.reviews,project_root=args.project_root,output_root=args.output_root)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command in ('experiment-init', 'experiment-run', 'experiment-review', 'freeze-evaluation',
-                            'probe-reproducibility', 'records-metrics',
-                            'probe-repeatability','stage-two','retry-evaluation',
-                            'records-patterns','reference-review','review-packet'):
-            from . import experiments
-            common = {k: getattr(args, k) for k in ('run_id','project_root','output_root') if hasattr(args, k)}
-            if args.command == 'experiment-init':
-                overrides = {}
-                for value in args.prompt_override:
-                    role, separator, version = value.partition('=')
-                    if not separator or not version or role in overrides:
-                        raise ValueError('prompt overrides require unique ROLE=VERSION pairs')
-                    overrides[role] = version
-                result = experiments.init_experiment(**common, materials_path=args.materials, cases_path=args.cases,
-                    methods=tuple(args.methods), partition=args.partition, stage=args.stage, config_path=args.config,
-                    prompt_overrides=overrides)
-            elif args.command == 'experiment-run':
-                result = experiments.run_experiment(**common, max_requests=args.max_requests,
-                                                   max_steps=args.max_steps, dry_run=args.dry_run, methods=args.methods,
-                                                   stages=args.stages, attempt_ids=args.attempt_ids)
-            elif args.command == 'experiment-review':
-                result = experiments.apply_human_reviews(**common, reviews_path=args.reviews, adjudicate=args.adjudicate)
-            elif args.command == 'reference-review':
-                result = experiments.apply_reference_reviews(**common, reviews_path=args.reviews)
-            elif args.command == 'review-packet':
-                result = experiments.export_source_review(**common)
-            elif args.command == 'records-patterns':
-                from .metrics import outcome_patterns
-                from .records import read_jsonl
-                result = outcome_patterns(read_jsonl(Path(args.records)))
-                if not args.attempts:
-                    for item in result['by_method'].values():
-                        item.pop('attempts')
-            elif args.command == 'freeze-evaluation':
-                result = experiments.freeze_evaluation(**common,protocol_path=args.protocol)
-            elif args.command == 'probe-repeatability':
-                result = experiments.probe_repeatability(**common,max_requests=args.max_requests)
-            elif args.command == 'stage-two':
-                from .batch import run_stage_two
-                result=run_stage_two(**common,evaluation_run=args.evaluation_run,materials_path=args.materials,
-                    repeatability_run=args.repeatability_run,method=args.method,max_requests=args.max_requests,dry_run=args.dry_run)
-            elif args.command == 'retry-evaluation':
-                from .batch import retry_failed_evaluation
-                result=retry_failed_evaluation(**common,attempt_ids=args.attempt_ids,steps=args.steps)
-            elif args.command == 'probe-reproducibility':
-                result = experiments.probe_reproducibility(**common, max_requests=args.max_requests)
-            else:
-                from .metrics import summarize_records
-                result = summarize_records(args.records, output_dir=args.output_dir)
-                result = {'n_planned':result['n_planned'], 'output_dir':args.output_dir or str(Path(args.records).parent)}
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-        elif args.command in {"run", "smoke"}:
-            result = execute_run(
-                config_path=args.config,
-                project_root=args.project_root,
-                run_id=args.run_id,
-                limit=args.limit,
-                output_root=args.output_root,
-            )
-            _print_result(result, resumed=result.new_calls == 0 and result.new_records == 0)
         elif args.command == "download-data":
             from .dataset import import_scienceqa
             print(json.dumps(import_scienceqa(Path(args.project_root), split=args.split, limit=args.limit,
@@ -363,25 +898,10 @@ def main(argv: list[str] | None = None) -> int:
                                          question_field=args.question_field,
                                          questions_output=Path(args.questions_output) if args.questions_output else None)
             print(json.dumps(result, ensure_ascii=False, indent=2))
-        elif args.command == "score":
-            result = rescore_run(source_run=args.source_run, run_id=args.run_id, project_root=args.project_root,
-                                 output_root=args.output_root, limit=args.limit, max_requests=args.max_requests,
-                                 max_tokens=args.max_tokens, dry_run=args.dry_run)
-            if isinstance(result, dict):
-                print(json.dumps(result, ensure_ascii=False, indent=2))
-            else:
-                _print_result(result, resumed=result.new_calls == 0 and result.new_records == 0)
-        elif args.command == "summarize":
-            result = summarize_run(
-                run_id=args.run_id,
-                project_root=args.project_root,
-                output_root=args.output_root,
-            )
-            _print_result(result, resumed=True)
         else:
             parser.error(f"unknown command: {args.command}")
             return 2
-    except (RunConfigMismatch, RequestBudgetExceeded, FileNotFoundError, ValueError) as exc:
+    except (RequestBudgetExceeded, FileNotFoundError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     return 0

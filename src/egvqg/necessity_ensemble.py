@@ -23,7 +23,7 @@ from .records import canonical_json, file_lock, read_jsonl, sha256_file, sha256_
 TEMPLATES = ('ensemble-sufficiency-v1', 'ensemble-witness-v1', 'answer-slots-schema-v1', 'answer-slots-extract-v1')
 GROUPS = ('a', 'b')
 ARBITER = 'arb'
-NO_IMAGE_TEXT = '材料仅为附图，没有任何文本材料。'
+NO_IMAGE_TEXT = 'The material is only the attached image; there is no text material.'
 
 
 # ----------------------------------------------------------------------------- pure decision logic
@@ -200,14 +200,14 @@ def sufficiency_prompt(prompts, i, mod, knowledge):
 
 
 def reference_prompt(prompts, i, knowledge):
-    material = '<T>' + i['text'] + '</T>\n材料同时包含附图（见图）。'
+    material = '<T>' + i['text'] + '</T>\nThe material also contains an attached image (see the image).'
     return prompts.render('ensemble-sufficiency-v1', Q=i['question'], MATERIAL=material, KNOWLEDGE=knowledge)
 
 
 def witness_prompt(prompts, i, removed, knowledge):
     scenario = i['witness_text_removed'] if removed == 'T' else i['witness_image_removed']
-    fixed = ('原图（见附图，保持不变）。文本被移除，下面两份是假想的替换文本。' if removed == 'T' else
-             '原文本保持不变：<T>' + i['text'] + '</T>\n图像被移除，下面两份是对假想图像的文字描述（视作该图的实际内容）。')
+    fixed = ('The original image (see the attached image, unchanged). The text is removed; the two entries below are hypothetical replacement texts.' if removed == 'T' else
+             'The original text stays unchanged: <T>' + i['text'] + '</T>\nThe image is removed; the two entries below are textual descriptions of hypothetical images (treat them as the actual content of that image).')
     return prompts.render('ensemble-witness-v1', Q=i['question'], FIXED=fixed, KNOWLEDGE=knowledge,
                           SCENARIO_A=scenario['scenario_a'], SCENARIO_B=scenario['scenario_b'])
 

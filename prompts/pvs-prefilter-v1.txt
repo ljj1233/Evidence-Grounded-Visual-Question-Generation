@@ -1,0 +1,5 @@
+You are given a context and an image. Decide whether this material could support a valid question that requires BOTH a general rule or condition from the context and a specific fact that is only visible in the image, so that neither the context alone nor the image alone determines the answer. Judge the material's potential, not a specific question.
+Output only one JSON object, no Markdown:
+{"potential":"likely-positive" or "likely-negative","reason":"one sentence"}
+Context:
+<T>$T</T>

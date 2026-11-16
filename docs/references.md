@@ -1,63 +1,102 @@
-# 参考资料索引
+# Reference index
 
-本文只汇总项目文档里已经引用的外部文献和数据来源，以及项目自己的数学定义入口。称呼与链接取自原文，未增补标题或作者；原文位置标出，便于回查。
+This document collects the external literature cited by the project, the data sources, and the project's own entry point for mathematical definitions. Each reference is annotated with a reading depth, to help judge how far it can be cited; "full text read" means the method and key sections were read, "abstract" means only the abstract page was seen, "search snippet" means only a fragment of search results was seen.
 
-## 1. 数学定义与论证（项目自有）
+## 1. Mathematical definitions and argumentation (project-owned)
 
-全部在 [necessity_formal_argument.md](necessity_formal_argument.md)，不依赖外部文献。
+All in [necessity_formal_argument.md](necessity_formal_argument.md), not dependent on external literature.
 
-| 内容 | 位置 |
+| Content | Location |
 |---|---|
-| 记号、有效性 $V$、相容补全 $C_T,C_I$、假设 A1 | 第1节 |
-| 模态必要性 $D_T,D_I$（定义1）、二分（引理1）、双必要 $B$（定义2） | 第2节 |
-| 充分解法（定义3，命题1：充分解法 ⇒ $D=0$）、见证（命题2：见证 ⇒ $D=1$）、失败不传递（命题3） | 第3节 |
-| 答题器行为不是必要性证据（命题4） | 第4节 |
-| 缺失不等于必要、不变性（命题5）、题干提供的事实不能当见证变量（命题6） | 第5节 |
-| 最小答案要点与整合性（命题7、8） | 第6节 |
-| 三值汇总、两类核验错误的不对称（命题10）、多核验器合取（命题11）、固定分母下的界（命题12） | 第7节 |
-| 论证没有解决的事 | 第8节 |
-| 评估实现的三条操作约定：预设闭包、题干槽位定义答案等价、两组一致三取二；偶然不变性边界；两类报告口径 | 第9节 |
+| Notation, validity $V$, consistent completions $C_T,C_I$, assumption A1 | Section 1 |
+| Modality necessity $D_T,D_I$ (Definition 1), dichotomy (Lemma 1), double necessity $B$ (Definition 2) | Section 2 |
+| Sufficient solution (Definition 3, Proposition 1), witness (Proposition 2), failure does not propagate (Proposition 3) | Section 3 |
+| Answerer behavior is not evidence of necessity (Proposition 4) | Section 4 |
+| Absence is not necessity, invariance (Proposition 5), facts supplied by the stem cannot serve as witness variables (Proposition 6) | Section 5 |
+| Minimal answer points and integration (Propositions 7, 8) | Section 6 |
+| Three-valued summary, asymmetry of the two kinds of verification error (Proposition 10), conjunction of multiple verifiers (Proposition 11), bounds under a fixed denominator (Proposition 12) | Section 7 |
+| What the argument does not resolve | Section 8 |
+| Three operational conventions of the evaluation implementation: presupposed closure, stem slots defining answer equivalence, two-group agreement with two-out-of-three; incidental invariance boundary; the two reporting categories | Section 9 |
+| Information-theoretic formulation: residual uncertainty (Proposition 13), per-question and question-level PID (Proposition 14), evidential strength of answerer signals (Proposition 15) | Section 10 |
 
-评估规格与协议另见：[evaluation_protocol_v1.0.md](evaluation_protocol_v1.0.md)（已冻结，不修改）、[evaluation_design_v2_draft.md](evaluation_design_v2_draft.md)（设计草案，历史）。
+Evaluation definitions and implementation conventions follow [necessity_formal_argument.md](necessity_formal_argument.md) and [VQG_Proposal.md](../VQG_Proposal.md); the earlier `evaluation_protocol_v1.0.md` has been deleted together with the old experimental framework code.
 
-## 2. 论文
+## 2. Papers
 
-### 2.1 捷径学习与视觉依赖
+### 2.1 Shortcut learning and visual dependence
 
-| 文献（原文称呼） | 链接 | 原文位置 | 原文中的用法 |
+| Literature | Link | Cited in | Usage | Reading depth |
+|---|---|---|---|---|
+| Shortcut learning | <https://arxiv.org/abs/2004.07780> | Early narrative | The general problem of shortcut learning in machine learning | Carried over from the original text, not re-verified |
+| VQA v2 | <https://arxiv.org/abs/1612.00837> | Early narrative | Language priors can mask insufficient visual ability; complementary images are used to check the dependence of answers on visual content | Carried over from the original text, not re-verified |
+| Seeing or Knowing? Visual Context Sensitivity in Multimodal Large Language Models | <https://arxiv.org/abs/2607.26326> | VQG_Proposal.md section 7 | Distinguishes encoding of visual information from its reliable utilization | Carried over from the original text, not re-verified |
+| VideoQA visual dependence audit | <https://arxiv.org/abs/2606.30220> | Early narrative | Compares performance with and without visual input | Carried over from the original text, not re-verified |
+
+### 2.2 Generation evaluation
+
+| Literature | Link | Cited in | Usage | Reading depth |
+|---|---|---|---|---|
+| Research on practices for evaluating generated text | <https://arxiv.org/abs/2202.06935> | Early narrative | The mismatch between surface quality, proxy metrics and the actual goal | Carried over from the original text, not re-verified |
+| Evaluation of ConVQG | <https://arxiv.org/html/2402.12846v1> | Early narrative | QG evaluation commonly uses automatic text metrics together with human preference comparison | Carried over from the original text, not re-verified |
+| QGEval | arXiv 2406.05707 | To be used | Evaluates generated questions along seven dimensions, including answerability | Search snippet |
+
+### 2.3 Visual question generation (VQG)
+
+| Literature | Link | Difference from this study | Reading depth |
 |---|---|---|---|
-| 捷径学习 | <https://arxiv.org/abs/2004.07780> | story.md:50 | 引言从机器学习中的捷径学习共性问题出发 |
-| VQA v2 | <https://arxiv.org/abs/1612.00837> | story.md:50、story.md:102 | 语言先验能掩盖视觉能力不足；以互补图像检查答案对视觉内容的依赖，作为视觉依赖诊断的先例 |
-| Seeing or Knowing? Visual Context Sensitivity in Multimodal Large Language Models | <https://arxiv.org/abs/2607.26326> | VQG_Proposal.md:10、story.md:50 | 感知—利用差距：区分视觉信息的编码与可靠利用；本研究的直接动机 |
-| VideoQA视觉依赖审计 | <https://arxiv.org/abs/2606.30220> | story.md:102 | 比较有无视觉输入时的表现 |
+| Early VQG | <https://aclanthology.org/P16-1170/> | Studies natural question asking | Carried over from the original text, not re-verified |
+| IM-VQG | <https://arxiv.org/abs/1903.11207> | Maximizes the mutual information among image, expected answer and question; this study does not pre-specify the answer | Carried over from the original text, not re-verified |
+| ConVQG | <https://arxiv.org/abs/2402.12846> | Dual contrastive objective; this study grounds joint utilization in the information requirement of the answer | Carried over from the original text, not re-verified |
+| SynMQG | <https://shuangyinli.cn/publications.html> | Decoupling and mutual information optimization; this study organizes evaluation around answering necessity | Carried over from the original text, not re-verified |
 
-### 2.2 生成评测
+### 2.4 Multimodal QA pair generation (direct competitors)
 
-| 文献（原文称呼） | 链接 | 原文位置 | 原文中的用法 |
+| Literature | Link | What was read | Reading depth |
 |---|---|---|---|
-| 生成文本评价实践研究 | <https://arxiv.org/abs/2202.06935> | story.md:68 | 讨论表面质量、代理指标与实际目标之间的失配 |
-| ConVQG的评测 | <https://arxiv.org/html/2402.12846v1> | story.md:72 | QG评测常用自动文本指标并结合人工偏好比较，不直接检验答案需要哪些材料 |
+| SMMQG (Wu et al., Findings EMNLP 2024) | <https://aclanthology.org/2024.findings-emnlp.759/>; arXiv 2407.02233 | Necessity is requested by the generation prompt; the main text claims the verification requires "every source", while the verification prompt published in Appendix D has only two items, "the answer can be derived" and "the style conforms"; no pass rate for that verification is given; the human study measures source relevance rather than necessity; no public code found in search | Full text and appendix read |
+| FM2DS (Abaskohi et al., Findings EMNLP 2025) | <https://aclanthology.org/2025.findings-emnlp.383/>; code github.com/ServiceNow/FM2DS | Paper: discard if a single modality can answer; public code: judges "not multimodal" as soon as the returned string is non-empty, uses gpt-4o-mini, images enter the prompt as text placeholders; the reported rejection rate of 11.58% combines the multi-hop and multimodal checks; the paper itself states that in the zero-shot setting the model bypasses verification | Full text, appendix and public code read |
 
-### 2.3 视觉问题生成（VQG）
+### 2.5 Question-generation self-play using answerer behavior as a signal
 
-| 文献（原文称呼） | 链接 | 原文位置 | 与本文的区别（原文） |
+| Literature | Link | What was read | Reading depth |
 |---|---|---|---|
-| 早期VQG | <https://aclanthology.org/P16-1170/> | story.md:74 | 研究自然提问 |
-| IM-VQG | <https://arxiv.org/abs/1903.11207>；<https://openaccess.thecvf.com/content_CVPR_2019/html/Krishna_Information_Maximizing_Visual_Question_Generation_CVPR_2019_paper.html> | story.md:74、VQG_Proposal.md:394 | 最大化图像、预期答案与问题之间的互信息；本文不预指定答案 |
-| ConVQG | <https://arxiv.org/abs/2402.12846> | story.md:74、VQG_Proposal.md:395 | 双重对比目标促进图像扎根与文本引导；本文把联合利用落实到答案的信息需求 |
-| SynMQG | <https://shuangyinli.cn/publications.html> | story.md:74、VQG_Proposal.md:396 | 解耦与互信息优化的协同多模态问题生成；本文以作答必要性组织证据选择与评价 |
-| VisPlay（自博弈问答合成） | <https://arxiv.org/abs/2511.15661> | VQG_Proposal.md:397 | 出题与答题协同演化；本文不以一致性或难度作为产出判据 |
+| VisPlay (CVPR 2026) | <https://arxiv.org/abs/2511.15661> | Question reward is the uncertainty of the answerer's majority-vote confidence minus repetition; pseudo-labels are the answerer's own majority vote; no "requires image" check, quality is judged only by downstream accuracy | Full text read |
+| V-Zero | <https://arxiv.org/abs/2601.10094> | Four-way multiple choice; reward is whether the intuitive answer agrees with the majority vote; no modality dependency check | Full text read |
+| SPELL (ICLR 2026) | <https://arxiv.org/abs/2509.23863> | Three roles: questioner, answerer, verifier; Appendix F.6 records the questioner converging to trivial questions and the verifier's self-deception | Abstract and Appendix F.6 read |
+| RGX (Luo et al.) | <https://arxiv.org/abs/2103.07449> | Grouped by answering loss, using only low and medium loss; "rewarding only correct answers converges to a trivial local optimum" | Method excerpt read |
+| Self-Questioning Language Models | <https://arxiv.org/abs/2508.03682> | A single model's question-asking and question-solving loop without external data (text only) | Search snippet |
 
-## 3. 数据来源
+### 2.6 Measuring and diagnosing modality dependence
 
-| 数据 | 链接 | 原文位置 |
+| Literature | Link | What was read | Reading depth |
+|---|---|---|---|
+| Park et al., modality bias in video QA | <https://arxiv.org/abs/2408.12763> | MIS = the accuracy difference between with and without a modality; complementary questions account for 2.1% of TVQA, 2.4% of LifeQA, 0.6% of AVQA; humans did not find complementary questions; human–machine kappa about 0.3; only one MLLM used; the arXiv page does not list a venue | Full text read |
+| Multi-modal Data Spectrum (Madaan et al.) | <https://arxiv.org/abs/2509.23499> | Modality shuffling plus three-model majority voting; covers 23 benchmarks; on ScienceQA, question text alone is 17.5% above random | Method and results read |
+| M3IRT (Uebayashi et al., ICLR 2026) | <https://arxiv.org/abs/2603.02663> | Decomposes ability and difficulty into three components—image, text, cross-modal—fitted from the response records of 24 VLMs; multiple choice only; lists "question generation that controls cross-modal difficulty" as a future direction | Abstract and conclusion read |
+| Liang et al., information decomposition of multimodal interaction (NeurIPS 2023) | <https://arxiv.org/abs/2302.12247> | Uses PID to characterize the redundancy, uniqueness and synergy of a dataset, and proposes a scalable estimator | Abstract read |
+
+### 2.7 Information-theoretic tools
+
+| Literature | Link | Usage | Reading depth |
+|---|---|---|---|
+| Williams & Beer 2010, Nonnegative Decomposition of Multivariate Information | <https://arxiv.org/abs/1004.2515> | Partial information decomposition: decomposes the information that several sources carry about a target into redundant, unique and synergistic atoms | Abstract read; its $I_{\min}$ redundancy measure has drawn later criticism |
+| Bertschinger et al. 2014, Quantifying unique information (Entropy 16(4)) | <https://arxiv.org/abs/1311.2852> | Another measure of unique, shared and synergistic information based on marginal distributions | Abstract read |
+| Fano's inequality | Standard information-theoretic result | Relates the error probability to the conditional entropy (mathematical reference Proposition 15) | Textbook result |
+
+### 2.8 Full texts not yet read
+
+CaptionQA (blind-answering screening), VeriSciQA, MedVLSynther, MuMuQA, CRIT, See First, Answer Later (blind reader as reward). So far only search snippets or fragments have been seen; they are not used as prior conclusions.
+
+## 3. Data sources
+
+| Data | Link | Cited in |
 |---|---|---|
-| ScienceQA 官方数据说明 | <https://scienceqa.github.io/> | VQG_Proposal.md:247 |
-| ScienceQA 官方仓库（下载与字段） | <https://github.com/lupantech/ScienceQA#-download-the-dataset> | README.md、VQG_Proposal.md:256 |
-| MultiModalQA（AllenAI） | <https://github.com/allenai/multimodalqa> | README.md |
-| WebQA（WebQnA） | <https://github.com/WebQnA/WebQA> | README.md |
+| ScienceQA official data description | <https://scienceqa.github.io/> | VQG_Proposal.md section 4 |
+| ScienceQA official repository (download and fields) | <https://github.com/lupantech/ScienceQA#-download-the-dataset> | README.md, VQG_Proposal.md section 4 |
+| MultiModalQA (AllenAI) | <https://github.com/allenai/multimodalqa> | README.md |
+| WebQA (WebQnA) | <https://github.com/WebQnA/WebQA> | README.md |
 
-## 4. 说明
+## 4. Notes
 
-- 本文件不独立判断文献内容；改动原文引用时请同步这里。
-- 三个arXiv编号（2607.26326、2606.30220、2511.15661）和SynMQG主页链接沿用原文，本次整理没有联网逐条核对，投稿前应核对标题、作者与版本。
+- Entries marked "carried over from the original text, not re-verified" come from earlier documents; their titles and links were not checked one by one online, and titles, authors and versions should be verified before submission; the reading depth of the other entries is as above.
+- When changing a citation, please also update the relevant places in [story.md](../story.md) and [VQG_Proposal.md](../VQG_Proposal.md).

@@ -1,0 +1,7 @@
+You are given a context and an image. Answer two yes/no questions about the material.
+1. rule: Does the context state a general rule or condition that could be applied to a specific value?
+2. image_unique: Does the image contain a specific value, label, genotype, measurement, or appearance that is NOT written in the context?
+Output only one JSON object, no Markdown:
+{"rule":true or false,"image_unique":true or false,"reason":"one sentence"}
+Context:
+<T>$T</T>

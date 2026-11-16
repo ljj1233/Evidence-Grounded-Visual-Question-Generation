@@ -1,413 +1,268 @@
-# 研究主线：面向教育图文材料的证据锚定问题生成
+# Research Proposal: Modality Necessity in Image-Text Question-Answer Pair Generation
 
-**协议版本：** v3.0，2026-11-11。  
-**文档状态：** 研究提案；本轮修订研究叙事与学术表达，保留既定任务、指标定义和实验设计。
+> **Protocol version note (2026-11-13):** The numbers and conclusions in this document come from the old protocol (generation prompt `plain-v1`, Qwen3-VL-8B, transformers 4.57.6). Results for the new protocol `plain-v2` (fixed neutral English prompt, transformers 5.22.2) are written in `outputs/<run_id>/probe_report.md`; after final integration a "Probe" section will be added to this document without changing the existing definitions and numbers.
 
-教育图文问题生成的核心要求，是让文本知识与视觉证据共同参与求解。问题涉及图中对象、符合文本主题，说明它与材料相关；只有完整答案确实需要两种材料各自提供的信息，问题才能考察学习者的图文整合能力。因此，**模态相关性（modality relevance）与模态必要性（modality necessity）是两个不同的目标**。仅凭常识、文本或题干线索即可回答的问题，无法有效检验视觉证据的利用。
+ 
+## Abstract
 
-现有视觉问题生成通过答案引导、互信息优化和对比学习改善问题的信息量与图文一致性；自博弈问答合成进一步利用问题难度和答案一致性构造学习信号。这些进展为多模态出题奠定了基础，但信息相关、表征协同与答案一致，都不足以确立“移除任一模态后无法完整作答”这一性质。本文将研究目标推进到**作答层面的双模态必要性**，并将其同时落实为生成原则和评价对象。
+The goal of image-text question generation is to have text and image jointly participate in solving. A question being related to both text and image, and being answerable under the complete input, does not mean that both modalities are indispensable: a question whose answer can be determined from only one modality cannot examine joint reasoning.
 
-这一目标直接回应 [*Seeing or Knowing? Visual Context Sensitivity in Multimodal Large Language Models*](https://arxiv.org/abs/2607.26326) 揭示的**感知—利用差距（perception–utilization gap）**：模型保留了可恢复的粗粒度视觉信息，却不能可靠控制对视觉上下文与参数知识先验的依赖。其启示是，视觉信息的可获得性与实际利用必须分别考察。由此，本文提出面向问题生成的设计原则：让材料特异的文本信息与视觉信息成为求解同一问题的必要依据，使“利用证据”成为完成任务的实质要求。
+This study focuses on **answer-level modality necessity**: after removing the text or removing the image, is the question's answer still determined? The study has three parts:
 
-本研究据此提出一个**面向教育的通用证据锚定多模态问题生成框架**，包含两个相互支撑的核心贡献：一是“证据提取—跨模态配对—问题生成”的三阶段方法；二是结合独立答案核验、模态消融与双模态依赖率（BDR）的诊断评估协议。方法负责构造必要依赖，评估负责检验依赖是否成立。ScienceQA 是首轮验证载体，框架围绕通用的文本、图像与证据关系设计，适用于具有联合求解空间的多种教育图文材料。
+1. **Measurement.** Using answer identifiability as the criterion, give a checkable certification for each question, and report it separately from the four-condition answering behavior (BDR) of fixed questions.
+2. **Diagnosis.** Evaluate baseline-generated questions on 1,257 material groups from ScienceQA: among valid questions, about 93% need only one modality, and verified dual-necessary questions account for only about 1.5%.
+3. **Method.** A closed loop built from the task's own criterion: a local answerability gate selects candidates (reject when one side alone answers), a repaired local three-condition verifier certifies survivors, and the loop is licensed only where $s>\ell$, with $s$ and $\ell$ measured on a labelled pilot. Generation-side circuit intervention is measured to be inadmissible because the copied span is load-bearing. Details and evidence status: "Technical Route" in [story.md](story.md) and [docs/necessity_formal_argument.md](docs/necessity_formal_argument.md) §11.
 
-实施路线见 [实施方案](docs/implementation_plan.md)，工程状态见 [PROGRESS.md](PROGRESS.md)。现有开发诊断在相应章节单独标识，方法比较与预期贡献按研究计划表述。
+## 1. Task Definition and Scope
 
-## 1. 任务定义与适用范围
+### 1.1 Inputs and Outputs
 
-### 1.1 公共输入与输出
+Given text $T$ and a companion image $I$, generate a question:
 
-给定一组教育文本与配套图像，生成一道自然语言问题：
+$$Q=G(T,I),$$
 
-$$Q=G(T,I).$$
+An answer $a$ may also be generated at the same time. The judgment depends only on the answer to $Q$, so the study first examines $Q$; when $a$ is also generated, it is additionally required that $a$ be equivalent to an independently established reference answer.
 
-- **文本 T：** 教材背景、概念说明、实验规则或其他可独立使用的教育文本。
-- **图像 I：** 与文本配套的示意图、装置结构图、图表或实例图。
-- **外部输出 Q：** 一道问题；生成器不接收预先指定的答案，也不对外输出答案。
+- **Text T:** background explanation, rules, conditions, or other text that can be used independently.
+- **Image I:** a diagram, structural figure, chart, or example image accompanying the text.
+- **Output:** one question; the generator does not receive a pre-specified answer and does not obtain evaluation labels.
 
-所有生成方法接收相同的 T、I。完整方法在内部提取和配对证据，内部信息均来自这组材料；人工答案和测试证据标签不作为生成输入。各阶段的调用、候选与计算预算完整记录。
+All generation methods receive the same $T,I$. ScienceQA is the current empirical vehicle; the question definition depends only on "whether the text, image, and answer are determined", and is not tied to subject, image type, or dataset fields.
 
-框架以图文信息之间的求解关系为基础，不绑定某一学科、图像类型或数据集字段。首轮采用无需训练的单题生成设置，完成从生成到评估的最小闭环；多题生成、认知层级控制与训练保留为后续扩展。
+### 1.2 Properties of an Ideal Question
 
-### 1.2 理想问题的性质
+1. **Valid ($V$):** the intent is clear, references are clear, presuppositions hold, and the material supports a unique complete answer.
+2. **Text-necessary ($D_T$) and image-necessary ($D_I$):** after removing the corresponding modality, the answer is no longer determined. When all three hold simultaneously, it is recorded as dual-necessary $B$.
+3. **No stitching, no leakage:** the two kinds of information jointly serve the same reasoning goal; the question stem does not restate key information from the other modality, nor juxtapose two independent sub-questions.
 
-目标问题同时满足三个条件：
+"Necessary" means that after removing that modality the answer is no longer determined; "redundant" means that after removing it the answer is still determined. Reasonable overlap between the two modalities is allowed, as long as each still has information that the other cannot replace.
 
-1. **问题有效性：** 题意明确、指代清楚、预设成立，给定材料支持可核验的答案或评分要点。
-2. **双模态必要性：** 完整作答需要文本和图像各自提供的相关独有信息；任一模态缺失都会使必要求解信息不完整。
-3. **教育适配性：** 考察目标和学段要求明确，两种信息共同服务于同一推理目标。
+### 1.3 Answers and Evidence Are Part of the Evaluation Object
 
-这里的“独有信息”指相对于当前 Q 与另一模态仍不可替代的信息，允许图文之间存在合理重叠。联合推理要求两种证据在求解中发生联系，例如用文本规则解释图中读数、用背景约束判断视觉状态，或结合文本条件与图像结构得出结论。将两道独立子问题并列，或在题干中复述关键视觉事实，均不满足这一目标。
+After generation, the evaluation process independently establishes a reference answer, scoring points, and acceptable formulations for the current question, and binds them to the question. Answer establishment is separate from generation: an independent model provides candidates, which are then confirmed via rules, programmatic derivation, or review. The original ScienceQA answer is reused only when the new question is semantically consistent with the original question's answer.
 
-### 1.3 答案与证据属于评估对象
+## 2. Research Questions
 
-生成之后，评估流程依据当前问题建立参考答案：
-
-$$A_Q^*=\operatorname{Annotate}(T,I,Q).$$
-
-参考答案、可接受答案集合和评分要点均与实际 Q 绑定。ScienceQA 原答案仅在新问题与原题答案语义确认一致时复用；开放出题按新 Q 重新标注。
-
-答案建立与 QG 生成分离：独立模型提供候选答案，再通过规则、程序化推导或人工进行核验。证据记录保留文本片段、图像区域或读数，以及它们对答案的具体支持作用。生成阶段的证据轨迹用于审查方法行为，评估阶段独立核验答案与信息依赖。
-
-未来训练中的答案条件、辅助损失或奖励按相应设定另行设计；首轮保持训练与推理均无需预指定答案的任务接口。
-
-## 2. 研究问题与理论动机
-
-*Seeing or Knowing* 将“视觉证据是否被编码”与“模型是否依赖视觉证据”分开考察，为本研究提供了理论动机。本文进一步将这一划分引入问题生成：生成器不仅决定如何表述问题，也决定选择哪些事实作为求解依据。若所选目标能够绕过图像完成求解，即使问题与图像高度相关，也无法形成检验视觉利用的任务。
-
-由此得到本文的核心思路：**在生成阶段显式选择两种模态各自不可替代的证据，并围绕共同求解目标组织问题；在评估阶段固定问题、分别移除材料，检查这种依赖是否在作答中体现。** 三阶段方法与诊断协议共同回答以下研究问题。
-
-| 研究问题 | 对应设计 | 主要证据 |
+| Research question | Corresponding design | Main evidence |
 |---|---|---|
-| RQ1：默认生成与明确双模态提示产生的问题，在多大程度上需要两种材料？ | 普通提示与强提示生成，逐题模态消融 | BDR、有效问题率、四条件作答及必要性诊断 |
-| RQ2：显式证据锚定能否比仅陈述目标更有效地构造双模态必要性？ | 同基座、同材料下比较强提示与三阶段方法 | 配对指标差异、有效性与计算代价 |
-| RQ3：图像证据锚定对问题构造有何贡献？ | 保留原始图像输入，移除图像锚定组件 | 完整方法与核心消融的配对比较 |
-| RQ4：可识别的视觉事实是否在自主出题时得到利用？ | 同模型、同材料、同目标事实的辅助分析 | 直接识别与出题利用的对应关系 |
+| RQ1: Among baseline-generated questions, how many genuinely require both modalities? | One generation over all materials, evaluated per question | Dual-necessary proportion, direction of redundancy, valid rate |
+| RQ2: Can behavioral signals (correct or incorrect under a single modality, uncertainty) certify modality necessity? | Compare identifiability certification with four-condition answering | Agreement and divergence of the two types of evidence, spot-check error |
+| RQ3: What kind of question-posing or training signal can raise the dual-necessary proportion without exceeding the material evidence? | Candidate methods compared under the same base model and the same materials | Dual-necessary proportion, valid rate, cost |
+| RQ4: What structure do dual-necessary questions have? | Classify verified questions | Distribution of types and material templates |
 
-RQ1 提供诊断依据，RQ2 和 RQ3 检验方法设计，构成首轮主实验；RQ4 用于进一步解释感知—利用关系。研究的两项主线分别是**如何生成依赖双模态证据的问题**与**如何评价这种依赖**。
+RQ1, RQ2, and RQ4 already have preliminary results (Section 7); RQ3 belongs to the method stage and has not yet been experimented on.
 
-## 3. 主指标：两项主指标与一项辅助指标
+## 3. Metrics
 
-### 3.1 共同评估单位与四种条件
+### 3.1 Answer Identifiability
 
-每种方法对每组材料安排一次生成尝试，产生一个最终问题。N 为预先安排的尝试总数，全部输出、无效题、生成失败和技术失败均保留。技术重试次数与预算在运行前固定，模型拒答单独记录。
+Fix a question $q$ and common knowledge $K$. After removing the text, the retained input is $(q,i,K)$; if all text completions that are "compatible with $q$, the retained material, and $K$, and still uniquely answerable" yield the same answer, then $D_T=0$ (text redundant), otherwise $D_T=1$. $D_I$ is defined symmetrically. There are two types of evidence:
 
-对固定问题 Q，在四种相互隔离的条件下独立作答：
+- **Sufficient solution:** if a solution is given that satisfies well-grounded premises, valid derivation, and a complete conclusion, then the corresponding direction is redundant.
+- **Witness pair:** if two legal completions are given that make the answers different, then the corresponding direction is necessary.
 
-| 条件 | 答题器可见内容 | 诊断作用 |
-|---|---|---|
-| TI | Q + T + I | 检查完整材料下的作答表现 |
-| T | Q + T | 检查移除图像后的作答表现 |
-| I | Q + I | 检查移除文本后的作答表现 |
-| 0 | 仅 Q | 检查脱离材料的可回答程度 |
+Failing to find a sufficient solution does not imply necessity, and a rejected witness does not imply redundancy; the evaluator outputs 0 or 1 only when it has accepted evidence, and otherwise remains undecided. Definitions, propositions, and proofs are in the mathematical reference; its information-theoretic formulation (residual uncertainty and partial information decomposition) is in Section 10 of that document.
 
-四条件使用相同答题模型与作答规则，并保留同一道 Q。移除材料时同步移除其 caption、OCR、证据摘要及其他衍生信息；不同条件不共享对话历史、回答或推理记录。参考答案与证据标签不进入答题输入。
+### 3.2 Evaluation Unit and Fixed Denominator
 
-主任务采用开放问题与语义评分。若扩展到选择题，各条件保留相同选项，并单独检查选项泄露。
+Each method generates one question per material group. $N$ is the pre-arranged total number of attempts; all outputs, invalid questions, generation failures, and technical failures remain in the denominator. The number of technical retries and the budget are fixed before the run; model refusals are recorded separately.
 
-### 3.2 主指标一：有效问题率
+### 3.3 Reporting: Two Categories
 
-令 V_i∈{1,0,?}，分别表示已确认有效、已确认无效与未决。有效性依据题意、指代、预设、材料支持和评分范围判定。
+Reporting uses only two categories: **verified dual-necessary** and **the rest**. "The rest" does not mean that all are single-modality questions; it includes questions where a single modality already suffices to determine the answer, questions that are themselves invalid, and questions the evaluator has not yet adjudicated. The report lists these separately; undecided only means that the evaluator has not adjudicated, not a category of result.
 
-全部已裁定时：
+Under fixed $N$, let $n_1$ be confirmed dual-necessary and $n_\bot$ undecided; the true count $m$ satisfies
 
-$$\mathrm{ValidRate}=\frac{1}{N}\sum_i\mathbf{1}[V_i=1].$$
+$$
+n_1\le m\le n_1+n_\bot .
+$$
 
-存在未决项时，报告有效、无效与未决的数量和比例，并给出标注不确定性边界：
+This interval expresses the effect of undecided cases and is not a sampling confidence interval; when false admissions exist it also no longer guarantees coverage of $m$. An evaluator confirmation counts only after human or delegated review.
 
-$$[n_{\mathrm{valid}}/N,\ (n_{\mathrm{valid}}+n_{\mathrm{unresolved}})/N].$$
+### 3.4 Validity and Faithfulness
 
-该边界表达尚待裁定记录的影响，与抽样置信区间分开报告。全图文作答正确率作为答题表现单列；问题有效性由独立判据确定。
+Validity $V\in\{1,0,?\}$ denotes confirmed valid, confirmed invalid, and undecided, respectively. For the question as generated, three things are checked: whether the presuppositions are supported by the input; whether the actual text and image together with common knowledge suffice to support a complete answer; and whether the requested object and comparison scope are clear. A disproven false presupposition, missing conditions that determine the answer, or an unclear scope of what is asked are defects of the generated question, recorded as $V=0$ and retained in the denominator; reviewer technical failures, illegible materials, or unresolved evidence disagreement remain undecided.
 
-### 3.3 主指标二：基于模态消融的双模态依赖估计 BDR
+Faithfulness and topical relevance are recorded separately: a question may talk about objects in the input yet demand a conclusion that the input cannot determine. Reference answers are also verified separately; disagreement among model answers alone does not prove that a question is invalid. Invalid questions are not assigned modality necessity.
 
-双模态依赖率（Bimodal Dependency Rate, BDR）衡量完整图文条件下可正确作答、移除任一模态后均未正确作答的有效问题比例。对具有已核验评分依据的问题，令 C_i^m 表示条件 m 下的回答是否正确。逐题定义：
+### 3.5 Behavioral Proxy: Four-Condition Answering of Fixed Questions
 
-$$B_i=\mathbf{1}[V_i=1,\ C_i^{TI}=1,\ C_i^T=0,\ C_i^I=0],\qquad
-\widehat{\mathrm{BDR}}=\frac{1}{N}\sum_i B_i.$$
+To compare with behavioral signals, four-condition answering of fixed questions is retained:
 
-这一逐题交集对应“完整材料成功、任一单模态失败”的作答模式；三组总体准确率之差不能替代它。
-
-公式用于全部可裁定的记录。确认无效或未产生有效问题的尝试记 B_i=0。若 V、参考答案或有关条件评分未决，且其他已知条件不足以确定 B_i=0，则保留 B_i=?。报告确认通过比例、未决比例及相应边界：
-
-$$[n_{\mathrm{pass}}/N,\ (n_{\mathrm{pass}}+n_{\mathrm{unresolved}})/N].$$
-
-主表始终采用预安排尝试数 N。有效问题内部的条件 BDR 可另列，并明确其分母及有效问题率。BDR 提供统一的行为诊断读数，具体信息是否不可替代，由第4节的证据审核进一步检查。
-
-### 3.4 辅助指标：无材料作答正确率
-
-对有效、答案已核验且仅 Q 条件可评分的问题，计算无材料作答正确率，同时报告该分母及其占全部 N 的比例。
-
-这一指标直接回答“脱离材料后仍有多少问题能够被答对”，与 TI、T、I 条件共同定位材料依赖中的捷径。全文统一使用“无材料作答正确率”；历史名称“先验泄露率”不作为操作性定义。
-
-### 3.5 最新三阶段预实验的固定分母协议
-
-用户最新指令采用`three-phase-prompt-v1`，仅适用于新版运行，历史结果保留原协议。新版所有指标以预安排名额N为分母，包括无材料条件；§3.4的可评分子集分母仅供历史运行解释。
-
-新版四条件正确率为确认有效且该条件正确的数量/N，即逐题三值`K_i^m=V_i C_i^m`。无Q的失败在聚合中贡献0，原始作答仍标不适用；已有Q但技术失败、拒答或参考答案未核验时保持未决。BDR沿用§3.3公式与§4.4拒答政策，不添加无材料答错条件。五维人工通过率分别对应有效性、图文相关性、文本必要性、图像必要性和推理整合性，均除以N；相关性仅评内容匹配，不包含必要性要求。五类捷径采用可重叠标签，按“有效且该捷径确认存在”的数量/N汇总。所有通过比例并列未决数量及`[通过/N,(通过+未决)/N]`边界。
-
-新版工程分别保存自动、人工和最终裁定标签，不相互代填。两次盲独立模型求解及必要的语义核验只建立`verified_automatic`参考依据。用户最新明确委托Codex承担复核，审核来源记`user_delegated_ai`，可用于本次最终裁定与冻结，human字段不冒填；此证据不称独立人类金标准。已完成12题材料限定复核并冻结[评价协议v1.0](docs/evaluation_protocol_v1.0.md)，历史自动结果暴露及证据范围如实记录。
-
-本轮材料筛选先固定随机抽取60组未使用训练候选，保留全部准入判断。用户最新授权不足时沿原随机框与顺序补抽，条件保持不变。实际累计审132组，30通过、15待审、87排除，按原顺序纳入前30个完全通过项；全程不看本批生成结果。比较集合为普通、强指令、完整锚定、去图像锚定四种方法，共120个固定名额。阶段二先plain30再strong30；其余60名额保持pending。流程与冻结入口见实施方案第6节。
-
-## 4. 独立答案标注、校准与失败处理
-
-评估流程依次完成候选答案建立、答案与问题有效性核验、四条件作答及语义评分。各角色分别配置并记录身份与重用关系，参考答案与当前 Q 一一对应。
-
-### 4.1 预实验人工审查
-
-按既定设计，先用约30组材料运行普通提示、强提示与完整方法，得到约90道输出，逐题检查：
-
-- 问题有效性、答案正确性、可接受表述与必要评分要点；
-- 文本证据、视觉证据及其共同求解作用；
-- BDR 与信息必要性审核之间的误判和分歧；
-- 常识替代、题干泄露、图文信息重复与独立子问题拼接；
-- 自动评估对不同问题形式的判断差异。
-
-预实验用于明确评分规范和评估提示。规则冻结后，按原计划使用未参与调试的小批材料复核；已用于修改规则的材料保留在诊断分区。
-
-### 4.2 正式实验抽查
-
-正式实验按方法分层抽查约10%的问题，标注者不见方法名称，记录问题与材料 ID。若为覆盖不同判定类别采用不等概率抽样，按层报告并使用对应权重汇总。
-
-抽查分别统计参考答案错误、有效性误判、BDR 假阳性与假阴性，以及未决记录；报告实际核验数量与一致比例。自动方法差异、配对统计区间和抽查误差共同呈现，使读者能够判断收益及其评估可靠性。
-
-### 4.3 失败不应被筛掉
-
-失败记录沿其发生环节分类处理：
-
-- **评估记录错误：** 修复可核实的标注或解析错误；无法核实时保留未决状态。
-- **问题缺陷：** 无答案、歧义、错误预设或材料矛盾计入相应生成失败或无效类别。
-- **技术故障：** 按预定政策有限重试，保留调用与失败原因。
-- **候选筛选或拒答：** 记录全部候选、选择轨迹、成功率及额外成本。
-
-所有预安排尝试留在固定分母中，保留原始结果及修订来源。
-
-### 4.4 问题与答案的操作判据
-
-本节细化 v3.0 的既定定义，分别判定材料适用性、问题质量、参考答案可信度与实际回答正确性。
-
-**忠实性诊断。** 对原样生成的Q核对三项：预设是否得到输入支持、实际图文与固定共同知识K是否足以支持完整答案、所求对象与比较范围是否明确。每项记录通过/不通过/未决及原文引文或图中位置。已证明的错误预设、缺少决定答案的条件、所求范围不清，属于生成问题缺陷，令有效性V=0，保留在固定分母；不再仅因没有可靠参考答案而一概记为未决。评审技术失败、材料不可辨读或证据分歧尚未解决，仍保留未决。此诊断落实既有V判据，不新增主指标或改变必要性定义。
-
-忠实性与主题相关性分别记录：题目可以谈论输入中的对象，却要求输入无法确定的结论。参考答案也单独核验；错误的候选参考或模型间答案不一致，本身不能证明Q无效。等价表述或题目允许的多个可行答案不构成忠实性失败。无效Q不赋文本/图像必要性；有效但必要性证据不足的Q仍保持该方向未决。派生复评使用独立run_id并保留旧结果，不覆盖原始回答，也不把原始拒答统一改记答错。
-
-**结果分开呈现。** 先报告固定全部生成名额中“可回答且文本和图像都必要”的确认数量，再分别展示两张诊断表：可回答性/忠实性，以及可回答题的双模态必要性。前者未决表示尚不能判定材料是否支持答案，后者未决表示答案已有依据但必要性证据尚未裁定，不能混称为不可回答。逐题分列文本必要、图像必要和目标验收；实际解题器回答正确性与BDR另列，不拿答题成功替代信息必要性。此处只规定展示顺序，不更改既有判据和指标公式。
-
-**参考答案核验。** 核验者读取实际 T、I 和当前 Q，确定答案、必要评分要点、可接受改写、等价单位及证据位置，检查数值、比较方向、限定条件与答案范围。题目只问结果时按结果评分；明确要求理由时覆盖必要解释。记录自动、程序或人工核验的来源，未核验的参考答案对应的回答保持未决。
-
-**问题分类。** 每项检查采用通过、不通过或未决，并保留证据。
-
-| 分类 | 操作判据 |
+| Condition | Content visible to the answerer |
 |---|---|
-| 符合双模态目标的问题 | 问题有效，答案经核验；T 与 I 各提供不可替代的必要信息，共同服务同一推理目标，并符合教育要求 |
-| 有效但未满足双模态目标的问题 | 能够明确作答，但可由单模态、题干线索或常识完成，或由两个独立子问题拼接而成 |
-| 无效问题 | 已确认题意或指代不明、预设错误、与材料矛盾，或所求答案超出材料支持范围 |
-| 待审问题 | 图像不可辨读、参考答案未核验、必要性证据不足，或核验分歧尚未解决 |
+| TI | $Q+T+I$ |
+| T | $Q+T$ |
+| I | $Q+I$ |
+| 0 | Only $Q$ |
 
-必要性审核分别说明：移除 T 后缺少哪条必要信息，其为何不能由 Q、I 或常识恢复；移除 I 后缺少哪个读数、标签、状态或关系，其为何不能由 Q、T 或常识恢复。审核定位具体证据及其参与的求解步骤。必要时以缺失信息的不同合理取值说明答案如何变化，无需为每题制作反事实图。
+The four conditions use the same answering model and answering rules; when material is removed, its caption, OCR, evidence summary, and other derived information are removed together, and different conditions do not share history. The per-question dual-modality dependence rate is defined as
 
-四条件作答与信息审核并列保留。`TI正确、T错误、I错误` 对应 BDR 通过；仅 Q 也答对时标记并审查相关捷径，仍沿用原公式，不新增 `C^0=0` 条件。
+$$
+B_i^{\mathrm{BDR}}=\mathbf 1[V_i=1,\ C_i^{TI}=1,\ C_i^T=0,\ C_i^I=0],\qquad \widehat{\mathrm{BDR}}=\frac1N\sum_iB_i^{\mathrm{BDR}} .
+$$
 
-**回答正确性。** 以已核验的参考答案和 Q 的实际要求为依据，采用三值判定。
+BDR is a behavioral proxy under a specific answerer and scoring protocol and **does not replace** $D_T,D_I$: a wrong single-modality answer may come from insufficient capability, a correct full image-text answer may come from guessing, and refusals are recorded as undecided in the protocol, so a genuinely dual-necessary question may appear as "undecided". The no-material answering accuracy is listed separately as an auxiliary reading to locate common-sense shortcuts and does not enter the BDR formula.
 
-| 判定 | 执行口径 |
+### 3.6 Correctness of Answers
+
+Based on the verified reference answer and the actual requirements of the question, a three-valued judgment:
+
+| Judgment | Criterion |
 |---|---|
-| 正确 | 覆盖全部必要要点，允许语义改写与等价单位，且无实质错误或矛盾 |
-| 错误或不完整 | 关键结果、单位、关系或方向错误，遗漏明确要求的要点，或附带理由与材料实质矛盾 |
-| 未决 | 参考答案、评分范围、返回内容或技术状态不足以支持可靠判定，保留 `correct=null` |
+| Correct | Covers all necessary points, semantic paraphrase and equivalent units allowed, no substantive error or contradiction |
+| Wrong or incomplete | Key result, unit, relation, or direction wrong, missing points explicitly required, or accompanying reasoning substantively contradicts the material |
+| Undecided | Reference answer, scoring scope, returned content, or technical state insufficient to support a reliable judgment; recorded as `correct=null` |
 
-现有协议不设部分分数；材料缺失条件下的拒答沿用未决状态。任何拒答政策调整单独版本化，不回写既有结果。
+There is no partial credit; refusals under missing-material conditions follow undecided. Answer correctness and question necessity are viewed separately; the performance of the actual solver does not replace the information-level judgment.
 
-小样本检查覆盖联合求解、仅图可答、仅文可答、题干泄露、错误预设和参考答案缺失等问题，以及等价改写、等价单位、错误结果、错误解释和遗漏要点等回答。预期标签在评估前写明来源，AI 起草与人工确认分别记录，对照材料归入诊断分区。
+### 3.7 Answer Equivalence and Evidence Acceptance
 
-### 4.5 当前可执行的质量诊断指标
+- **Presupposition closure:** a legal completion must satisfy the presuppositions entailed by the question (including implicit presuppositions such as "the exchange or option asked about is indeed feasible").
+- **Answer equivalence:** determined by a "slot pattern" generated only from the question, each slot containing exactly one value; equivalence holds only when all slots are identical after normalization, and missing values or inconsistent extraction are recorded as undecided. Granularity is determined by what is asked, without using domain lexicons.
+- **Evidence acceptance:** two model groups each propose and recompute evidence, and it is accepted only when the two groups agree; when they disagree or one is undecided, a third model group arbitrates, best of three, and if there is still no majority it is recorded as undecided.
 
-`quality-diagnostic-v1` 在未经修改的真实 ScienceQA `hint+image` 上执行以下分层检查，与第3节主指标配套使用。
+The basis and boundaries of these three (e.g., incidental invariance) are in Section 9 of the mathematical reference.
 
-| 项目 | 定义与证据 |
-|---|---|
-| 有效性 V | 问题清楚、预设成立、材料支持答案 |
-| 参考答案核验 R | 当前 Q 的答案、评分范围和支持证据已核验，并记录核验来源 |
-| 文本必要性 D_T | 移除 T 后具体缺失不可替代的求解信息 |
-| 图像必要性 D_I | 移除 I 后具体缺失不可替代的视觉信息 |
-| 推理整合性 S | 两种信息共同完成同一推理目标 |
-| 教育适配性 E | 考察目标明确，符合相应教育要求 |
+### 3.8 Review Source and Spot Checks
 
-判定顺序固定：V 无效则归为无效；V 未决或 R 未通过核验则待审；V 有效且 R 通过后，D_T、D_I、S、E 中任一项明确不通过，归为有效但未满足目标；全部通过，标记为自动判定符合目标；其余待审。各项允许 null，并保留解释。
+Review is performed by AI delegated by the researcher, and the source is truthfully recorded as `user_delegated_ai`, not written as human annotation, and human labels are not automatically filled in; the automatic, human, and final adjudication label sets are stored separately and are not substituted for one another. This review can be used for process freezing and result organization, but it is not an independent human gold standard, nor a human agreement validation.
 
-报告采用全部 N 分母，展示各类别数量、未决情况、与事前标签的逐类混淆表、误收情况、回答对照一致数，以及四条件覆盖率、拒答、技术失败和原定义 BDR。
+For the formal experiment, about 10% of questions are spot-checked, stratified by method, with annotators blind to method names; reference-answer errors, validity misjudgments, false positives and false negatives of dual necessity, and undecided records are counted separately. Failure records are classified by the stage in which they occur: evaluation record errors (fixed if repairable, retained as undecided if unverifiable), question defects (counted as invalid), technical faults (limited retries under the pre-set policy), candidate filtering and refusals (all candidates and costs recorded). All pre-arranged attempts remain in the fixed denominator.
 
-**已有开发诊断。** `outputs/scienceqa-quality-diagnostic/` 的12道问题中，仅检查 V 接受9题；加入 D_T、D_I 后保留3题；再检查推理整合性等条件后保留2题。被排除的 c11 同时问文本中的国家与图中食物链的中间生物，展示了“两种模态分别必需”与“共同完成一个推理目标”的区别。分类与事前 AI 标签12/12一致，回答边界对照6/6一致，标签来源均保留为 AI。
+## 4. Data
 
-c01、c05 两道自动判定符合目标的问题与 c11 拼接题的 BDR 均未决，原因是完整图文作答正确、单模态拒答按当前协议记未决。这些记录用于解释分层审核与行为指标的互补作用，正式主指标继续沿用第3节定义。
+### 4.1 ScienceQA Material Subset
 
-### 4.6 可迁移流程的存活率与改写率
+The first round uses image-text materials from ScienceQA. Official statistics are 21,208 questions, of which 10,332 contain images and 6,532 contain both image and text context ([official data description](https://scienceqa.github.io/)). Text source policy:
 
-`portable-refinement-v1` 支持原 Q 导入或生成、检查表诊断、一次有界改写与复核。每组标准化材料预安排一道原题，计划在调用前固定，全部失败、未决与无候选项保留。
+- **`hint`:** the context used preferentially by default.
+- **`lecture`:** if used as background text, marked separately as an extended-input setting, and repetition of visual facts is reviewed.
+- **`solution`:** not used as default input, retained in the raw data.
+- **Original question:** only independently usable background explanations are extracted; importing the full original question belongs to the existing-question revision setting and is recorded separately from autonomous question posing.
 
-设 N 为计划材料数，I 为原题自动通过数，S 为最终自动通过数，A 为触发改写数，C 为候选可解析且文本实际改变的题数，R 为改写后通过且文本确实改变的题数。
+Field basis is in the [ScienceQA official repository](https://github.com/lupantech/ScienceQA#-download-the-dataset). The current baseline uses the 1,257 material groups in the official test split that contain a hint and an image, without filtering by joint solution space or output quality.
 
-| 工程指标 | 定义 | 配套记录 |
+### 4.2 Material Admission Rules (Used in Method Comparison Experiments)
+
+The material admission check looks for a natural joint solution space: text and image each contain at least one relevant piece of unique information, and together they can support a verifiable conclusion; text and image may partially overlap, but the key is that the required information is irreplaceable.
+
+| Check item | Admission criterion | Exclusion or pending cases |
 |---|---|---|
-| 改前自动存活率 | I/N | 原题生成或导入数量及失败 |
-| 最终自动存活率 | S/N | 未决、未通过与无候选数量 |
-| 改写触发率 | A/N | 缺陷依据及触发原因 |
-| 实际文本改写率 | C/N | 规范化前后的 Q 文本 |
-| 触发项改写成功率 | R/A | A=0 时未定义 |
-| 改写带来的自动产出 | R/N | 原未通过项与原未决项分别统计 |
+| Source and readability | Source, split, text field, and image hash are traceable; text and image are complete and legible | Image missing or corrupted, key axes, legends, or units unreadable |
+| Text has substantive role | Background, rules, constraints, or relations necessary for the joint goal can be located | Only "see figure", object names, or duplicated captions |
+| Image has unique information | Readings, states, structures, or spatial relations not fully restated in the text can be located | Decorative images, key visual facts all written into the text |
+| Joint solution goal | Text rules or background together with visual facts derive a conclusion | Only independent questions can be stitched together, or extra rules must be fabricated |
+| No answer leakage in input | Generation input contains only the specified text and image; text source policy is consistent | Mixing in the original answer, solution, candidate labels, or evaluation evidence |
+| Split and source isolation | Duplication of images, sources, and templates is recorded; debug materials are isolated from formal tests | Shared sources used across rule debugging and formal evaluation |
 
-文本比较规范化 Unicode 与空白，并保留科学符号大小写。自动通过要求检查者与审核者对有效性、双模态必要性、整合性、教育适配性和无泄露均通过，且当前 Q 的参考答案通过核验；冲突与未解决缺陷保留待审。
+Materials passing all checks enter the pilot; explicit failures retain their exclusion reason; unknown items remain pending. Material screening is completed before method runs, and the rules are identical for all methods; the pilot has about 30 groups, and the formal experiment targets about 300 independent material groups.
 
-原题通过则保留；明确未通过，或两轮检查共同指出同一受限修复代码时，最多改写一次；其余未决留审。反馈仅包含结构化检查项、受限缺陷代码和固定建议，候选答案、评分要点与检查者自由推理不进入改写输入。原样返回、拒绝改写、解析失败与技术故障分别记录。
+### 4.3 Illustrative Example (Synthetic)
 
-**已有开发运行。** 固定30组材料的结果为 I=7、S=14、A=20、C=15、R=7；最终另有6未决、7未通过、3无合规候选。最终自动存活率46.7%，实际文本改写率50.0%，触发项改写成功率35.0%。未决包括1次超时、4次输出未完成和1项有效性分歧。原始记录、自动判断及 AI 抽查意见保存在 `outputs/portable-refine-30/`。这些工程指标与 BDR、有效问题率分别报告。
+- **Text:** This experiment lists temperatures whose activity is no lower than 75% of the highest measurement in this run as candidate operating temperatures, then selects the lowest temperature among the candidates.
+- **Image content:** In the bar chart, 20, 30, 40, and 50°C correspond to activities 22, 47, 61, and 29.
+- **Question:** According to the screening rule of this experiment, which test temperature should be chosen for the run?
+- **Answer:** 30°C. The threshold is 61×75%=45.75; 30°C and 40°C qualify, and the lower one is chosen.
 
-## 5. 数据方案：ScienceQA 教育图文材料子集
+The text gives a decision rule specific to this experiment, and the image gives unique measurement data; together they determine the answer, and removing either modality makes the answer unobtainable. The 75% is a self-authored rule, and the image content is an illustrative description; this example is a synthetic illustration and is not counted in real-data results.
 
-首轮使用 ScienceQA 的教育图文材料验证通用框架。其官方统计为21,208道问题，其中10,332道包含图像，6,532道同时包含图像和文本上下文。[ScienceQA 官方数据说明](https://scienceqa.github.io/)
+### 4.4 Sampled Diagnosis of Material Yield
 
-材料构造明确记录文本来源：
+From the training split `hint+image` candidates, 30 groups were sampled by simple random sampling without replacement (seed 20261111). Each group underwent one joint-question witness search and one challenge review: the model's two-round results were 15 passed, 6 failed, 9 undecided; a subsequent AI per-image review tentatively gave 5 passed, 18 failed, 7 pending, and both sets of records are retained. Scaling by 5/30, the point estimate for training candidates is about 657 groups, and the Wilson sampling interval scales to about 289–1,324 groups; if all pending cases pass, the point estimate is about 1,578 groups. This interval describes sampling fluctuation and does not correct automatic misjudgments; val/test have not yet been sampled. Records are in `outputs/scienceqa-screen-30/`.
 
-- **`hint`：** 默认优先检查的上下文。
-- **`lecture`：** 若作为背景文本，单独标记扩展输入设定并审核视觉事实重复。
-- **`solution`：** 不作为默认输入，保留在原始数据中。
-- **原题：** 仅提取可独立使用的背景说明；完整原题导入属于已有问题修订设定，与自主出题分别记录。
+## 5. Methods and Comparison
 
-字段依据见 [ScienceQA 官方仓库](https://github.com/lupantech/ScienceQA#-download-the-dataset)。文本来源政策在预实验中确定并在正式评估前冻结；图像类型和学科作为材料属性记录。
+**The route below is the one the evidence supports; the earlier candidates are kept as comparison objects.** The method is a loop whose filter is the definition made executable: the answerer sees the full material and each single side separately (plus a blind condition), and a candidate is rejected when one side alone answers. The filter's usefulness on a corpus is decidable from two measured rates ($s>\ell$), and its recall is capped by the answerer's composition accuracy, which is repairable at the answering interface (per-item comparison: 0.517 → 1.000 accuracy, verifier recall 0.483 → 0.983). Generation-side circuit intervention was tested and is inadmissible (the copy is load-bearing). Details, numbers and non-claims are in "Technical Route" in [story.md](story.md).
 
-### 5.1 筛选规则
+### 5.1 Early Vision: Three-Stage Evidence Anchoring
 
-材料准入检查寻找自然的联合求解空间：T 与 I 各包含至少一项相关独有信息，两者能共同支持一个可核验的结论。图文可以部分重叠，筛选重点是所需信息的不可替代性。
+The three-stage method operationalizes necessity as an explicit question construction process:
 
-预实验计划约30组，正式实验以约300组独立材料为初始目标。候选池、纳入与排除原因、待审项及素材类别完整记录。正式测试优先来自官方测试分区，预实验使用非测试材料，按共享图像、来源与模板检查分区重叠。
+1. **Evidence extraction:** extract rules, conditions, and relations from the text, and readings, states, structures, or spatial relations from the image, saving source locations.
+2. **Cross-modal evidence pairing:** select text and image evidence that jointly support one solution goal, and check their unique roles, redundancy, common-sense substitution, and reasoning connection; pairing targets solution relations such as "how a text rule acts on a visual fact", not topical similarity.
+3. **Evidence-anchored question generation:** generate one question around the selected evidence and its solution relation; the stem retains necessary references and avoids directly writing out the required visual reading or replacing integration with two independent sub-questions.
 
-| 检查项 | 准入依据 | 排除或待审情形 |
+Internal evidence, the final question, and failure trajectories are traceable; the external output is only the question.
+
+### 5.2 Minimal Comparison Set
+
+| Condition | Design | Question answered |
 |---|---|---|
-| 来源与可读性 | 来源、分区、文本字段与图像哈希可追溯，图文完整可辨 | 图像缺失、损坏，关键轴、图例或单位不可读 |
-| 文本有实质作用 | 可定位对联合目标必要的背景、规则、约束或关系 | 仅“见图”、对象名或重复图注 |
-| 图像有独有信息 | 可定位文本未完整复述的读数、状态、结构或空间关系 | 装饰图、关键视觉事实全部写入 T |
-| 共同求解目标 | 文本规则或背景与视觉事实共同导出结论 | 只能拼接独立问题，或需额外编造规则 |
-| 输入无答案泄露 | 生成输入仅含既定 T、I，文本来源政策一致 | 混入原答案、solution、候选标签或评估证据 |
-| 分区与来源隔离 | 图像、来源与模板重复有记录，调试材料与正式测试隔离 | 共享来源跨用于规则调试与正式评估 |
+| Plain zero-shot | Pose questions directly from T, I | What modality dependence do default-generated questions have |
+| Strong prompt | Explicitly require that missing either modality prevents a complete answer | How much necessary dependence can be achieved by merely stating the goal |
+| Full evidence anchoring | Execute the three stages | What gains and costs explicit construction brings |
+| Remove image anchoring | Keep the original T, I and remove the explicit image-evidence anchoring step | What contribution the image-anchoring component makes |
 
-全部通过的材料进入预实验，明确不通过项保留排除原因，未知项保持待审。非空 `hint+image` 用于发现候选。筛选中的内部见证问题与答案仅供核验联合空间，不传给生成方法；扩展文本或改编材料显式标记。
+The pilot first runs the first three conditions, and the formal experiment adds the core ablation. All methods share the base model, materials, final question count, and technical retry policy; call counts, tokens, time, and candidate counts at each stage are all reported. When the self-play method enters the comparison, it is likewise added under the same base model, the same materials, and the same budget.
 
-材料筛选在方法运行之前完成，规则对所有方法一致。生成后的分类用于分析和题库导出，主指标仍保留全部预安排尝试。图像可编辑性仅用于后续辅助反事实子集。
+### 5.3 Decoding and Statistics
 
-### 5.2 说明性案例：自拟材料与求解关系
+The main local-model experiment uses the greedy setting `do_sample=False, num_beams=1`, recording model version, seed, prompt, preprocessing, and environment. The API uses the most deterministic configuration it supports, with actual parameters recorded. Comparisons are paired on the same materials, bootstrap resamples by material or shared-source cluster, all methods use the same index, and metric differences with intervals are reported. The formal scale targets about 300 independent material groups initially; sample size and expansion policy are determined from the pilot before the formal run.
 
-- **文本：** 本实验将活性不低于本次最高测量值75%的温度列为候选运行温度，再选择候选中的最低温度。
-- **图像内容：** 柱状图中20、30、40、50℃对应活性22、47、61、29。
-- **问题：** 按照本实验的筛选规则，应选择哪个测试温度运行？
-- **答案：** 30℃。阈值为61×75%=45.75，30℃和40℃符合条件，选择较低者。
+### 5.4 Checklist-Based Bounded Question Revision (Transferable Prototype)
 
-文本给出本实验特定的决策规则，图像给出独有测量数据，两者共同决定答案。移除文本，无法确定选择规则；移除图像，无法确定最高值与达标温度。这一案例说明从“涉及图文”到“依赖图文”的设计区别。
+Bounded revision applies the necessity criterion to improve existing questions: diagnose the gap, make one targeted rewrite, re-check under the same criterion, and verify the answer separately. Materials are fixed, the rewriter outputs only the question, and the reference answer and scoring points are not used as rewriting input. The checklist covers question intent and presuppositions, answer support, necessity in both directions, reasoning integration, stem leakage, the actual information dependence of the requested quantity, and the definition of quantities and units. Revision is organized around solution relations, e.g., changing from comparing temperature differences to computing the average cooling rate so that the duration in the text truly participates in the computation; merely adding phrasing such as "according to the text" does not constitute a necessity fix. When no question meeting the target can be obtained under the original materials, the unrepaired state and the denominator are retained.
 
-75%为自拟规则，并非通用酶学标准；图像内容为示意描述。本例标记为合成说明，不计入真实数据结果。
+Development run (30 training materials, records in `outputs/portable-refine-30/`): 7 questions survived automatically before rewriting, 14 in the end (46.7%), 20 triggered rewriting, and 7 rewrites succeeded (35.0% success among triggered items); in addition, 6 were undecided, 7 failed, and 3 had no compliant candidate. These are engineering metrics, reported separately from the dual-necessary proportion, and do not represent a human gold standard or a formal method improvement.
 
-### 5.3 材料产出率的随机抽样诊断
+## 6. Current Results
 
-`material-yield-screen-v1` 从训练分区 `hint+image` 候选中简单随机、不放回抽样，预先固定种子与样本量。每组进行一次联合问题见证搜索与一次质疑审核；两轮均通过记自动通过，均不通过记自动未通过，分歧或技术失败记未决。所有抽样材料保留在分母。
-
-报告通过、未通过、未决、学科组成、样本内图像重复及复核来源。设自动或复核通过数为 a、未决数为 u、样本量为 n，分别报告 a/n 与 (a+u)/n，表示不同待审结果下的产出情景。抽样波动使用近似95% [Wilson 区间](https://itl.nist.gov/div898/handbook/prc/section2/prc241.htm) 表达，与待审情景分开；当前抽样比例约0.76%，未作有限总体修正。
-
-**已有抽样诊断。** 30组材料的种子为20261111。模型两轮结果为15通过、6未通过、9未决；后续 Codex 逐图复核暂定5通过、18未通过、7待审，两套记录均保留。按5/30折算，训练候选点估计约657组，Wilson 抽样区间折算约289–1,324组；待审全部通过时，点估计约1,578组。val/test 尚未抽样。完整证据位于 `outputs/scienceqa-screen-30/`。
-
-该诊断用于估计材料获取与审核预算，生成方法的实际产出通过独立运行统计。
-
-## 6. 方法与公平比较
-
-### 6.1 三阶段证据锚定
-
-三阶段方法将双模态必要性转化为显式的问题构造过程，依次解决“有哪些可用证据”“哪些证据必须联合使用”与“如何围绕联合证据提出问题”。
-
-1. **证据提取（Evidence Extraction）。** 分别提取文本中的规则、条件、关系和背景信息，以及图像中的读数、状态、结构或空间关系，保存来源位置。此阶段将可感知信息组织为后续可选择的证据。
-2. **跨模态证据配对（Cross-modal Evidence Pairing）。** 选择共同支持一个求解目标的文本与图像证据，检查二者的独有作用、冗余、常识替代及推理联系。配对面向“文本规则如何作用于视觉事实”等求解关系，而非仅按主题相似度关联。
-3. **证据锚定问题生成（Evidence-anchored Question Generation）。** 围绕所选证据及其求解关系生成一道 Q，使文本条件和视觉事实在完整作答中均有实质作用。题干保留必要指代，避免直接写出所需视觉读数或用两个独立子问题代替整合。
-
-这三个阶段分别衔接感知、证据选择与问题构造，使视觉信息从“输入中存在”进入“答案的求解依据”。与直接要求“结合图文”的提示相比，方法显式组织两种信息的互补作用；第3、4节则独立检验生成结果是否实现目标。内部证据、最终问题和失败轨迹均可追溯，外部输出保持仅 Q。
-
-### 6.2 最小比较集合
-
-| 条件 | 设计 | 回答的问题 |
+| Content | Result | Source |
 |---|---|---|
-| 普通零样本 QG | 基于 T、I 直接出题 | 默认生成的问题具有怎样的材料依赖？ |
-| 强提示 QG | 明确要求缺少任一模态均不能完整作答 | 仅陈述目标能实现多少必要依赖？ |
-| 完整证据锚定 | 执行证据提取、跨模态配对和问题生成 | 显式构造过程带来怎样的收益与代价？ |
-| 去掉图像锚定的完整方法 | 保留原始 T、I，移除显式图像证据锚定环节 | 图像锚定组件有何贡献？ |
+| Qwen3-VL-8B baseline, all 1,257 groups | Valid 962; of which single modality already suffices to determine the answer 896 (93%); verified dual-necessary lower bound 19 (1.5%); invalid 268, pending adjudication 27 | `outputs/qwen3vl8b-necessity-v2/probe_report.md` |
+| luna baseline (test reference), all 1,257 groups | Answerable 1100, single-modality sufficient 976; verified dual-necessary about 23 (1.8%); original evaluator automatically tentative 64 | `outputs/necessity-v3-full-v1/probe_report.md` |
+| Spot check of single-modality screening | 40/40 indeed have at least one redundant modality (Wilson 95% lower bound about 0.912); accordingly, redundancy accounts for at least about 84.8% of valid questions, and dual necessity for at most about 11.6% (relative to $N$) | Same as above, Section 6 |
+| Direction of redundancy | Text redundant at least 630, image redundant at least 565 (evaluator screening judgment, directions not checked one by one) | Same as above |
+| Structure of verified dual-necessary questions | Of the 19 questions, 14 are grid questions and 5 are yes/no exchange questions | `audit.jsonl` |
+| Evaluator error | Of 28 automatically confirmed questions, 19 remained after review; incidental invariance 6, false admission 3; another 5 yes/no questions of the same type were not confirmed, judged by question type as likely missed but images not inspected | Same as above |
+| Cost | Qwen generation and answering done locally; evaluation about 3,823 API calls, about 4.73 million tokens; about one third of the luna batch evaluation cost | Same as above |
 
-预实验先运行前三种条件，正式实验加入核心消融。各方法共享基座、材料、最终题目数与技术重试政策。消融改变生成机制，原始图像输入保持一致；评价端的模态消融则固定 Q、改变答题器可见材料，两者职责明确。
+The 12 controlled comparisons and 30 material screens during development served to expose evaluation blind spots and calibrate boundaries; label agreement rates do not represent formal results.
 
-各阶段调用数、token、耗时、候选数及可获得费用均报告。强提示与完整方法共享双模态必要性目标，比较重点是显式证据构造相对于目标提示的增益及计算代价。候选筛选与重生成若进入运行，按显式配置和预算记录。
+## 7. Discussion and Limitations
 
-### 6.3 解码与统计
+**Necessity and proxy metrics.** Dual-modality necessity is a property of the question's information requirements, while BDR is a behavioral proxy under a specific answerer and scoring protocol. A wrong single-modality answer can be affected by capability, a correct full image-text answer can be affected by guessing, and both modalities being separately necessary does not rule out stitching independent questions. Answering correctly with only $Q$ can come from common sense, memory, stem clues, or guessing, and is not used to infer the generator's internal knowledge source.
 
-本地模型主实验采用贪心设置 `do_sample=False, num_beams=1`，记录模型版本、种子、提示、预处理与环境。API 使用其支持的最确定配置，并记录实际参数。
+**Boundaries of the metric.** The evaluator's counterexamples and verification are done by models, which both falsely admit and miss cases; false admissions concentrate on presupposition binding, stem restatement, single-modality transcription, and incidental invariance (e.g., for a 2:2 grid the answer is 1/2 for either trait correspondence, judged as text redundancy by definition). The review precision for confirmed items is 19/28, and stratified sampling of "the rest" has not yet been done, so the dual-necessary proportion is a lower bound with an unknown number of missed cases.
 
-首轮每组材料每方法生成一道问题，无需重复采样。比较按相同材料配对，bootstrap 以材料或共享来源簇为重采样单位，所有方法使用相同索引，报告指标差值及区间。
+**Status of evidence.** Review is AI review delegated by the researcher, not independent human annotation; current results come from one dataset, two generators, and a single run. The reuse of model roles and the fact that materials participated in debugging are retained in the records.
 
-正式规模以约300组独立材料为初始目标，样本量与扩样政策在正式运行前依据预实验确定。结果同时展示 BDR、有效率、未决率、四条件表现、人工抽查误差及成本。
+**Perception–utilization gap.** [*Seeing or Knowing?*](https://arxiv.org/abs/2607.26326) distinguishes the encoding of visual information from its reliable utilization. After the main pipeline is complete, about 100 groups can be selected for auxiliary analysis: for the same model, materials, and target visual facts, relate direct recognition performance to the role of evidence in generated questions. This analysis is behavioral evidence and cannot by itself identify internal causes in the model.
 
-### 6.4 基于检查表的有界问题修订原型
+**Question dependence and generation response.** The evidence dependence of fixed questions (modify relevant facts, see whether the answer changes) and the response of regenerated questions (regenerate after modifying materials) are two different objects; counterfactual editing is limited to an auxiliary subset, recording naturalness and editing failures.
 
-有界修订将必要性判据用于改进已有问题，流程为“诊断缺口—一次针对性改写—按同一口径复核—单独核验答案”。T、I 固定，改写器只输出 Q，参考答案与评分要点不作为改写输入。
+**Research extensions.** More datasets (the raw data of WebQA and MultiModalQA are already on the server, untested), more models, cognitive levels, diversity control, training and contrastive losses, and systematic counterfactual analysis are all future directions and are not prerequisites for the first-round contribution.
 
-检查表覆盖题意与预设、答案支持、文本必要性、图像必要性、推理整合性、题干泄露、所求量的实际信息依赖，以及量和单位定义。修订围绕求解关系展开：例如，从比较温差改为求平均降温速率，使文本中的时长真正参与计算。仅加入“根据文本”等措辞，或删去冗余词，不构成必要性修复。
+## 8. Execution Order and Deliverables
 
-无法在原材料与既定假设下得到符合目标的问题时，保留未修复状态及分母。检查表修订作为可迁移原型单列，与三阶段核心方法及其正式比较分别记录。
-
-**已有开发实例。** `checklist-repair-v2` 在3组训练材料上保留了电池平均降温速率题、明确每 mL 溶剂所代表模型粒子数的粒子题，以及未修复的长颈鹿题。部分最终编辑由 Codex 完成，来源显式标记；原题来自材料筛选见证。记录见 `outputs/checklist-repair-reviewed/`，早期失败保留在相应运行中。30组通用流程的工程统计见第4.6节。
-
-## 7. 讨论、局限与后续方向
-
-### 7.1 感知与利用差距
-
-*Seeing or Knowing* 提供了区分视觉编码与证据利用的研究基础。本文据此提出生成端的对应问题：能够直接识别某一视觉事实的模型，是否会在自主出题时将其转化为必要求解依据？
-
-主流程完成后，可按原计划选择约100组作辅助分析：对同一模型、材料与目标视觉事实，关联直接识别表现和生成问题中的证据作用，同时检查模型选择的其他合理视觉证据。这项分析帮助解释三阶段设计如何连接证据识别与任务构造，不作为核心贡献成立的额外前提。
-
-直接识别与自主出题表现的差异属于行为证据，不能单独识别模型内部成因或训练目标效应。本文引用的既有发现针对所研究的粗粒度视觉属性，不将其推广为所有视觉任务均不存在感知瓶颈。
-
-### 7.2 问题依赖与生成响应分开
-
-反事实分析包含两个不同对象：
-
-- **固定问题的证据依赖：** 修改与 Q 相关的文本或视觉事实，核验答案或可回答性是否相应变化。
-- **重新生成的问题响应：** 修改材料后重新生成 Q，观察问题目标与证据选择如何调整。
-
-两者分别刻画既有问题的依赖结构与生成器对输入变化的响应。一次编辑未改变答案，需结合编辑是否具有判别作用解释；生成问题保持不变或发生变化，也需根据其语义合理性判断。
-
-MDFR、GRS 及图文差值保留为后续探索，不进入首轮主指标。反事实编辑限于辅助子集，记录自然性、额外变量与编辑失败；大规模编辑及渲染对照留待承担系统干预结论时研究。
-
-### 7.3 解释边界与后续扩展
-
-**必要性与代理指标。** 双模态必要性是关于问题信息需求的任务性质，BDR 是特定答题器和评分协议下的行为代理。单模态答错可受能力影响，完整图文答对可受猜测影响；两种模态分别必需也不能排除独立问题拼接。因此，BDR 与独立答案核验、信息必要性审核和推理整合性共同使用。仅 Q 答对可来自常识、记忆、题干线索或猜测，不用于反推生成器的内部知识来源。
-
-**方法与教育范围。** 显式证据配对提供可检查的构造机制，不构成每道输出均满足必要性的形式保证。双模态必要性服务于本研究的图文整合目标；有效的单模态教育问题同样有教学价值。首轮在一个数据源和一个基座上验证通用设计，跨数据集与跨模型的实际表现作为后续验证范围。
-
-**开发诊断的证据地位。** 现有12题对照、30组材料筛查与30组修订运行用于开发，AI 标签一致率和自动存活率不代表人工金标准或正式方法提升。模型角色复用、非盲 AI 复核及材料参与调试的事实保留在记录中。长颈鹿等常识捷径、单位边界和拒答未决揭示了待核验情形；已有开发输出不进入确认性方法比较。
-
-**抽样与统计。** 材料产出区间描述给定标签下的抽样波动，不校正自动误判或去重损失。跨分区产出外推属于情景估计；约300组为计划规模，实际合格数量按筛选记录报告。配对区间与抽查误差共同解释，不将统计重采样视为消除系统评分偏差的手段。
-
-**研究扩展。** 更多数据集与模型、其他组件消融、认知层级、多样性控制、训练与对比损失，以及系统性反事实分析均为后续方向。现有最小闭环已覆盖任务定义、核心生成方法、诊断协议与受控比较，这些扩展不作为首轮贡献的前置要求。
-
-## 8. 执行顺序与交付物
-
-| 阶段 | 工作 | 交付与完成标准 |
+| Stage | Work | Delivery and completion criteria |
 |---|---|---|
-| 1：材料预审 | 按既定准入规则选约30组材料 | 来源清单、独有信息、共同求解关系及排除原因 |
-| 2：流程预实验 | 三种生成条件、独立答案核验、四条件作答和逐题审查 | 原始问题、证据轨迹、评分要点与误判记录 |
-| 3：协议冻结及复核 | 固定提示、判据、预算和抽查政策，使用未参与调试的材料复核 | 版本化配置、可复现记录及评估误差说明 |
-| 4：正式实验 | 约300组独立材料，主比较与图像锚定消融 | BDR、有效率、未决率、四条件表现、配对区间、抽查与成本 |
-| 5：辅助解释 | 依主结果价值开展感知—利用分析、少量反事实和案例解释 | 与核心结果关联的辅助证据及适用范围 |
+| 1: baseline profile | Two-category reporting under a fixed denominator, error sources, structural classification | Completed (Qwen and luna batches) |
+| 2: evaluator stability | Stratified sampling of "the rest" to estimate the miss rate; repeated runs; more generators | Error description and stability data |
+| 3: generalization test | Test the evaluator on non-educational data | Scope-of-applicability statement |
+| 4: method | Local answerability gate + repaired local verifier, compared with API PVS and with the no-filter baseline under the same materials and budget | Dual-necessary proportion, precision/recall of selection, valid rate, cost, intervals, and the measured $s$ vs $\ell$ |
+| 5: formal experiment | About 300 independent material groups, main comparison and ablation, paired bootstrap by material or source cluster | Complete raw results, intervals, spot checks, and cost |
 
-阶段1—4构成既定最小闭环；阶段5按解释价值开展。规则修订使用过的材料转入诊断分区，确认性评估保留独立材料。各阶段按记录完整性、评估可检查性与比较可复现性验收，方法效果由实际结果确定。
+Materials used in rule revision are moved to the diagnostic split, and confirmatory evaluation retains independent materials. Each stage is accepted by record completeness, evaluation inspectability, and comparison reproducibility; method effects are determined by actual results.
 
-## 9. 记录规格、相关工作与预期贡献
+## 9. Record Specification and Related Work
 
-每条记录保留协议版本、分区、材料与来源 ID、文本字段、图像路径及哈希、筛选依据、方法与基座版本、提示和解码参数、内部证据、全部候选与最终 Q、失败与重试、调用及成本、参考答案和评分要点、标注来源、有效性、四条件回答及正确性、BDR 状态，以及复核与修订轨迹。
+**Record specification.** Each record retains protocol version, split, material and source ID, text field, image path and hash, method and base model version, prompt and decoding parameters, all candidates and the final question, failures and retries, calls and cost, reference answer and scoring points, annotation source, validity, necessity evidence and labels, and review trajectory. The run and recovery contract is in [docs/implementation_plan.md](docs/implementation_plan.md).
 
-相关工作沿同一坐标展开：**已有目标如何改善多模态问题生成，本文如何进一步要求完整答案依赖两种材料的独有信息。**
+**Related work.** Detailed reading records are in [story.md](story.md) and [docs/references.md](docs/references.md); the distinction along the same coordinate is given here: how existing objectives improve multimodal question generation, and how this study further requires the answer to depend on information that each of the two modalities provides.
 
-| 研究方向或代表工作 | 已有目标与机制 | 本文的区别 |
+| Research direction or representative work | Existing objective and mechanism | Distinction of this study |
 |---|---|---|
-| [IM-VQG](https://openaccess.thecvf.com/content_CVPR_2019/html/Krishna_Information_Maximizing_Visual_Question_Generation_CVPR_2019_paper.html) | 最大化图像、预期答案与问题之间的互信息，生成信息丰富、目标明确的问题 | 本文不预指定答案，并将教育文本与图像对完整作答的必要作用作为生成目标 |
-| [ConVQG](https://arxiv.org/abs/2402.12846) | 通过双重对比目标区分联合模态与单模态生成表示，促进图像扎根与文本引导 | 本文将联合利用落实到答案的信息需求：分别移除 T 或 I，检验完整作答是否受阻，并显式构造证据依赖 |
-| [SynMQG](https://shuangyinli.cn/publications.html) | 以解耦和互信息优化研究协同多模态问题生成 | 本文以作答必要性组织证据选择、跨模态配对与评价；表征协同与答案所需信息分别考察 |
-| 自博弈问答合成，如 [VisPlay](https://arxiv.org/abs/2511.15661) | 通过出题与答题协同演化，利用难度、多样性和合成答案构造学习信号 | 本文面向固定教育图文材料生成问题，以双模态必要性和共同推理目标判定产出，不将一致性或难度作为必要性的替代 |
+| [IM-VQG](https://openaccess.thecvf.com/content_CVPR_2019/html/Krishna_Information_Maximizing_Visual_Question_Generation_CVPR_2019_paper.html) | Maximize mutual information among the image, the expected answer, and the question | Does not pre-specify an answer; targets the necessity of the answer to both modalities |
+| [ConVQG](https://arxiv.org/abs/2402.12846) | Dual contrastive objective distinguishes joint-modality and single-modality representations | Joint utilization is grounded in the answer's information requirements and certified per question |
+| [SynMQG](https://shuangyinli.cn/publications.html) | Disentanglement and mutual-information-optimized collaborative multimodal question generation | Evaluation organized by answering necessity; representation collaboration and answer-required information examined separately |
+| Multimodal QA-pair generation: SMMQG, FM2DS | Instruction requirements or single-modality answerability checks | Public materials report no precision of necessity checks; this study certifies with evidence |
+| Question-posing self-play: [VisPlay](https://arxiv.org/abs/2511.15661), V-Zero | Reward based on the answerer's uncertainty | Difficulty is not equal to necessity; the reward cannot see whether a modality is redundant |
+| Measures of modality dependence: Park et al., M3IRT | Accuracy differences, model-population answering records | Behavioral or population statistics; this study certifies per question |
 
-这些研究分别推进了信息量、图文联合利用、表征协同与自主数据构造。本文建立的差异是**从模态相关性走向模态必要性**：问题与材料匹配、生成表示使用多模态信息，以及完整答案缺一不可，属于不同层次。本文将最后一项同时纳入方法与诊断设计，形成统一研究框架。
+**Expected contributions.**
 
-**预期贡献：**
-
-1. **面向教育的通用证据锚定问题生成框架。** 以文本与图像各自不可替代的信息为基础，通过证据提取、跨模态配对与问题生成，将双模态必要性落实为可执行、可追溯的构造过程。
-2. **与方法目标一致的诊断评估协议。** 将独立答案核验、固定问题的四条件作答、逐题 BDR 和信息必要性审核结合，区分问题有效、材料相关与双模态必要，为教育多模态 QG 提供操作化评价依据。
-3. **围绕必要性的受控实验分析。** 在相同材料与基座上比较普通提示、强提示、完整方法和图像锚定消融，揭示目标提示与显式证据构造的差异，并共同报告依赖、有效性、未决与成本。
-
-## Key Revisions
-
-- **贯通问题、理论动机与方案。** 以“相关性不足以确立必要性”为切入点，将感知—利用差距自然连接到生成阶段的证据选择，明确为何需要三阶段方法。
-- **并列强化方法与评估贡献。** 三阶段流程承担必要依赖的构造，BDR 与证据审核承担检验，形成完整的方法—评价闭环。
-- **明确与相关工作的比较层次。** 保留前人在互信息、对比学习、协同生成与自博弈上的贡献，以作答所需信息区分本文目标，避免将创新表述为一般融合改进。
-- **集中解释边界，恢复主线力度。** 将代理指标、开发诊断与泛化范围的限制集中于讨论，正文直接陈述任务原则与方法设计，并保持既定实验范围。
-- **统一术语与记录口径。** 统一模态必要性、推理整合性、参考答案核验和未决状态，保留原有分母、BDR 公式、拒答政策及核心比较集合。
+1. **Problem and metric.** Distinguish "the question involves two modalities" from "both modalities are necessary", certify per question by answer identifiability, and provide an information-theoretic formulation and an analysis of evidential power.
+2. **Diagnostic findings.** Quantify modality redundancy in generated questions on ScienceQA, and characterize the direction of redundancy and the structure of dual-necessary questions.
+3. **Method.** Question-posing signals designed against redundant modalities and comparison experiments (not yet completed).

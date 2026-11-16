@@ -1,0 +1,6 @@
+Based on the context and the image, ask one question.
+Do not repeat numbers, thresholds, or rule wording that already appears in the context; refer to them instead (for example, "the stated rule" or "the given condition").
+Keep proper names and entity labels that the question needs.
+Context:
+<T>$T</T>
+Output only the question.

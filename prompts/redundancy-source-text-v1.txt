@@ -1,0 +1,19 @@
+Fixed question:
+$Q
+
+The material text (the side the evaluator found UNNECESSARY):
+<T>$TEXT</T>
+
+Common knowledge convention K:
+$KNOWLEDGE
+
+Our evaluator found that this question is already fully answerable from the image alone, so the text above was not needed. (The image is not attached; judge only whether the question copies text content it needs.) Decide only WHY the text was not needed. Do not answer the question.
+
+Definitions:
+- "leak": the question itself restates information that exists only in the material text and that would otherwise be required to answer. The generator copied the text's content (a value, a threshold, a rule, a name, a clause) into the question, which is why the text became unnecessary.
+- "anchor": the question does not copy any text content it needs. It asks about something the image alone already determines (a visual comparison, a readout, a count), or it never required the text in the first place.
+- "other": the question is vague or degenerate, the answer needs outside knowledge, or the judgment that the image alone suffices looks wrong.
+
+Copying an incidental word or number that the question does not need (a stock date, filler phrase) is NOT a leak; only information required to answer counts.
+
+Output only one JSON object, no Markdown. Format: {"source":"leak" or "anchor" or "other","copied_span":"exact words from the question that copy the text, or null","copied_info":"the text content being copied, or null","needed":true or false or null,"why":"one sentence"}

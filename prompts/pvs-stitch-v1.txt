@@ -1,0 +1,7 @@
+Question:
+$Q
+Context:
+<T>$T</T>
+Decide whether the question requires two independent sub-answers (for example two wh-clauses, two questions, or a juxtaposition such as "what is A, and what is B"), rather than one integrated question that requires a rule and an image fact together.
+Output only one JSON object, no Markdown:
+{"stitching":true or false,"reason":"one sentence"}

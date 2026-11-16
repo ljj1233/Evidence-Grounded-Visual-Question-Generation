@@ -1,0 +1,18 @@
+Classify how the answer to the question is obtained from the material.
+
+Question:
+<Q>$Q</Q>
+
+Passage:
+<T>$T</T>
+
+Attached image: the material image.
+
+Answer:
+<A>$A</A>
+
+Definitions:
+- extractive: the answer (or a direct paraphrase) is stated in the passage, or can be read directly from the image (a label, number, entity, color, count) without combining the two sources.
+- derived: the answer requires combining the passage rule/condition with the image facts, or computing, comparing, or inferring; it is not directly stated in either source.
+
+Output only JSON: {"type":"extractive" or "derived","source":"text" or "image" or "both","reason":"brief basis"}

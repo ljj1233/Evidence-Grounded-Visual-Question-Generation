@@ -20,7 +20,7 @@ from .records import (canonical_json,file_lock,read_jsonl,sha256_file,sha256_tex
                       stable_id,utc_now,write_json,write_jsonl)
 
 VERSION='simple-api-baseline-v1'
-NAMES=('plain-v1','solve-v1')
+NAMES=('plain-v2','solve-v1')
 
 
 def bounded_image(root,material,directory,policy):
@@ -140,7 +140,7 @@ def _process_item(root,out,manifest,prompts,slot,material,reuse,provider_factory
         if row['steps'][stage]!='pending':continue
         if stage=='answer_TI' and not q():row['steps'][stage]='not_applicable';continue
         if stage=='generation':
-            template='plain-v1';variables={'T':material['text']};fmt='text';text=material['text'];image=material['image_path'];condition=None
+            template='plain-v2';variables={'T':material['text']};fmt='text';text=material['text'];image=material['image_path'];condition=None
         else:
             template='solve-v1';payload=answering_input(row,'TI',root);variables=payload['variables'];fmt='json'
             text=payload['text'];image=payload['image_path'];condition='TI'
@@ -213,12 +213,12 @@ def report_simple_baseline(*,run_id,project_root='.',output_root='outputs'):
                     'status':r['generation']['status']} for r in rows])
         write_jsonl(out/'answers.jsonl',[{'attempt_id':r['attempt_id'],'material_id':r['material_id'],
                     'question_sha256':r['question']['sha256'],'TI_response':r['responses']['TI']} for r in rows])
-        (out/'probe_report.md').write_text('\n'.join(['# 简单API baseline：生成与完整图文回答','',
-            f'固定N={len(plan)}，已完成{completed}，异步并发{m["config"]["concurrency"]}。模型{m["config"]["model"]}，普通plain-v1生成，独立TI回答。','',
-            f'生成Q {status["questions_generated"]}，TI作答{status["TI_answered"]}，拒答{status["TI_refused"]}，生成失败{status["generation_failures"]}，TI技术/格式失败{status["TI_failures"]}。全部名额保留。','',
-            f'本轮新HTTP {status["new_http_requests"]}，输入/模型完全匹配的旧调用复用{len(reused)}；旧调用原始用量不重复计入本轮新消费。图片上限见manifest，原图不改。','',
-            '本阶段不构造参考、不做四条件、不评分、不判必要性。跑完生成与回答后再评估；当前不能用这些完成数宣称可回答性或双模态达标率。',
-            '原始新输出含失败在calls.jsonl，复用原始输出在items/*/reused_calls.jsonl；questions.jsonl与answers.jsonl按attempt_id和question_sha256关联。','']))
+        (out/'probe_report.md').write_text('\n'.join(['# Simple API baseline: generation and full text+image answers','',
+            f'Fixed N={len(plan)}, completed {completed}, async concurrency {m["config"]["concurrency"]}. Model {m["config"]["model"]}, ordinary plain-v2 generation, independent TI answers.','',
+            f'Questions generated {status["questions_generated"]}, TI answered {status["TI_answered"]}, refusals {status["TI_refused"]}, generation failures {status["generation_failures"]}, TI technical/format failures {status["TI_failures"]}. All planned slots are kept.','',
+            f'New HTTP this round {status["new_http_requests"]}, old calls reused when the input and model match exactly {len(reused)}; usage of old calls is not counted again as new consumption this round. Image limits are in the manifest; original images are not modified.','',
+            'This stage builds no reference, runs no four-condition answering, does no scoring and judges no necessity. Evaluate only after generation and answering have finished; these completion counts must not be used now to claim answerability or dual-modality rates.',
+            'Raw new outputs including failures are in calls.jsonl, reused raw outputs in items/*/reused_calls.jsonl; questions.jsonl and answers.jsonl are joined by attempt_id and question_sha256.','']))
         return status
 
 

@@ -143,18 +143,18 @@ class Mock:
                 prompt = request.prompt
                 if outer.fail and outer.fail(model, request):
                     raise RuntimeError('mock failure')
-                if '最小答案槽位' in prompt:
+                if 'minimal answer slots' in prompt:
                     data = {'slots': [{'name': 'v', 'asks': 'x', 'granularity': 'g'}]}
-                elif '答案槽位定义' in prompt:
+                elif 'Answer slot definition' in prompt:
                     lines = [line.split('] ', 1)[1] for line in prompt.splitlines() if line.startswith('[')]
                     data = {'items': [{'i': n, 'values': {'v': 'gamma' if 'gamma' in s else s.strip().lower()}} for n, s in enumerate(lines)]}
-                elif '情形1' in prompt:
+                elif 'Situation 1:' in prompt:
                     bad = model == 'model-b' and request.condition == 'T'
                     data = {'presuppositions': ['p'], 's': [{'presup_ok': not bad, 'consistent': True, 'answer': 'alpha'},
                                                            {'presup_ok': not bad, 'consistent': True, 'answer': 'beta'}]}
-                elif request.condition is None and request.image_path and '情形1' not in prompt:        # reference answer with the full material
+                elif request.condition is None and request.image_path and 'Situation 1:' not in prompt:        # reference answer with the full material
                     data = {'determinable': True, 'answer': 'delta' if (outer.ref_disagree and model == 'model-b') else 'gamma', 'reason': 'fixture'}
-                elif prompt.split('固定问题：')[1].startswith('\nQ2') and request.condition == 'T':
+                elif prompt.split('Fixed question:')[1].startswith('\nQ2') and request.condition == 'T':
                     data = {'determinable': True, 'answer': 'gamma', 'reason': 'fixture'}
                 else:
                     data = {'determinable': False, 'answer': None, 'reason': 'fixture'}
@@ -177,19 +177,19 @@ def test_end_to_end_isolation_arbiter_scope_resume_and_denominator(tmp_path):
     mock = Mock()
     go(tmp_path, mock)
     for model, r in mock.calls:                                           # material isolation and no reference leakage
-        judging = '最小答案槽位' not in r.prompt and '答案槽位定义' not in r.prompt
+        judging = 'minimal answer slots' not in r.prompt and 'Answer slot definition' not in r.prompt
         if judging:
             assert SENTINELS['ref'] not in r.prompt and 'K_SENTINEL' in r.prompt
-        if judging and '情形1' not in r.prompt:
+        if judging and 'Situation 1:' not in r.prompt:
             if r.condition == 'T':
                 assert r.image_path is None and SENTINELS['text'] in r.prompt
             else:
                 assert r.image_path and NO_IMAGE_TEXT in r.prompt and SENTINELS['text'] not in r.prompt
-        if '情形1' in r.prompt and r.condition == 'I':                      # image removed: text stays, image is not sent
+        if 'Situation 1:' in r.prompt and r.condition == 'I':                      # image removed: text stays, image is not sent
             assert r.image_path is None and SENTINELS['text'] in r.prompt
-        if '情形1' in r.prompt and r.condition == 'T':                      # text removed: image stays, original text is not sent
+        if 'Situation 1:' in r.prompt and r.condition == 'T':                      # text removed: image stays, original text is not sent
             assert r.image_path and SENTINELS['text'] not in r.prompt
-        if '最小答案槽位' in r.prompt:
+        if 'minimal answer slots' in r.prompt:
             assert SENTINELS['text'] not in r.prompt and r.image_path is None and SENTINELS['ref'] not in r.prompt
     assert {r.metadata['key'].split('|')[-1] for model, r in mock.calls if model == 'model-arb'} == {'attempt_0'}   # only the open item
     assert not any(model not in ('model-a', 'model-b', 'model-arb') for model, _ in mock.calls)
@@ -207,7 +207,7 @@ def test_end_to_end_isolation_arbiter_scope_resume_and_denominator(tmp_path):
 def test_failed_calls_are_recorded_not_cached_and_retried_on_resume(tmp_path):
     build_source(tmp_path)
     init_ensemble(run_id='ens', source_run='source', model_a='model-a', model_b='model-b', arbiter='model-arb', project_root=tmp_path, concurrency=2, candidates_only=False, reference='baseline')
-    target = lambda model, r: model == 'model-b' and r.condition == 'T' and '情形1' not in r.prompt and '固定问题：\nQ2' in r.prompt
+    target = lambda model, r: model == 'model-b' and r.condition == 'T' and 'Situation 1:' not in r.prompt and 'Fixed question:\nQ2' in r.prompt
     go(tmp_path, Mock(fail=target), phase='screen')
     rows = read_jsonl(tmp_path / 'outputs/ens/results.jsonl')
     failed = [r for r in rows if r.get('error')]

@@ -1,0 +1,4 @@
+Based on the context and the image, ask one question.
+Context:
+<T>$T</T>
+Output only the question.

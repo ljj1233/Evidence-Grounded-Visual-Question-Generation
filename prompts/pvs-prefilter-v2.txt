@@ -1,0 +1,5 @@
+You are given a context and an image. Mark likely-positive ONLY if the image contains a specific fact that is NOT stated in the context and cannot be inferred from the context alone, AND a valid question could require that image fact together with a general rule from the context. If the context already states the image's specific fact, or the image is merely illustrative, mark likely-negative.
+Output only one JSON object, no Markdown:
+{"potential":"likely-positive" or "likely-negative","reason":"one sentence"}
+Context:
+<T>$T</T>

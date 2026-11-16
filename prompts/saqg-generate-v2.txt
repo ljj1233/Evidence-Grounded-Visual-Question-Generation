@@ -1,0 +1,8 @@
+Based on the context and the image, ask one question.
+Context:
+<T>$T</T>
+Rule from the context: $R
+Specific fact from the image: $F
+$SCHEMA
+Example of the requested style (different material): $EXAMPLE
+Write one concise question in one clause. Do not repeat the rule or the fact; refer to them implicitly. Do not ask two independent sub-questions. Output only the question.

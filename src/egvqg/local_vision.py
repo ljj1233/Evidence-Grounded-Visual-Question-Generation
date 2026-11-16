@@ -7,6 +7,7 @@ request by request, so one bad input cannot take the others down; a request that
 from __future__ import annotations
 
 import queue
+import re
 import threading
 import time
 from concurrent.futures import Future
@@ -15,6 +16,19 @@ from pathlib import Path
 
 from .providers import Completion, ProviderError
 from .records import sha256_file
+
+
+class _SuppressTokens:
+    def __init__(self, token_sets):
+        self.token_sets = token_sets
+
+    def __call__(self, input_ids, scores):
+        import torch
+        floor = torch.finfo(scores.dtype).min
+        for row, ids in enumerate(self.token_sets):
+            if ids:
+                scores[row, list(ids)] = floor
+        return scores
 
 
 @dataclass(frozen=True)
@@ -77,9 +91,12 @@ class BatchingProvider:
 class QwenVLBackend:
     """Hugging Face Qwen3-VL, bf16, sdpa, greedy. Weights are loaded on first use."""
 
-    def __init__(self, model_path, *, device='cuda:0', max_new_tokens=1024, max_image_pixels=1048576, max_time=900):
+    def __init__(self, model_path, *, device='cuda:0', max_new_tokens=1024, max_image_pixels=1048576, max_time=900,
+                 do_sample=False, temperature=1.0, top_p=1.0, top_k=None, suppress_text_numbers=False):
         self.path = Path(model_path).expanduser().resolve()
         self.device, self.max_new_tokens, self.max_image_pixels, self.max_time = device, max_new_tokens, max_image_pixels, max_time
+        self.do_sample, self.temperature, self.top_p, self.top_k = do_sample, temperature, top_p, top_k
+        self.suppress_text_numbers = suppress_text_numbers
         self._model = self._processor = None
 
     def fingerprint(self):
@@ -93,17 +110,26 @@ class QwenVLBackend:
     def _load(self):
         if self._model is not None:
             return
+        import json
+        import os
+
         import torch
-        from transformers import AutoProcessor, Qwen3VLForConditionalGeneration
+        import transformers
+        from transformers import AutoProcessor
+        architecture = json.loads((self.path / 'config.json').read_text())['architectures'][0]      # Qwen3VL... or Qwen3_5...
+        model_class = getattr(transformers, architecture)
+        # CPU image preprocessing is 400x slower at the 64-thread default (thread oversubscription); 8 threads is fastest
+        # and produces bit-identical pixel_values, so it does not change any recorded result.
+        torch.set_num_threads(int(os.environ.get('EGVQG_TORCH_THREADS', '8')))
         torch.manual_seed(42)
-        self._processor = AutoProcessor.from_pretrained(str(self.path), local_files_only=True, use_fast=False, max_pixels=self.max_image_pixels)
+        self._processor = AutoProcessor.from_pretrained(str(self.path), local_files_only=True)
         self._processor.tokenizer.padding_side = 'left'
-        self._model = Qwen3VLForConditionalGeneration.from_pretrained(
+        self._model = model_class.from_pretrained(
             str(self.path), local_files_only=True, dtype=torch.bfloat16, device_map={'': self.device}, attn_implementation='sdpa')
         self._model.eval()
 
-    def generate(self, requests):
-        import torch
+    def encode(self, requests):
+        """Chat-template and tokenize requests (image first, then text) into model inputs on the device."""
         from PIL import Image
         self._load()
         conversations, opened = [], []
@@ -113,17 +139,39 @@ class QwenVLBackend:
                 if request.image_path:
                     image = Image.open(request.image_path)
                     opened.append(image)
+                    if image.width * image.height > self.max_image_pixels:      # transformers 5 ignores a pixel cap passed to the processor
+                        raise ValueError('image exceeds the declared pixel bound')
                     content.append({'type': 'image', 'image': image.convert('RGB')})
                 content.append({'type': 'text', 'text': request.prompt})
                 conversations.append([{'role': 'user', 'content': content}])
-            inputs = self._processor.apply_chat_template(conversations, tokenize=True, add_generation_prompt=True,
-                                                         return_dict=True, return_tensors='pt', padding=True).to(self._model.device)
-            width = inputs['input_ids'].shape[1]
-            with torch.inference_mode():
-                generated = self._model.generate(**inputs, do_sample=False, num_beams=1, max_new_tokens=self.max_new_tokens, max_time=self.max_time)
+            return self._processor.apply_chat_template(conversations, tokenize=True, add_generation_prompt=True,
+                                                       return_dict=True, return_tensors='pt', enable_thinking=False,
+                                                       processor_kwargs={'padding': True}).to(self._model.device)
         finally:
             for image in opened:
                 image.close()
+
+    def generate(self, requests):
+        import torch
+        inputs = self.encode(requests)
+        width = inputs['input_ids'].shape[1]
+        kwargs = {'do_sample': self.do_sample, 'num_beams': 1, 'max_new_tokens': self.max_new_tokens, 'max_time': self.max_time}
+        if self.do_sample:
+            kwargs.update({'temperature': self.temperature, 'top_p': self.top_p, 'top_k': self.top_k})
+        if self.suppress_text_numbers:
+            from transformers import LogitsProcessorList
+            eos = self._model.generation_config.eos_token_id
+            eos = set(eos if isinstance(eos, list) else [eos])
+            token_sets = []
+            for request in requests:
+                ids = set()
+                for number in re.findall(r'(?<![\d.])\d+(?:\.\d+)?(?![\d.])', request.text or ''):
+                    for variant in (number, ' ' + number):
+                        ids.update(self._processor.tokenizer.encode(variant, add_special_tokens=False))
+                token_sets.append(ids - eos)
+            kwargs['logits_processor'] = LogitsProcessorList([_SuppressTokens(token_sets)])
+        with torch.inference_mode():
+            generated = self._model.generate(**inputs, **kwargs)
         pad = self._processor.tokenizer.pad_token_id
         eos = self._model.generation_config.eos_token_id
         eos = set(eos if isinstance(eos, list) else [eos])
@@ -137,13 +185,38 @@ class QwenVLBackend:
         return outputs
 
 
-def local_provider(model_path, *, device='cuda:0', max_batch=8, max_new_tokens=1024, max_image_pixels=1048576):
-    """A provider for `simple-baseline-run` that runs a local Qwen3-VL model."""
+def qwen_identity(backend, adapter, **extra):
+    """Effective model/decoding identity recorded in model_identity.json (shared by the batched provider and white-box capture)."""
+    import json
     import torch
     import transformers
+    size = json.loads((backend.path / 'preprocessor_config.json').read_text()).get('size', {})
+    architecture = json.loads((backend.path / 'config.json').read_text())['architectures'][0]
+    return {'adapter': adapter, 'architecture': architecture, 'thinking': 'disabled (enable_thinking=False; ignored by templates without it)', 'model': backend.path.name, 'model_fingerprint': backend.fingerprint(),
+            'device_kind': 'cuda', 'dtype': 'bfloat16', 'attention': 'sdpa', 'do_sample': False, 'num_beams': 1,
+            'max_new_tokens': backend.max_new_tokens, 'max_image_pixels': backend.max_image_pixels, 'seed': 42,
+            'batch_composition_can_change_low_order_bits': True, 'torch': torch.__version__,
+            'transformers': transformers.__version__,
+            'image_preprocessing': {'source': 'model preprocessor_config.json', 'size': size,
+                                    'note': 'transformers>=5 applies shortest_edge as the minimum pixel count: images below it are upscaled (4.57.6 did not)',
+                                    'declared_max_pixels_checked_in_encode': backend.max_image_pixels}, **extra}
+
+
+def identity_matches(stored, current):
+    """Identity equality across machines: the model's absolute directory is environment-specific, but every config hash,
+    weight-shard size and setting must agree. Used when resuming a run after relocating the same model."""
+    import json
+
+    def normalized(identity):
+        value = json.loads(json.dumps(identity))
+        value.get('model_fingerprint', {}).pop('path', None)
+        return value
+
+    return normalized(stored) == normalized(current)
+
+
+def local_provider(model_path, *, device='cuda:0', max_batch=8, max_new_tokens=1024, max_image_pixels=1048576):
+    """A provider for `simple-baseline-run` that runs a local Qwen3-VL model."""
     backend = QwenVLBackend(model_path, device=device, max_new_tokens=max_new_tokens, max_image_pixels=max_image_pixels)
-    identity = {'adapter': 'local-qwen3-vl-batched-v1', 'model': backend.path.name, 'model_fingerprint': backend.fingerprint(),
-                'device_kind': 'cuda', 'dtype': 'bfloat16', 'attention': 'sdpa', 'do_sample': False, 'num_beams': 1,
-                'max_new_tokens': max_new_tokens, 'max_image_pixels': max_image_pixels, 'seed': 42,
-                'batch_composition_can_change_low_order_bits': True, 'torch': torch.__version__, 'transformers': transformers.__version__}
+    identity = qwen_identity(backend, 'local-qwen3-vl-batched-v1')
     return BatchingProvider(backend, model=backend.path.name, identity=identity, max_batch=max_batch)

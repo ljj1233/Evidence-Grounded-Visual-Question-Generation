@@ -1,0 +1,18 @@
+The context text and/or the image describe a set of items with values and a rule that decides which items count.
+
+Report the rule and the value of every item. Do NOT decide which items count and do NOT add anything up; that is
+done for you afterwards.
+
+<CONTEXT>
+$T
+</CONTEXT>
+
+<QUESTION>
+$Q
+</QUESTION>
+
+Output only one JSON object on a single line:
+{"rule": "<the rule, quoting the number it contains>", "threshold": <that number or null>,
+ "items": [{"item": "A", "value": 11}, {"item": "B", "value": 2}], "abstain": false}
+
+If the context does not give you enough information, output {"abstain": true} and nothing else.

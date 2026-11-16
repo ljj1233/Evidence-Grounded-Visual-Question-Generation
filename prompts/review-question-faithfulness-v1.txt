@@ -1,21 +1,21 @@
-你评估一道生成问题及其参考答案对原始输入的忠实性。只依据实际图文、固定问题和允许知识K，不替生成器添加实验条件、改写问题或解释成另一道较容易的问题。
-原始文本：
+You evaluate the faithfulness of a generated question and its reference answer to the original input. Use only the actual text and image, the fixed question and the allowed knowledge K; do not add experimental conditions for the generator, rewrite the question, or reinterpret it as another, easier question.
+Original text:
 $T
-原始材料图像随请求提供。
-原样生成问题：
+The original material image is provided with the request.
+Question generated verbatim:
 $Q
-允许的共同知识：
+Allowed common knowledge:
 $KNOWLEDGE
-待核对的参考答案（可缺失；不作为问题正确的证据）：
+Reference answer to be checked (may be missing; not evidence that the question is correct):
 $REFERENCE
 
-分别核对：
-1. presupposition_supported：问题陈述或预设的对象、事件、关系、步骤是否有原材料或K支持。主题相关并不足够。
-2. answer_supported：实际输入与K是否足以确定原Q要求的完整答案或可核查的可接受答案范围；不能猜材料特定的数值、关系、实验设置。若已能指出缺失的决定性前提，明确判0，这属于生成问题缺陷，而非评估器未决。
-3. scope_clear：所求对象、比较量、时间、单位和答案范围是否足够明确；不能通过窄化、改换对象或多加限制来判通过。
-4. reference_supported：给定参考是否真正回答原Q且每个关键前提有输入或K依据。错误参考不自动使一个可回答的Q失败；参考缺失或解析失败不自动说明Q无答案。
+Check separately:
+1. presupposition_supported: whether the objects, events, relations and steps stated or presupposed by the question are supported by the original material or K. Topical relevance is not enough.
+2. answer_supported: whether the actual input and K are sufficient to determine the full answer required by the original Q, or a checkable acceptable answer range; you must not guess material-specific numbers, relations or experimental settings. If a decisive missing premise can already be identified, judge 0 explicitly; this is a defect of the generated question, not evaluator undecidedness.
+3. scope_clear: whether the requested object, compared quantity, time, units and answer range are sufficiently clear; you may not pass it by narrowing, changing the object or adding restrictions.
+4. reference_supported: whether the given reference truly answers the original Q and every key premise has support in the input or K. A wrong reference does not automatically make an answerable Q fail; a missing or unparsable reference does not automatically mean Q has no answer.
 
-每项value仅1/0/null，附证据来源、原文引文或图中可核对的位置及推理。能够明确证明不支持、错误预设或歧义时判0；只有确实不能完成评审时才用null，并说明评审阻碍。解题器拒答、其他模型不同意或必要性反例失败均不能单独使本问题失败。不要输出必要性标签或根据多数票判断；忠实性通过的Q仍可能仅靠一种模态就能回答。
-只输出JSON：
-{"question_checks":{"presupposition_supported":{"value":1,"reason":"依据"},"answer_supported":{"value":1,"reason":"依据"},"scope_clear":{"value":1,"reason":"依据"}},"reference_supported":{"value":1,"reason":"依据"},"evidence":[{"source":"T","quote_or_location":"原文引文或明确位置","explanation":"支持或反驳何项"}],"failure_codes":[],"reason":"总依据"}
-source仅Q/T/I/K。失败代码可用unsupported_presupposition、missing_decisive_premise、ambiguous_request_scope、unsupported_reference；不为技术失败或评估分歧填生成错误代码。不额外输出答案、标签投票或改写后的Q。
+Each value is only 1/0/null, with the evidence source, a quote from the original text or a checkable location in the image, and the reasoning. Judge 0 when you can clearly show lack of support, a wrong presupposition or ambiguity; use null only when the review truly cannot be completed, and state what blocks it. A solver refusing, other models disagreeing, or a necessity counterexample failing must not by itself make this question fail. Do not output a necessity label or decide by majority vote; a question that passes faithfulness may still be answerable from a single modality.
+Output only JSON:
+{"question_checks":{"presupposition_supported":{"value":1,"reason":"basis"},"answer_supported":{"value":1,"reason":"basis"},"scope_clear":{"value":1,"reason":"basis"}},"reference_supported":{"value":1,"reason":"basis"},"evidence":[{"source":"T","quote_or_location":"quote from the text or an explicit location","explanation":"which item it supports or refutes"}],"failure_codes":[],"reason":"overall basis"}
+source is only Q/T/I/K. Failure codes may be unsupported_presupposition, missing_decisive_premise, ambiguous_request_scope, unsupported_reference; do not use a generation-error code for technical failures or evaluator disagreement. Do not output extra answers, label votes or a rewritten Q.

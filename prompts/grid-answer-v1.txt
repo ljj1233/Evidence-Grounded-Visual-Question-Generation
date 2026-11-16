@@ -1,0 +1,8 @@
+Answer the question using only the material provided (the context text and/or the image).
+Context:
+<T>$T</T>
+Question:
+<Q>$Q</Q>
+If several values are requested, list all of them separated by commas.
+Output only JSON: {"answer":"short answer","abstain":false}
+Set abstain to true only if the material does not determine the answer.

@@ -7,18 +7,7 @@ from string import Template
 
 from .records import canonical_json, sha256_text
 
-PROMPT_NAMES = (
-    "qg_plain",
-    "qg_strong",
-    "qg_evidence",
-    "extract_text_evidence",
-    "extract_image_evidence",
-    "pair_evidence",
-    "annotate_answer",
-    "verify_answer",
-    "validate_question",
-    "answer_question",
-)
+PROMPT_NAMES = ("plain-v2",)
 
 
 class PromptError(RuntimeError):

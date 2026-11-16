@@ -156,14 +156,14 @@ def report_evaluation(*,run_id,project_root='.',output_root='outputs'):
             'concurrency':m['settings']['concurrency'],'usage':usage,'source':'automatic_provisional'}
         write_jsonl(out/'records.jsonl',rows);write_jsonl(out/'calls.jsonl',calls);write_jsonl(out/'requests.jsonl',requests)
         write_json(out/'status.json',status);write_json(out/'usage.json',usage)
-        (out/'probe_report.md').write_text('\n'.join(['# 完整批次后的baseline评估（自动暂定）','',
-            f'固定N={len(rows)}，已评估{len(completed)}，其余尚未处理。源生成/回答运行：{m["source_run"]}；源问题、图片与答案不改。','',
-            f'可回答性/忠实性：{status["answerability_completed_only"]}。','',
-            f'在可回答题中，双模态必要性：{necessity}。','',
-            f'原TI回答支持情况单列：{status["original_TI_answer_support_completed_only"]}；拒答/技术失败不冒充题目无效。','',
-            f'目标验收：{status["target_acceptance_completed_only"]}。模型核验失败只留方向未决，不翻相反标签。','',
-            '保留文本充分时即可确认图像不必要，并停止该题后续方向调用；另一方向不被强行填0。未完成项不算失败，始终保留全量固定分母。','',
-            '按既有K与open/verify-v2证据规则执行；未运行四条件或BDR。所有结果暂定自动，模型角色同为gpt-6-luna时有相关误差，不是独立人类金标准。需要抽查典型缺陷、候选双必要题及条件边界后再形成研究结论。','']))
+        (out/'probe_report.md').write_text('\n'.join(['# Baseline evaluation after a complete batch (automatic, provisional)','',
+            f'Fixed N={len(rows)}, evaluated {len(completed)}, the rest not yet processed. Source generation/answer run: {m["source_run"]}; source questions, images and answers unchanged.','',
+            f'Answerability/faithfulness: {status["answerability_completed_only"]}.','',
+            f'Dual-modality necessity among answerable questions: {necessity}.','',
+            f'Support of the original TI answer listed separately: {status["original_TI_answer_support_completed_only"]}; refusals and technical failures are not treated as invalid questions.','',
+            f'Target acceptance: {status["target_acceptance_completed_only"]}. A failed model verification leaves that direction undecided only; it is never flipped to the opposite label.','',
+            'When the retained text is sufficient the image can be confirmed unnecessary and later direction calls for that item stop; the other direction is not forced to 0. Unfinished items are not failures, and the full fixed denominator is always kept.','',
+            'Follows the existing K and the open/verify-v2 evidence rules; four-condition answering and BDR were not run. All results are provisional and automatic; with gpt-6-luna in the model role there is correlated error, and this is not an independent human gold standard. Typical defects, candidate dual-necessary questions and condition boundaries need spot checks before research conclusions are formed.','']))
         return status
 
 
