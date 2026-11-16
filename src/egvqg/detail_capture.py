@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 from .records import append_jsonl, read_jsonl, utc_now, write_json
-from .whitebox import forward_extras, has_question_states
+from .capture import forward_extras, has_question_states
 
 VERSION = 'detail-capture-v1'
 
@@ -56,7 +56,7 @@ def run_detail_capture(*, run_id, capture_run, project_root='.', output_root='ou
     from .local_vision import QwenVLBackend
     from .prompts import PromptSet
     from .providers import CompletionRequest
-    from .whitebox import Capturer
+    from .capture import Capturer
 
     root = Path(project_root).resolve()
     base = root / output_root

@@ -52,7 +52,7 @@ def run_saqg(*, run_id, materials_file, model_path, project_root='.', output_roo
     from .prompts import PromptSet
     from .providers import CompletionRequest
     from .records import read_jsonl
-    from .whitebox import Capturer
+    from .capture import Capturer
 
     root = Path(project_root).resolve()
     out = root / output_root / run_id

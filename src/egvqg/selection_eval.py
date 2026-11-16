@@ -11,7 +11,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from .probing import bootstrap_groups, interval
+from .stats import bootstrap_groups, interval
 
 
 def outcomes(row):

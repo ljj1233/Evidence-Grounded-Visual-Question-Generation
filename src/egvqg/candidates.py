@@ -116,12 +116,12 @@ def choose_materials(materials, *, materials_file, group_field, select, max_mate
 
 def run_candidates(*, run_id, project_root='.', output_root='outputs', reference_run=None, model_path, device='cuda:0', n_skills=0, per_skill=0,
                    n_candidates=8, temperature=0.7, top_p=0.8, top_k=20, k=4, max_new_tokens=1024, exclude_run=None, run_seed=SEED, template=TEMPLATE,
-                   materials_file=None, group_field='group', select='all', max_materials=None, intervention=None):
+                   materials_file=None, group_field='group', select='all', max_materials=None):
     from safetensors.torch import save_file
     from .local_vision import QwenVLBackend, identity_matches, qwen_identity
     from .prompts import PromptSet
     from .providers import CompletionRequest
-    from .whitebox import Capturer, gpu_memory_mib
+    from .capture import Capturer, gpu_memory_mib
     root, out = Path(project_root).resolve(), Path(output_root).resolve() / run_id
     materials = load_materials_any(root, output_root, reference_run, materials_file)
     selection = choose_materials(materials, materials_file=materials_file, group_field=group_field, select=select, max_materials=max_materials,
@@ -138,7 +138,7 @@ def run_candidates(*, run_id, project_root='.', output_root='outputs', reference
                              state_dtype='bfloat16', sampling=sampling, n_candidates=n_candidates, run_seed=run_seed,
                              selection={'n_skills': n_skills, 'per_skill': per_skill, 'exclude_run': exclude_run, 'materials_file': materials_file,
                                         'group_field': group_field, 'select': select, 'max_materials': max_materials},
-                             intervention=(intervention or {}).get('description'))
+                             intervention=None)
     identity['do_sample'] = True
     stored_path = out / 'model_identity.json'
     if stored_path.exists():
@@ -168,7 +168,7 @@ def run_candidates(*, run_id, project_root='.', output_root='outputs', reference
                 prepared = capturer.prepare(request, m['text'])
             seed = candidate_seed(run_seed, mid, j)
             states, meta = capturer.capture(request, m['text'], prepared=prepared, sample={**sampling, 'seed': seed},
-                                            intervention=(intervention or {}).get('factory'))
+                                            intervention=None)
             save_file(states, str(out / 'states' / f'{cid}.safetensors'))
             row = {'candidate_id': cid, 'material_id': mid, 'index': j, 'seed': seed, 'skill': sk, 'created_at': utc_now(),
                    'states_file': f'states/{cid}.safetensors', 'text_chars': len(m['text']), 'n_choices': m.get('n_text_choices'), 'parent_material_id': m.get('parent_material_id'),

@@ -325,7 +325,7 @@ def run_behaviour(backend, prompts, items):
 def _hooked_forward(backend, prompt, text, image_path, prefix_ids):
     """One teacher-forced forward over prompt + answer prefix; per-layer final-norm hidden states."""
     import torch
-    from .whitebox import forward_extras
+    from .capture import forward_extras
     from .providers import CompletionRequest
 
     request = CompletionRequest(task='interval-mechanism-lens', prompt=prompt, question=FULL_QUESTION,

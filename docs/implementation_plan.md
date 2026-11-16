@@ -48,12 +48,9 @@ Model names, endpoints and call budgets are all configured (see README "Model an
 | `baseline_analysis.py`, `faithfulness.py`, `evidence_verification.py`, `assessment_rules.py` | Evaluation input construction, faithfulness derivation, evidence verification gate, knowledge-scope configuration |
 | `necessity_ensemble.py` | Necessity evaluator with two groups plus arbitration; decision logic is pure functions |
 | `local_vision.py` | Local Qwen3-VL provider: dynamic batching, interface consistent with API providers |
-| `candidates.py`, `whitebox.py` | Candidate sampling and white-box capture (P0/P1) |
-| `probe_labels.py`, `label_audit.py` | Label assembly and sampling audit |
-| `probing.py`, `probe_run.py` | Linear probe, layer selection and G2 decision |
-| `modality_distance.py`, `distance_analysis.py`, `distance_robust.py` | Hidden-state shift from modality removal/replacement and R1/R2 |
-| `geometry.py`, `variance_decomposition.py` | Geometry readings and variance decomposition (descriptive; the latter has no CLI entry yet) |
-| `selection_eval.py`, `intervene.py` | best-of-k selection evaluation (implemented, no CLI entry yet) and steering (exploratory) |
+| `candidates.py`, `capture.py` | Candidate sampling and hidden-state capture (P0/P1) |
+| `candidate_labels.py`, `label_audit.py` | Label assembly and sampling audit |
+| `selection_eval.py` | best-of-k selection evaluation (used by the PVS comparison) |
 | `synthetic_composition.py` | Week-1 mechanism route: programmatic derived/bridging/stitching/interval materials, split single-hop answers, local-model answering/generation, material-bootstrap composition deficits (CLI `synthetic-build`, `composition-*`) |
 | `inline_analysis.py` | R2: inline numbers/rules in generated questions and their association with text redundancy (CLI `inline-report`) |
 | `validity_check.py` | R3: local `local-validity-v1` review of generated questions (CLI `local-validity`, `validity-report`; local AI review, not the official evaluator) |
@@ -256,19 +253,13 @@ Scale: S about hours to one day, M about 2–4 days, L about a week or more; all
 | Module | Responsibility |
 |---|---|
 | `stats.py` | paired bootstrap over parent materials, Wilson interval, grouped AUC interval |
-| `centering.py` | none/global/skill/material centering, row-internal Pearson contrast, balance value |
 | `candidate_table.py` | convert `captures.jsonl` + `labels_<eval>.jsonl` (+ `labels_new.jsonl`) to `candidates.jsonl`; load hidden states aligned by `cand_id` |
-| `diag_template.py` | 1b: nested SS shares, norm ratios, within-material cosine, token-length control |
-| `diag_curve.py` | 1c: probes after each centering level (parent-grouped, label-balanced folds), material-internal AUC, saves `w_dir.npy` |
 | `llm.py` | one cached call path (`hash(model, prompt, image_id)`), call counter, `--max-calls` |
 | `label_repair.py` | stage 0: stratified sample, two judges on isolated T-only/I-only payloads, third-judge arbitration, verdict + evidence, precision/recall report |
-| `select.py` | 2a: PRISM-style material-centered outlier, balance to b, min_shift, random analytic baseline, uncentered ablation |
-| `steer.py` | 2b: `h + α(b−⟨h,ŵ⟩)ŵ` clamp and `h + βσŵ` push at prompt_end / all_generated / both; orthogonal random and skill-mean controls |
 | `factsplit.py` | 1a/P2: LLM fact extraction and A/B split, condition materials, existing/render image backends |
-| `filter_baseline.py` | 2c: keep candidates changed/undeterminable under both counterfactuals; rewrite branch signature only |
-| `scripts/sanity.py` | the single synthetic check of the shares, centering signal, steering formula and null bootstrap |
+| `scripts/sanity.py` | the single synthetic check (null bootstrap, gate precision law, answer equivalence, Wilson bounds) |
 
-**Status:** all modules implemented; `scripts/sanity.py` passes; every command was dry-run on the existing confirm features (480 candidates) or synthetic data. Dry-run estimates: label repair ≈792 calls for 60 parents and ≈4,224 for 320 parents (≤3 candidates, 2 sides, 2 judges, +10% arbitration), within the remaining route budget. `vqag-steer` CPU hook check passes; its dry-run prints ≈6,720 local generations and ≈3,226 label calls for 60 materials × 14 conditions × 8 candidates. Real API/GPU runs remain for the researcher to launch.
+**Status (updated 2026-11-16):** the centering/curve/select/steer/filter modules and their CLI stages were deleted as a closed route (see `PROGRESS.md`, "Paths already tried"); `label-repair` and `factsplit` remain. Early status note: `scripts/sanity.py` passes; every command was dry-run on the existing confirm features (480 candidates) or synthetic data. Dry-run estimates: label repair ≈792 calls for 60 parents and ≈4,224 for 320 parents (≤3 candidates, 2 sides, 2 judges, +10% arbitration), within the remaining route budget. `vqag-steer` CPU hook check passes; its dry-run prints ≈6,720 local generations and ≈3,226 label calls for 60 materials × 14 conditions × 8 candidates. Real API/GPU runs remain for the researcher to launch.
 
 ### 7.12 Time-boxed mechanism route: cross-modal composition gap (2026-11-15; pre-registered before any synthetic answer data)
 

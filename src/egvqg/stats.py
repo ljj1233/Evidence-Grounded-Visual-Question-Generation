@@ -81,3 +81,34 @@ def spearman(x, y):
         return float('nan'), float('nan')
     r = spearmanr(x[ok], y[ok])
     return float(r.statistic), float(r.pvalue)
+
+def bootstrap_groups(groups, metric_fns, B=1000, seed=0):
+    """Paired bootstrap over parent groups. metric_fns: name -> f(index_array) -> float."""
+    rng = np.random.default_rng(seed)
+    groups = np.asarray(groups)
+    uniq = np.unique(groups)
+    members = {g: np.where(groups == g)[0] for g in uniq}
+    out = {n: [] for n in metric_fns}
+    for _ in range(B):
+        pick = rng.choice(uniq, size=len(uniq), replace=True)
+        idx = np.concatenate([members[g] for g in pick])
+        for n, f in metric_fns.items():
+            out[n].append(f(idx))
+    return {n: np.array(v) for n, v in out.items()}
+
+
+def interval(samples, level=0.95):
+    s = np.asarray(samples)[~np.isnan(np.asarray(samples))]
+    if len(s) < 20:
+        return [float('nan'), float('nan')]
+    lo, hi = np.quantile(s, [(1 - level) / 2, 1 - (1 - level) / 2])
+    return [float(lo), float(hi)]
+
+
+def wilson_lower(successes, n, z=1.96):
+    if n == 0:
+        return 0.0
+    p = successes / n
+    centre = p + z * z / (2 * n)
+    margin = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5)
+    return (centre - margin) / (1 + z * z / n)

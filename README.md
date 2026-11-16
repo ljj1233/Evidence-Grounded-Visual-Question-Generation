@@ -67,10 +67,8 @@ Commands have the form `.venv/bin/python -m egvqg <command> --run-id <run> ...`;
 | Basic evaluation (cascade) | `simple-baseline-eval-init --cascade` → `eval-run` → `eval-report` | Validity → unimodal screening → generate counterexamples only for surviving questions; about half the cost of the full pipeline |
 | **Necessity evaluation (recommended)** | `necessity-ensemble-init/run/report` | See the next section |
 | Candidates and labels | `candidates-capture`, `candidate-source-init/run`, `candidate-labels`, `label-audit-prepare/finish` | P1: stratified material×candidate sampling, white-box capture, writing candidates as baseline source runs, concatenating cascade labels and sampled audit |
-| White-box and probes | `whitebox-capture`, `whitebox-compare`, `modality-distances`, `probe-run`, `p5-readout`, `p5-robust`, `geometry-run`, `geometry-summary` | P0/P3/P5: hidden states at three positions, per-layer probes, modality displacement readouts, and geometry |
-| Selection and steering | `steer-prepare`, `steer-analyze` | P4 steering screening and G3 adjudication, depending on A-stream labels; P6's `selection_eval.py` is implemented but has no CLI entry yet |
-| VQAG diagnostics | `diag-template`, `diag-curve` | 1b/H2 variance shares and centering levels; 1c/H2–H3 probes after none/global/skill/material centering, plus `w_dir.npy` |
-| VQAG labels and solutions | `label-repair`, `vqag-select`, `vqag-steer`, `filter-baseline` | Stage-0 evidence labels with arbitration; 2a outlier/balance/min_shift selection; 2b projection clamping with controls (GPU); 2c counterfactual filter baseline |
+| Hidden-state capture | `whitebox-capture`, `whitebox-compare`, `detail-capture` | P0: greedy generation with hidden states at the prompt end, the first K question tokens and the question end; capture-run comparison and per-head/per-step states |
+| Evidence labels | `label-repair` | Stage-0 evidence labels with two judges, arbitration and reliability bounds |
 | VQAG facts | `factsplit` | 1a/P2 fact extraction, A/B split, four-condition materials (render image is OCR-shortcut flagged) |
 | Synthetic composition | `synthetic-build`, `composition-answer`, `composition-generate`, `composition-report`, `composition-compare`, `composition-compare-prompts` | Week-1 mechanism route: programmatic derived/bridging/stitching materials with split single-hop questions; local-model answering and dual-question generation; material-bootstrap composition deficits and the both-hops-correct-full-wrong list |
 | Composition grid (E2) | `grid-build`, `grid-answer`, `grid-report` | 2×2 modality placement grid (rule text/image × values text/image) on paired materials; programmatic conditional/sum scoring, paired material bootstraps, and a psychometric curve by signed distance from the threshold |
@@ -81,20 +79,15 @@ Commands have the form `.venv/bin/python -m egvqg <command> --run-id <run> ...`;
 | Generalization checks | `material-generate`, `mmqa-refer-compare`, `interval-mechanism` | Generic MMQA generation for the refer-prompt feasibility test; behavioural ablations + logit lens for the interval-count failures |
 | Accounting | `api-ledger` | Aggregates call counts and known tokens by run-name pattern |
 
-## VQAG Mainline (code built; no real runs yet)
+## Evidence Labels (VQAG label stage, retained)
 
-The mechanism/solution route is implemented as CLI subcommands and was only exercised with `--dry-run` on existing confirm-run features. No paid call or GPU job was made in this round. All new commands accept `--dry-run`; API-facing ones also accept `--max-calls` and share `outputs/cache/vqag/` (key = model + prompt + image hash). Intervals are paired bootstraps over parent materials in `stats.py`.
+One part of the former VQAG route is still used: `label-repair` builds evidence labels from an existing capture run with two independent judges on isolated single-side payloads plus arbitration, and reports precision/recall with reliability bounds. The diagnostic, selection and steering stages of that route were closed and deleted on 2026-11-16 (see the "Paths already tried" table in [PROGRESS.md](PROGRESS.md)).
 
 ```bash
 E=".venv/bin/python -m egvqg"; C=qwen3vl8b-cand-confirm-v2; L=labels_${C}-eval.jsonl
-$E diag-template --run-id vqag-dry --capture-run $C --label-file $L --dry-run
-$E diag-curve    --run-id vqag-dry --capture-run $C --label-file $L --dry-run
-$E label-repair  --run-id vqag-dry --capture-run $C --label-file $L --dry-run   # prints 60/320-parent call estimates
-$E vqag-select   --run-id vqag-dry --capture-run $C --label-file $L --dry-run   # old labels only: pipeline check
-$E vqag-steer    --run-id vqag-dry --capture-run $C --label-file $L --dry-run   # CPU hook check + GPU/API estimate
-$E factsplit     --run-id vqag-dry --dry-run
-$E filter-baseline --run-id vqag-dry --capture-run $C --label-file $L --eval-run ${C}-eval --dry-run
-.venv/bin/python scripts/sanity.py    # the only sanity check (synthetic, CPU, seconds)
+$E label-repair --run-id vqag-dry --capture-run $C --label-file $L --dry-run   # prints 60/320-parent call estimates
+$E factsplit    --run-id vqag-dry --dry-run
+.venv/bin/python scripts/sanity.py    # synthetic, CPU, seconds
 ```
 
 ## Synthetic Composition Route (week-1 mechanism check)
@@ -153,4 +146,4 @@ $E necessity-ensemble-report --run-id $R                # fixed-denominator repo
 
 ## Currently Not Implemented
 
-Formal candidate data and G1 adjudication under plain-v2 (`scripts/gpu_queue.sh` and `scripts/api_queue.sh`), a formal comparison of the proposed generation method (data-side selection/rewriting), the CLI for P6 selection evaluation, second-model re-checking with Qwen3.5, formal runs and evaluation of steering, independent human annotation and scoring calibration, and overall repeated-run stability of the evaluator. The VQAG mainline (plan 7.11) is code-complete but has only been dry-run: real label repair, fact splitting, filtering and steering await explicit API/GPU launch.
+Formal candidate data and G1 adjudication under plain-v2, a formal comparison of the proposed generation method, second-model re-checking, independent human annotation and scoring calibration, and overall repeated-run stability of the evaluator.

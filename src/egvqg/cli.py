@@ -11,11 +11,6 @@ from typing import Any, Mapping
 from .providers import RequestBudgetExceeded
 
 
-def load_steer_spec(path,project_root):
-    from .intervene import intervention_from_spec
-    return intervention_from_spec(Path(project_root).resolve()/path)
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="egvqg", description="Evidence-grounded VQG research pipeline")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -101,7 +96,6 @@ def build_parser() -> argparse.ArgumentParser:
     cc.add_argument('--group-field',default='group',help='field of the materials file used as the template/group')
     cc.add_argument('--select',choices=('all','sample'),default='all')
     cc.add_argument('--max-materials',type=int,default=None)
-    cc.add_argument('--steer-spec',default=None,help='steering specification written by steer-prepare (JSON, relative to the project root)')
     dtc=subparsers.add_parser('detail-capture',help='teacher-forced per-head, per-step and image/text-pooled states from an existing capture run')
     dtc.add_argument('--capture-run',required=True)
     dtc.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
@@ -127,59 +121,6 @@ def build_parser() -> argparse.ArgumentParser:
     lap.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
     lap.add_argument('--two-class',action='store_true',help='sample redundant and non-redundant labels for a precision/recall audit')
     laf=subparsers.add_parser('label-audit-finish',help='summarise audit_reviews.jsonl (AI review) with Wilson bounds')
-    md=subparsers.add_parser('modality-distances',help='P5: per-layer hidden-state shift of captured candidates under modality removal/replacement (run_id = capture run)')
-    md.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
-    md.add_argument('--local-model-path',required=True)
-    md.add_argument('--device',default='cuda:0')
-    md.add_argument('--limit',type=int,default=None)
-    md.add_argument('--materials-file',default=None)
-    pr=subparsers.add_parser('probe-run',help='P3: layer choice on discovery, G2 on confirmation (sets given as CAPTURE_RUN:LABEL_FILE, comma separated)')
-    pr.add_argument('--discovery',required=True)
-    pr.add_argument('--confirmation',required=True)
-    pr.add_argument('--bootstrap',type=int,default=1000)
-    p5=subparsers.add_parser('p5-readout',help='P5: modality-shift readout vs redundancy/direction labels')
-    p5.add_argument('--discovery',required=True)
-    p5.add_argument('--confirmation',default=None)
-    p5.add_argument('--bootstrap',type=int,default=1000)
-    ge=subparsers.add_parser('geometry-run',help='P5: per-layer anisotropy / effective rank of image vs text token states (prompt only)')
-    ge.add_argument('--capture-run',required=True)
-    ge.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
-    ge.add_argument('--local-model-path',required=True)
-    ge.add_argument('--device',default='cuda:0')
-    gs=subparsers.add_parser('geometry-summary',help='P5: gap statistics and correlation with the material-level redundant fraction')
-    gs.add_argument('--capture-run',required=True)
-    gs.add_argument('--label-file',required=True)
-    p5r=subparsers.add_parser('p5-robust',help='P5 robustness R1 (within skill) and R2 (baseline-adjusted) at the layers chosen in p5_readout.json of --layers-run')
-    p5r.add_argument('--sets',required=True,help='CAPTURE_RUN:LABEL_FILE, comma separated')
-    p5r.add_argument('--layers-run',required=True)
-    p5r.add_argument('--bootstrap',type=int,default=1000)
-    sele=subparsers.add_parser('selection-eval',help='P6: random baseline and intrinsic min_shift selection on labelled candidates')
-    sele.add_argument('--capture-run',required=True)
-    sele.add_argument('--label-file',required=True)
-    sele.add_argument('--layer',type=int,required=True)
-    sele.add_argument('--position',default='prompt_end',choices=('prompt_end','question_end'))
-    sele.add_argument('--bootstrap',type=int,default=1000)
-    dt=subparsers.add_parser('diag-template',help='VQAG 1b/H2: variance shares, norm ratios and within-material cosine by centering level')
-    dt.add_argument('--capture-run',required=True)
-    dt.add_argument('--label-file',required=True)
-    dt.add_argument('--layer',type=int,default=22)
-    dt.add_argument('--layers',default=None,help='comma separated layers; overrides --layer')
-    dt.add_argument('--positions',default='prompt_end')
-    dt.add_argument('--pos',default=None,choices=('prompt_end','early','question_end'),help='single position; overrides --positions')
-    dt.add_argument('--materials',default=None,help='text file with parent/material ids')
-    dt.add_argument('--dry-run',action='store_true')
-    dc=subparsers.add_parser('diag-curve',help='VQAG 1c/H2-H3: probes after none/global/skill/material centering; saves w_dir.npy')
-    dc.add_argument('--capture-run',required=True)
-    dc.add_argument('--label-file',required=True)
-    dc.add_argument('--layer',type=int,default=22)
-    dc.add_argument('--layers',default=None,help='comma separated layers; overrides --layer')
-    dc.add_argument('--positions',default='early,question_end')
-    dc.add_argument('--pos',default=None,choices=('prompt_end','early','question_end'),help='single position; overrides --positions')
-    dc.add_argument('--levels',default='none,global,skill,material')
-    dc.add_argument('--materials',default=None)
-    dc.add_argument('--bootstrap',type=int,default=2000)
-    dc.add_argument('--seeds',default='0,1,2')
-    dc.add_argument('--dry-run',action='store_true')
     lr=subparsers.add_parser('label-repair',help='VQAG stage 0: two independent judges + arbitration on a stratified sample')
     lr.add_argument('--capture-run',default=None)
     lr.add_argument('--label-file',default=None)
@@ -196,38 +137,6 @@ def build_parser() -> argparse.ArgumentParser:
     lr.add_argument('--max-calls',type=int,default=0)
     lr.add_argument('--seed',type=int,default=20261113)
     lr.add_argument('--concurrency',type=int,default=1,help='parallel candidate labels (API calls); caches and the call cap are thread safe')
-    vs=subparsers.add_parser('vqag-select',help='VQAG 2a/H2: outlier/balance/min_shift/random within-material selection')
-    vs.add_argument('--capture-run',required=True)
-    vs.add_argument('--label-file',required=True)
-    vs.add_argument('--layer',type=int,default=22)
-    vs.add_argument('--pos',default='early',choices=('prompt_end','early','question_end'))
-    vs.add_argument('--materials',default=None)
-    vs.add_argument('--k',type=int,default=1)
-    vs.add_argument('--bootstrap',type=int,default=2000)
-    vs.add_argument('--label-new',default=None)
-    vs.add_argument('--w-dir',default=None)
-    vs.add_argument('--dry-run',action='store_true')
-    vst=subparsers.add_parser('vqag-steer',help='VQAG 2b/H3: projection clamping / side pushing with controls (GPU, exploratory)')
-    vst.add_argument('--capture-run',required=True)
-    vst.add_argument('--label-file',required=True)
-    vst.add_argument('--layer',type=int,default=22)
-    vst.add_argument('--pos',default='early',choices=('prompt_end','early','question_end'))
-    vst.add_argument('--steer-pos',default='prompt_end',choices=('prompt_end','all_generated','both'))
-    vst.add_argument('--alphas',default='0.25,0.5,1')
-    vst.add_argument('--betas',default='-2,-1,1,2')
-    vst.add_argument('--n-candidates',type=int,default=8)
-    vst.add_argument('--materials',default=None)
-    vst.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
-    vst.add_argument('--materials-file',default=None)
-    vst.add_argument('--local-model-path',default=None)
-    vst.add_argument('--device',default='cuda:0')
-    vst.add_argument('--max-new-tokens',type=int,default=1024)
-    vst.add_argument('--temperature',type=float,default=0.7)
-    vst.add_argument('--top-p',type=float,default=0.8)
-    vst.add_argument('--top-k',type=int,default=20)
-    vst.add_argument('--w-dir',default=None)
-    vst.add_argument('--dry-run',action='store_true')
-    vst.add_argument('--max-calls',type=int,default=0)
     fs=subparsers.add_parser('factsplit',help='VQAG 1a/P2: extract facts, split A/B, build four-condition materials')
     fs.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
     fs.add_argument('--materials-file',default=None)
@@ -237,35 +146,11 @@ def build_parser() -> argparse.ArgumentParser:
     fs.add_argument('--model',default='gpt-6-luna')
     fs.add_argument('--dry-run',action='store_true')
     fs.add_argument('--max-calls',type=int,default=0)
-    fb=subparsers.add_parser('filter-baseline',help='VQAG 2c: keep candidates changed by both counterfactuals (no new calls)')
-    fb.add_argument('--capture-run',required=True)
-    fb.add_argument('--label-file',required=True)
-    fb.add_argument('--eval-run',required=True)
-    fb.add_argument('--n-materials',type=int,default=20)
-    fb.add_argument('--label-new',default=None)
-    fb.add_argument('--bootstrap',type=int,default=2000)
-    fb.add_argument('--dry-run',action='store_true')
     mm=subparsers.add_parser('import-mmqa-materials',help='build image+paragraph materials from the downloaded MultiModalQA (generalisation check)')
     mm.add_argument('--name',required=True)
     mm.add_argument('--count',type=int,required=True)
     mm.add_argument('--seed',type=int,default=20261113)
     mm.add_argument('--project-root',default='.')
-    sp=subparsers.add_parser('steer-prepare',help='steering vectors (real, random in-distribution, Gaussian), one spec per condition, held-out material ids')
-    sp.add_argument('--training',required=True,help='CAPTURE_RUN:LABEL_FILE, comma separated')
-    sp.add_argument('--layers',required=True,help='comma separated decoder layers')
-    sp.add_argument('--alphas',default='1,2')
-    sp.add_argument('--heldout',type=int,default=8,help='number of skills held out of training and used for evaluation')
-    sp.add_argument('--seed',type=int,default=20261113)
-    sp.add_argument('--reference-run',default='qwen3vl8b-baseline-test1257-simple-v1')
-    sp.add_argument('--materials-file',default=None)
-    sa=subparsers.add_parser('steer-analyze',help='steering: label-free screening of conditions, or paired effects against the control with the G3 verdict')
-    sa.add_argument('--stage',choices=('screen','effect'),required=True)
-    sa.add_argument('--prefix',required=True,help='capture runs are named PREFIX-CONDITION, labels labels_PREFIX-CONDITION-eval.jsonl')
-    sa.add_argument('--conditions',required=True)
-    sa.add_argument('--random-conditions',default=None,help='for the effect stage: comma separated random controls to beat, per real condition use --real')
-    sa.add_argument('--real',default=None)
-    sa.add_argument('--project-root',default='.')
-    sa.add_argument('--output-root',default='outputs')
     wcm=subparsers.add_parser('whitebox-compare',help='compare two white-box capture runs of the same materials (e.g. software versions)')
     wcm.add_argument('--run-a',required=True)
     wcm.add_argument('--run-b',required=True)
@@ -480,7 +365,7 @@ def build_parser() -> argparse.ArgumentParser:
     im.add_argument('--max-new-tokens',type=int,default=32)
     im.add_argument('--limit',type=int,default=None)
     im.add_argument('--skip-lens',action='store_true')
-    for command in (sbinit,sbrun,sbreport,seinit,serun,sereport,nei,ner,nerep,wbc,cc,dtc,csi,csr,cl,lap,laf,md,pr,p5,ge,gs,p5r,sp,sele,dt,dc,lr,vs,vst,fs,fb,ca,cg,mg,ga,gr,svr,svp,svrr,svrp,psel,cai,cab,ckm,cmr,aar,aap,cr,ccomp,cpmp,im,inl,rsrc,mrc,lv,vr):
+    for command in (sbinit,sbrun,sbreport,seinit,serun,sereport,nei,ner,nerep,wbc,cc,dtc,csi,csr,cl,lap,laf,lr,fs,ca,cg,mg,ga,gr,svr,svp,svrr,svrp,psel,cai,cab,ckm,cmr,aar,aap,cr,ccomp,cpmp,im,inl,rsrc,mrc,lv,vr):
         command.add_argument('--run-id',required=True);command.add_argument('--project-root',default='.')
         command.add_argument('--output-root',default='outputs')
 
@@ -504,8 +389,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.command=='candidates-capture':
                 result=C.run_candidates(**common,reference_run=args.reference_run,model_path=args.local_model_path,device=args.device,n_skills=args.n_skills,
                     per_skill=args.per_skill,n_candidates=args.n_candidates,temperature=args.temperature,top_p=args.top_p,top_k=args.top_k,k=args.k,max_new_tokens=args.max_new_tokens,exclude_run=args.exclude_run,template=args.template,
-                    materials_file=args.materials_file,group_field=args.group_field,select=args.select,max_materials=args.max_materials,
-                    intervention=load_steer_spec(args.steer_spec,args.project_root) if args.steer_spec else None)
+                    materials_file=args.materials_file,group_field=args.group_field,select=args.select,max_materials=args.max_materials)
             elif args.command=='candidate-source-init':
                 result=C.init_candidate_source(**common,capture_run=args.capture_run,reference_run=args.reference_run,materials_file=args.materials_file)
             else:
@@ -717,7 +601,7 @@ def main(argv: list[str] | None = None) -> int:
                 material_ids_file=args.material_ids_file,prompts_file=args.prompts_file)
             print(json.dumps(result,ensure_ascii=False,indent=2))
         elif args.command=='candidate-labels':
-            from .probe_labels import build_label_table,profile_report
+            from .candidate_labels import build_label_table,profile_report
             common={k:getattr(args,k) for k in ('project_root','output_root')}
             build_label_table(capture_run=args.run_id,source_run=args.source_run,eval_run=args.eval_run,**common)
             print(json.dumps(profile_report(capture_run=args.run_id,eval_run=args.eval_run,**common),ensure_ascii=False,indent=2))
@@ -729,56 +613,6 @@ def main(argv: list[str] | None = None) -> int:
                     LA.prepare_audit(capture_run=args.run_id,eval_run=args.eval_run,reference_run=args.reference_run,**common)
                     if args.command=='label-audit-prepare' else LA.finish_audit(capture_run=args.run_id,**common))
             print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command=='modality-distances':
-            from .modality_distance import run_distances
-            result=run_distances(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,reference_run=args.reference_run,
-                model_path=args.local_model_path,device=args.device,limit=args.limit,materials_file=args.materials_file)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command in ('probe-run','p5-readout'):
-            common={k:getattr(args,k) for k in ('project_root','output_root')}
-            sets=lambda text:([x.split(':')[0] for x in text.split(',')],[x.split(':')[1] for x in text.split(',')])
-            pairs=lambda text:[tuple(x.split(':')) for x in text.split(',')]
-            if args.command=='probe-run':
-                from .probe_run import run_probes
-                result=run_probes(run_id=args.run_id,discovery=sets(args.discovery),confirmation=sets(args.confirmation),B=args.bootstrap,**common)
-            else:
-                from .distance_analysis import run_p5
-                result=run_p5(run_id=args.run_id,discovery=pairs(args.discovery),confirmation=pairs(args.confirmation) if args.confirmation else None,B=args.bootstrap,**common)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command in ('geometry-run','geometry-summary'):
-            from . import geometry as G
-            common={k:getattr(args,k) for k in ('run_id','project_root','output_root')}
-            result=(G.run_geometry(**common,capture_run=args.capture_run,reference_run=args.reference_run,model_path=args.local_model_path,device=args.device)
-                    if args.command=='geometry-run' else G.geometry_summary(**common,label_file=args.label_file,capture_run=args.capture_run))
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command=='p5-robust':
-            from .distance_robust import run_robust
-            base=Path(args.project_root).resolve()/args.output_root
-            entries=json.loads((base/args.layers_run/'p5_readout.json').read_text())['entries']
-            result=run_robust(run_id=args.run_id,sets=[tuple(x.split(':')) for x in args.sets.split(',')],layers={k:v['chosen_layer'] for k,v in entries.items()},
-                project_root=args.project_root,output_root=args.output_root,B=args.bootstrap)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command=='selection-eval':
-            from .selection_eval import run_selection
-            result=run_selection(run_id=args.run_id,capture_run=args.capture_run,label_file=args.label_file,
-                layer=args.layer,position=args.position,B=args.bootstrap,project_root=args.project_root,output_root=args.output_root)
-            print(json.dumps(result,ensure_ascii=False,indent=2))
-        elif args.command in ('diag-template','diag-curve'):
-            layers=[int(x) for x in args.layers.split(',')] if args.layers else [args.layer]
-            positions=(args.pos,) if args.pos else tuple(x.strip() for x in args.positions.split(','))
-            if args.command=='diag-template':
-                from .diag_template import run_diag_template
-                result=run_diag_template(capture_run=args.capture_run,label_file=args.label_file,layers=layers,
-                    positions=positions,materials=args.materials,
-                    project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,dry_run=args.dry_run)
-            else:
-                from .diag_curve import run_diag_curve
-                result=run_diag_curve(capture_run=args.capture_run,label_file=args.label_file,layers=layers,
-                    positions=positions,
-                    levels=tuple(x.strip() for x in args.levels.split(',')),materials=args.materials,
-                    project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,
-                    bootstrap=args.bootstrap,seeds=tuple(int(x) for x in args.seeds.split(',')),dry_run=args.dry_run)
-            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='label-repair':
             from .label_repair import run_label_repair
             result=run_label_repair(capture_run=args.capture_run,label_file=args.label_file,candidates=args.candidates,
@@ -788,22 +622,6 @@ def main(argv: list[str] | None = None) -> int:
                 sample_rate=args.sample_rate,per_parent=args.per_parent,dry_run=args.dry_run,
                 max_calls=args.max_calls,seed=args.seed,n_parents=args.n_parents,concurrency=args.concurrency)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
-        elif args.command=='vqag-select':
-            from .select import run_select
-            result=run_select(capture_run=args.capture_run,label_file=args.label_file,project_root=args.project_root,
-                output_root=args.output_root,run_id=args.run_id,layer=args.layer,position=args.pos,materials=args.materials,
-                k=args.k,bootstrap=args.bootstrap,label_new=args.label_new,w_dir=args.w_dir,dry_run=args.dry_run)
-            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
-        elif args.command=='vqag-steer':
-            from .steer import run_steer
-            result=run_steer(capture_run=args.capture_run,label_file=args.label_file,project_root=args.project_root,
-                output_root=args.output_root,run_id=args.run_id,layer=args.layer,position=args.pos,steer_pos=args.steer_pos,
-                alphas=tuple(float(x) for x in args.alphas.split(',')),betas=tuple(float(x) for x in args.betas.split(',')),
-                n_candidates=args.n_candidates,materials=args.materials,model_path=args.local_model_path,device=args.device,
-                max_new_tokens=args.max_new_tokens,temperature=args.temperature,top_p=args.top_p,top_k=args.top_k,
-                w_dir=args.w_dir,reference_run=args.reference_run,materials_file=args.materials_file,
-                dry_run=args.dry_run,max_calls=args.max_calls)
-            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='factsplit':
             from .factsplit import run_factsplit
             result=run_factsplit(project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,
@@ -811,44 +629,17 @@ def main(argv: list[str] | None = None) -> int:
                 conditions=args.conditions,image_backend=args.image_backend,model=args.model,
                 dry_run=args.dry_run,max_calls=args.max_calls)
             print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
-        elif args.command=='filter-baseline':
-            from .filter_baseline import run_filter_baseline
-            result=run_filter_baseline(capture_run=args.capture_run,label_file=args.label_file,eval_run=args.eval_run,
-                project_root=args.project_root,output_root=args.output_root,run_id=args.run_id,
-                n_materials=args.n_materials,label_new=args.label_new,bootstrap=args.bootstrap,dry_run=args.dry_run)
-            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='import-mmqa-materials':
             from .dataset import import_mmqa_materials
             print(json.dumps(import_mmqa_materials(args.project_root,name=args.name,count=args.count,seed=args.seed),ensure_ascii=False,indent=2))
-        elif args.command=='steer-prepare':
-            from .intervene import prepare_steering
-            result=prepare_steering(run_id=args.run_id,training=[tuple(x.split(':')) for x in args.training.split(',')],layers=[int(x) for x in args.layers.split(',')],
-                alphas=[float(x) for x in args.alphas.split(',')],heldout=args.heldout,seed=args.seed,project_root=args.project_root,output_root=args.output_root,
-                reference_run=args.reference_run,materials_file=args.materials_file)
-            print(json.dumps({k:v for k,v in result.items() if k!='diagnostics'},ensure_ascii=False,indent=2))
-        elif args.command=='steer-analyze':
-            from . import intervene as IV
-            from .records import read_jsonl
-            base=Path(args.project_root).resolve()/args.output_root
-            conds=args.conditions.split(',')
-            if args.stage=='screen':
-                data={c:read_jsonl(base/f'{args.prefix}-{c}'/'captures.jsonl') for c in conds}
-                result=IV.screen_conditions(data)
-            else:
-                data={c:read_jsonl(base/f'{args.prefix}-{c}'/f'labels_{args.prefix}-{c}-eval.jsonl') for c in conds}
-                effects=IV.paired_effect(data)
-                result={'effects':effects}
-                if args.real:
-                    result['g3']={r:IV.g3_verdict(effects,r,[x for x in (args.random_conditions or '').split(',') if x]) for r in args.real.split(',')}
-            print(json.dumps(result,ensure_ascii=False,indent=2,default=float))
         elif args.command=='whitebox-compare':
-            from .whitebox import compare_captures
+            from .capture import compare_captures
             print(json.dumps(compare_captures(run_a=args.run_a,run_b=args.run_b,project_root=args.project_root,output_root=args.output_root),ensure_ascii=False,indent=2))
         elif args.command=='api-ledger':
             from .candidates import api_ledger
             print(json.dumps(api_ledger(patterns=args.patterns.split(','),project_root=args.project_root,output_root=args.output_root),ensure_ascii=False,indent=2))
         elif args.command=='whitebox-capture':
-            from .whitebox import run_capture
+            from .capture import run_capture
             result=run_capture(run_id=args.run_id,project_root=args.project_root,output_root=args.output_root,reference_run=args.reference_run,
                 model_path=args.local_model_path,device=args.device,limit=args.limit,k=args.k,max_new_tokens=args.max_new_tokens,check=not args.no_check,template=args.template)
             print(json.dumps(result,ensure_ascii=False,indent=2))

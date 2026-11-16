@@ -1,4 +1,4 @@
-"""Candidate labels (from the cascade evaluation) and the material-level propensity profile (P1/P2). Pure Python, no numpy.
+"""Candidate labels from a cascade evaluation and the material-level propensity profile (P1/P2). No numpy.
 
 Label semantics follow the cascade evaluator: a candidate is *valid* when question_answerability == 1; among valid candidates the
 single-modality screen says whether the image alone / the text alone gives a unique full answer. `redundant` = screen cut;
@@ -11,6 +11,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from .records import read_jsonl, write_json, write_jsonl
+from .stats import wilson_lower
 
 DIRECTIONS = ('image', 'text', 'both')
 
@@ -81,15 +82,6 @@ def g1_check(profile, *, threshold=0.25):
 def coverage(rows):
     """Share of candidates with a decided label (valid/invalid); evaluation failures and pending items are not covered."""
     return sum(bool(r['decided']) for r in rows) / len(rows) if rows else None
-
-
-def wilson_lower(successes, n, z=1.96):
-    if n == 0:
-        return 0.0
-    p = successes / n
-    centre = p + z * z / (2 * n)
-    margin = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5)
-    return (centre - margin) / (1 + z * z / n)
 
 
 def profile_report(*, capture_run, eval_run, project_root='.', output_root='outputs'):

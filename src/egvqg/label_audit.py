@@ -12,7 +12,7 @@ import textwrap
 from collections import defaultdict
 from pathlib import Path
 
-from .probe_labels import wilson_lower
+from .stats import wilson_lower
 from .records import read_jsonl, write_json, write_jsonl
 
 DIRECTION_QUOTA = (('image', 14), ('text', 12), ('both', 14))
