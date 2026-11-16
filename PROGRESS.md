@@ -157,6 +157,14 @@ The outline now follows the five parts the completed measurements support; numbe
 
 ## Work log
 
+### 2026-11-16: Repository cleanup - prompt layout, junk removal, CJK removal
+
+- Removed the stray root-level `train.py` (a Chinese-language GPU stress script from an old session, not part of the pipeline) and the last Chinese residue in the docs (`"缺" list` -> `"a list of gaps"` in the `INVENTORY.md` entry). Only the CJK code-point range in `candidates.cjk_share` and its test still contain Chinese characters, which is intentional.
+- `prompts/` went from 32 flat files to 27 files in four role directories (`generate/`, `answer/`, `assess/`, `select/`) plus a name-based resolver `prompts.prompt_path`, so the directory listing is readable and adding a template no longer adds a top-level file. Deleted five superseded templates: `plain-refer-v1` (replaced by v2), `pvs-prefilter-v2`/`v3` (closed PVS branch), `s2-answer-type-v1`, `unique-v1` (old protocol material variants). Templates are still referred to by name in code and snapshotted per run, so old artefacts are unaffected.
+- Fixed every direct `prompts/<name>.txt` path in `candidates.py`, `copy_circuit.py`, `redundancy_source.py` and `whitebox.py` to go through `prompt_path`, and updated the four tests that copy templates into temporary prompt directories.
+- Verified: `.venv/bin/python -m pytest` -> **183 passed in 13.25s**; `scripts/sanity.py` -> SANITY PASSED.
+- Not done, and why: the probe/steering/diagnostic modules (`whitebox`, `probing`, `probe_*`, `distance_*`, `modality_distance`, `geometry`, `intervene`, `steer`, `centering`, `diag_*`, `select`, `filter_baseline`) are still in `src/egvqg/` and still wired to CLI stages. They cannot be deleted without first splitting `whitebox` and `probing`, because live stages depend on them: `saqg` (built the MMQA SAQG pool used by E1) and `candidates` capture use `whitebox`; `label_audit` uses `probe_labels`; `interval_mechanism` uses `whitebox`; `selection_eval` uses `probing`. Deleting the cluster is a separate refactor, not a folder move.
+
 ### 2026-11-13: Establishment of the probe route (P0 and the old-protocol pilot)
 
 - New modules: `whitebox.py` (three positions × per-layer hidden states and spans), `candidates.py`, `probe_labels.py`, `label_audit.py`, `probing.py`, `probe_run.py`, `modality_distance.py`, `distance_analysis.py`, `distance_robust.py`, `selection_eval.py`, `geometry.py`, `variance_decomposition.py`, `intervene.py`; CLI and offline tests updated in sync (172 passed in total).

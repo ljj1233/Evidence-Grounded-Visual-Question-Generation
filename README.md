@@ -51,6 +51,10 @@ Model calls read `.env` or environment variables of the same name (environment v
 
 Model names on the gateway are case- and hyphen-sensitive (for example `DeepSeek-V4.1-Flash`); `/v1/models` can list the names actually available. Model outputs, adjudication rationales, calls, and billing uncertainties are recorded in `calls.jsonl`, `requests.jsonl`, and `usage.json` respectively; unknown tokens or costs are recorded as `null` rather than 0. Responses are cached in `outputs/cache/judge/`.
 
+## Prompt Templates
+
+Templates live under `prompts/` grouped by role: `generate/` (question generation), `answer/` (answering and comparison, including the answer-equivalence judge), `assess/` (sufficiency, faithfulness, validity and redundancy-source judging) and `select/` (PVS screens). Code refers to a template by name only; `egvqg.prompts.prompt_path` resolves `prompts/<name>.txt` or `prompts/<role>/<name>.txt`, and every run snapshots the templates it used into its output directory.
+
 ## Workflow and Commands
 
 Commands have the form `.venv/bin/python -m egvqg <command> --run-id <run> ...`; `--run-id`, `--project-root`, and `--output-root` are written after the subcommand, and specific arguments are viewed with `<command> -h`. Rerunning the same `run_id` with the same configuration resumes, filling in only missing records; changing the configuration or prompts requires a new `run_id`.
